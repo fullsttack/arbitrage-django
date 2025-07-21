@@ -61,7 +61,7 @@ ASGI_APPLICATION = 'config.asgi.application'
 
 # Database Configuration
 DB_ENGINE = os.getenv('DB_ENGINE', 'django.db.backends.postgresql')
-DB_NAME = os.getenv('DB_NAME', 'arbit')
+DB_NAME = os.getenv('DB_NAME', 'new')
 DB_USER = os.getenv('DB_USER', 'mohsen')
 DB_PASSWORD = os.getenv('DB_PASSWORD', '')
 DB_HOST = os.getenv('DB_HOST', 'localhost')
@@ -75,9 +75,7 @@ DATABASES = {
         'PASSWORD': DB_PASSWORD,
         'HOST': DB_HOST,
         'PORT': DB_PORT,
-        'OPTIONS': {
-            'options': '-c default_transaction_isolation=repeatable_read'
-        }
+        'OPTIONS': {}
     }
 }
 

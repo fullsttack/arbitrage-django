@@ -1,0 +1,56 @@
+[2025-07-21 20:09:08,918] INFO core.redis_manager redis_manager.connect:29 - Redis connected successfully
+[2025-07-21 20:09:08,924] INFO core.consumers consumers.connect:28 - ArbitrageConsumer connected
+[2025-07-21 20:09:15,672] INFO core.consumers consumers.disconnect:37 - ArbitrageConsumer disconnected: 1001
+[2025-07-21 20:09:15,771] INFO core.consumers consumers.connect:28 - ArbitrageConsumer connected
+[2025-07-21 20:09:20,720] INFO core.consumers consumers.disconnect:37 - ArbitrageConsumer disconnected: 1001
+[2025-07-21 20:09:20,815] INFO core.consumers consumers.connect:28 - ArbitrageConsumer connected
+[2025-07-21 20:09:22,957] INFO core.consumers consumers.disconnect:37 - ArbitrageConsumer disconnected: 1001
+[2025-07-21 20:09:24,612] INFO core.consumers consumers.connect:28 - ArbitrageConsumer connected
+[2025-07-21 20:09:43,708] INFO core.consumers consumers.disconnect:37 - ArbitrageConsumer disconnected: 1001
+[2025-07-21 20:09:50,468] INFO core.consumers consumers.connect:28 - ArbitrageConsumer connected
+[2025-07-21 20:09:52,016] INFO core.consumers consumers.disconnect:37 - ArbitrageConsumer disconnected: 1001
+[2025-07-21 20:09:52,486] INFO core.consumers consumers.connect:28 - ArbitrageConsumer connected
+[2025-07-21 20:10:01,544] INFO core.consumers consumers.disconnect:37 - ArbitrageConsumer disconnected: 1001
+[2025-07-21 20:10:01,550] INFO core.consumers consumers.connect:28 - ArbitrageConsumer connected
+[2025-07-21 20:10:10,798] INFO core.consumers consumers.disconnect:37 - ArbitrageConsumer disconnected: 1001
+[2025-07-21 20:10:10,808] INFO core.consumers consumers.connect:28 - ArbitrageConsumer connected
+[2025-07-21 20:11:31,275] INFO core.consumers consumers.disconnect:37 - ArbitrageConsumer disconnected: 1001
+[2025-07-21 20:11:31,278] INFO core.consumers consumers.connect:28 - ArbitrageConsumer connected
+[2025-07-21 20:11:40,428] INFO core.consumers consumers.disconnect:37 - ArbitrageConsumer disconnected: 1001
+[2025-07-21 20:11:42,000] INFO core.consumers consumers.connect:28 - ArbitrageConsumer connected
+[2025-07-21 20:11:43,238] INFO core.consumers consumers.disconnect:37 - ArbitrageConsumer disconnected: 1001
+[2025-07-21 20:11:43,322] INFO core.consumers consumers.connect:28 - ArbitrageConsumer connected
+[2025-07-21 20:11:44,019] INFO core.consumers consumers.disconnect:37 - ArbitrageConsumer disconnected: 1001
+[2025-07-21 20:11:44,024] INFO core.consumers consumers.connect:28 - ArbitrageConsumer connected
+[2025-07-21 20:12:05,510] INFO core.consumers consumers.disconnect:37 - ArbitrageConsumer disconnected: 1001
+[2025-07-21 20:12:05,614] INFO core.consumers consumers.connect:28 - ArbitrageConsumer connected
+[2025-07-21 20:12:25,511] INFO core.consumers consumers.disconnect:37 - ArbitrageConsumer disconnected: 1001
+[2025-07-21 20:12:25,618] INFO core.consumers consumers.connect:28 - ArbitrageConsumer connected
+[2025-07-21 20:13:00,748] INFO core.consumers consumers.disconnect:37 - ArbitrageConsumer disconnected: 1001
+[2025-07-21 20:13:00,857] INFO core.consumers consumers.connect:28 - ArbitrageConsumer connected
+[2025-07-21 20:13:02,459] INFO core.consumers consumers.disconnect:37 - ArbitrageConsumer disconnected: 1001
+[2025-07-21 20:13:03,318] INFO core.consumers consumers.connect:28 - ArbitrageConsumer connected
+[2025-07-21 20:14:00,085] INFO core.consumers consumers.disconnect:37 - ArbitrageConsumer disconnected: 1001
+[2025-07-21 20:14:00,219] INFO core.consumers consumers.connect:28 - ArbitrageConsumer connected
+[2025-07-21 20:14:52,883] INFO core.consumers consumers.disconnect:37 - ArbitrageConsumer disconnected: 1001
+[2025-07-21 20:14:53,070] INFO core.consumers consumers.connect:28 - ArbitrageConsumer connected
+[2025-07-21 20:15:33,368] INFO core.redis_manager redis_manager.connect:29 - Redis connected successfully
+[2025-07-21 20:15:33,372] INFO core.consumers consumers.connect:28 - ArbitrageConsumer connected
+[2025-07-21 20:15:46,528] INFO core.consumers consumers.disconnect:37 - ArbitrageConsumer disconnected: 1001
+[2025-07-21 20:15:46,639] INFO core.consumers consumers.connect:28 - ArbitrageConsumer connected
+[2025-07-21 20:16:24,774] INFO core.consumers consumers.disconnect:37 - ArbitrageConsumer disconnected: 1001
+[2025-07-21 20:16:24,919] INFO core.consumers consumers.connect:28 - ArbitrageConsumer connected
+[2025-07-21 20:17:14,554] INFO core.consumers consumers.disconnect:37 - ArbitrageConsumer disconnected: 1001
+[2025-07-21 20:17:14,678] INFO core.consumers consumers.connect:28 - ArbitrageConsumer connected
+[2025-07-21 20:17:16,361] INFO core.consumers consumers.disconnect:37 - ArbitrageConsumer disconnected: 1001
+[2025-07-21 20:17:17,363] INFO core.consumers consumers.connect:28 - ArbitrageConsumer connected
+[2025-07-21 20:17:33,186] INFO core.consumers consumers.disconnect:37 - ArbitrageConsumer disconnected: 1001
+[2025-07-21 20:17:33,312] INFO core.consumers consumers.connect:28 - ArbitrageConsumer connected
+[2025-07-21 20:17:48,862] INFO core.consumers consumers.disconnect:37 - ArbitrageConsumer disconnected: 1001
+[2025-07-21 20:17:49,897] INFO core.consumers consumers.connect:28 - ArbitrageConsumer connected
+[2025-07-21 20:19:12,439] INFO core.consumers consumers.connect:28 - ArbitrageConsumer connected
+[2025-07-21 20:19:12,493] INFO core.consumers consumers.disconnect:37 - ArbitrageConsumer disconnected: 1001
+[2025-07-21 20:19:41,883] INFO core.consumers consumers.disconnect:37 - ArbitrageConsumer disconnected: 1001
+[2025-07-21 20:25:33,720] INFO core.consumers consumers.connect:28 - ArbitrageConsumer connected
+[2025-07-21 20:25:46,419] INFO core.consumers consumers.disconnect:37 - ArbitrageConsumer disconnected: 1001
+[2025-07-21 20:25:46,556] INFO core.consumers consumers.connect:28 - ArbitrageConsumer connected

@@ -99,8 +99,8 @@
                                 <div class="flex space-x-2">
                                     <a href="/admin/core/exchange/{{ exchange.id }}/change/" 
                                        class="text-blue-400 hover:text-blue-300 transition-colors">Edit</a>
-                                    <button onclick="testConnection('{{ exchange.name }}')" 
-                                            class="text-green-400 hover:text-green-300 transition-colors">Test</button>
+                                    <button class="test-connection text-green-400 hover:text-green-300 transition-colors" 
+                                            data-exchange="{{ exchange.name }}">Test</button>
                                 </div>
                             </td>
                         </tr>
@@ -170,8 +170,9 @@
                                 <div class="flex space-x-2">
                                     <a href="/admin/core/tradingpair/{{ pair.id }}/change/" 
                                        class="text-blue-400 hover:text-blue-300 transition-colors">Edit</a>
-                                    <button onclick="testPair('{{ pair.exchange.name }}', '{{ pair.api_symbol }}')" 
-                                            class="text-green-400 hover:text-green-300 transition-colors">Test</button>
+                                    <button class="test-pair text-green-400 hover:text-green-300 transition-colors" 
+                                            data-exchange="{{ pair.exchange.name }}" 
+                                            data-symbol="{{ pair.api_symbol }}">Test</button>
                                 </div>
                             </td>
                         </tr>
@@ -289,16 +290,16 @@
                 </div>
                 
                 <div class="p-6 space-y-4">
-                    <button onclick="clearRedisData()" class="w-full px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
+                    <button id="clear-redis" class="w-full px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
                         Clear Redis Data
                     </button>
-                    <button onclick="restartWorkers()" class="w-full px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors">
+                    <button id="restart-workers" class="w-full px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors">
                         Restart Workers
                     </button>
-                    <button onclick="exportSettings()" class="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                    <button id="export-settings" class="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
                         Export Settings
                     </button>
-                    <button onclick="showSystemHealth()" class="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                    <button id="system-health" class="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
                         System Health Check
                     </button>
                 </div>
@@ -314,7 +315,7 @@
         <div id="health-content" class="space-y-2">
             <!-- Health status will be populated here -->
         </div>
-        <button onclick="closeHealthModal()" class="mt-4 w-full px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">
+        <button id="close-health-modal" class="mt-4 w-full px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">
             Close
         </button>
     </div>
@@ -338,6 +339,49 @@ function switchTab(tab) {
     document.querySelectorAll('.tab-content').forEach(content => content.classList.add('hidden'));
     document.getElementById(`content-${tab}`).classList.remove('hidden');
 }
+
+// Add event listeners for all buttons
+document.addEventListener('DOMContentLoaded', function() {
+    // Exchange toggle buttons
+    document.querySelectorAll('.exchange-toggle').forEach(button => {
+        button.addEventListener('click', function() {
+            const exchangeId = this.getAttribute('data-id');
+            toggleExchange(exchangeId);
+        });
+    });
+    
+    // Pair toggle buttons
+    document.querySelectorAll('.pair-toggle').forEach(button => {
+        button.addEventListener('click', function() {
+            const pairId = this.getAttribute('data-id');
+            togglePair(pairId);
+        });
+    });
+    
+    // Test connection buttons
+    document.querySelectorAll('.test-connection').forEach(button => {
+        button.addEventListener('click', function() {
+            const exchangeName = this.getAttribute('data-exchange');
+            testConnection(exchangeName);
+        });
+    });
+    
+    // Test pair buttons
+    document.querySelectorAll('.test-pair').forEach(button => {
+        button.addEventListener('click', function() {
+            const exchangeName = this.getAttribute('data-exchange');
+            const symbol = this.getAttribute('data-symbol');
+            testPair(exchangeName, symbol);
+        });
+    });
+    
+    // System action buttons
+    document.getElementById('clear-redis').addEventListener('click', clearRedisData);
+    document.getElementById('restart-workers').addEventListener('click', restartWorkers);
+    document.getElementById('export-settings').addEventListener('click', exportSettings);
+    document.getElementById('system-health').addEventListener('click', showSystemHealth);
+    document.getElementById('close-health-modal').addEventListener('click', closeHealthModal);
+});
 
 // Toggle exchange status
 async function toggleExchange(exchangeId) {

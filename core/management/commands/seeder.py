@@ -47,6 +47,7 @@ class Command(BaseCommand):
             {'symbol': 'XRP', 'name': 'Ripple', 'display_name': 'ریپل'},
             {'symbol': 'DOGE', 'name': 'DOGE', 'display_name': 'دوج'},
             {'symbol': 'ETH', 'name': 'Ethereum', 'display_name': 'اتریوم'},
+            {'symbol': 'USDT', 'name': 'Tether', 'display_name': 'تتر'},
         ]
         
         for currency_data in currencies_data:
@@ -60,102 +61,31 @@ class Command(BaseCommand):
                 self.stdout.write(f'⚡ Currency exists: {currency.symbol}')
         
         # Create Trading Pairs
-        trading_pairs_data = [
-            # Wallex pairs
-            {
-                'exchange': 'wallex',
-                'base_currency': 'XRP',
-                'quote_currency': 'USDT',
-                'symbol_format': 'XRPUSDT',
-                'pair_id': None,
-                'arbitrage_threshold': 1.0,
-                'min_volume': 0.001,
-                'max_volume': 100000
-            },
-            {
-                'exchange': 'wallex',
-                'base_currency': 'DOGE',
-                'quote_currency': 'USDT',
-                'symbol_format': 'DOGEUSDT',
-                'pair_id': None,
-                'arbitrage_threshold': 1.0,
-                'min_volume': 0.001,
-                'max_volume': 100000
-            },
-            {
-                'exchange': 'wallex',
-                'base_currency': 'ETH',
-                'quote_currency': 'USDT',
-                'symbol_format': 'ETHUSDT',
-                'pair_id': None,
-                'arbitrage_threshold': 1.0,
-                'min_volume': 0.001,
-                'max_volume': 100000
-            },
-            # LBank pairs
-            {
-                'exchange': 'lbank',
-                'base_currency': 'XRP',
-                'quote_currency': 'USDT',
-                'symbol_format': 'xrp_usdt',
-                'pair_id': None,
-                'arbitrage_threshold': 1.0,
-                'min_volume': 0.001,
-                'max_volume': 100000
-            },
-            {
-                'exchange': 'lbank',
-                'base_currency': 'DOGE',
-                'quote_currency': 'USDT',
-                'symbol_format': 'doge_usdt',
-                'pair_id': None,
-                'arbitrage_threshold': 1.0,
-                'min_volume': 0.001,
-                'max_volume': 100000
-            },
-            {
-                'exchange': 'lbank',
-                'base_currency': 'ETH',
-                'quote_currency': 'USDT',
-                'symbol_format': 'eth_usdt',
-                'pair_id': None,
-                'arbitrage_threshold': 1.0,
-                'min_volume': 0.001,
-                'max_volume': 100000
-            },
-            # Ramzinex pairs
-            {
-                'exchange': 'ramzinex',
-                'base_currency': 'XRP',
-                'quote_currency': 'USDT',
-                'symbol_format': 'XRP/USDT',
-                'pair_id': '643',  # ID for XRP/USDT in Ramzinex
-                'arbitrage_threshold': 1.0,
-                'min_volume': 0.001,
-                'max_volume': 100000
-            },
-            {
-                'exchange': 'ramzinex',
-                'base_currency': 'DOGE',
-                'quote_currency': 'USDT',
-                'symbol_format': 'DOGE/USDT',
-                'pair_id': '432',  # ID for DOGE/USDT in Ramzinex
-                'arbitrage_threshold': 1.0,
-                'min_volume': 0.001,
-                'max_volume': 100000
-            },
-            {
-                'exchange': 'ramzinex',
-                'base_currency': 'ETH',
-                'quote_currency': 'USDT',
-                'symbol_format': 'ETH/USDT',
-                'pair_id': '13',  # ID for ETH/USDT in Ramzinex
-                'arbitrage_threshold': 1.0,
-                'min_volume': 0.001,
-                'max_volume': 100000
-            },
-        ]
-        
+        trading_pairs_data = []
+        exchanges = ['wallex', 'lbank', 'ramzinex']
+        base_currencies = ['XRP', 'DOGE', 'ETH']
+        quote_currency = 'USDT'
+        symbol_formats = {
+            'wallex': lambda base: f'{base}USDT',
+            'lbank': lambda base: f'{base.lower()}_usdt',
+            'ramzinex': lambda base: f'{base}/USDT',
+        }
+        pair_ids = {
+            'ramzinex': {'XRP': '643', 'DOGE': '432', 'ETH': '13'}
+        }
+        for exchange in exchanges:
+            for base in base_currencies:
+                trading_pairs_data.append({
+                    'exchange': exchange,
+                    'base_currency': base,
+                    'quote_currency': quote_currency,
+                    'symbol_format': symbol_formats[exchange](base),
+                    'pair_id': pair_ids.get(exchange, {}).get(base, None),
+                    'arbitrage_threshold': 1.0,
+                    'min_volume': 0.001,
+                    'max_volume': 100000
+                })
+
         for pair_data in trading_pairs_data:
             try:
                 exchange = Exchange.objects.get(name=pair_data['exchange'])
