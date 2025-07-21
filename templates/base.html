@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Arbitrage Monitor{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    animation: {
+                        'pulse-fast': 'pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'bounce-slow': 'bounce 2s infinite',
+                        'gradient': 'gradient 15s ease infinite',
+                    },
+                    backgroundImage: {
+                        'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @keyframes gradient {
+            0%, 100% {
+                background-size: 200% 200%;
+                background-position: left center;
+            }
+            50% {
+                background-size: 200% 200%;
+                background-position: right center;
+            }
+        }
+        
+        body {
+            background: linear-gradient(-45deg, #0f172a, #1e293b, #0f172a, #374151);
+            background-size: 400% 400%;
+            animation: gradient 15s ease infinite;
+        }
+        
+        .glass-effect {
+            backdrop-filter: blur(10px);
+            background: rgba(31, 41, 55, 0.8);
+            border: 1px solid rgba(75, 85, 99, 0.3);
+        }
+    </style>
+</head>
+<body class="dark text-white min-h-screen">
+    <!-- Navigation -->
+    <nav class="glass-effect border-b border-gray-700/50 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center">
+                    <h1 class="text-xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+                        🚀 Crypto Arbitrage Monitor
+                    </h1>
+                </div>
+                <div class="flex items-center space-x-6">
+                    <!-- Performance Indicator -->
+                    <div class="flex items-center space-x-2">
+                        <div id="performance-indicator" class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                        <span class="text-xs text-gray-400">Real-time</span>
+                    </div>
+                    
+                    <!-- Connection Status -->
+                    <div id="connection-status" class="flex items-center space-x-2">
+                        <div class="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
+                        <span class="text-sm">Connecting...</span>
+                    </div>
+                    
+                    {% if user.is_staff %}
+                    <a href="{% url 'core:admin_panel' %}" class="text-gray-300 hover:text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-200 hover:bg-gray-700/50">
+                        Admin Panel
+                    </a>
+                    {% endif %}
+                    
+                    <a href="/admin/" class="text-gray-300 hover:text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-200 hover:bg-gray-700/50">
+                        Django Admin
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Content -->
+    <main class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="mt-16 glass-effect border-t border-gray-700/50">
+        <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center">
+                <p class="text-gray-400 text-sm">
+                    © 2024 Crypto Arbitrage Monitor - Built with Django Channels & Redis
+                </p>
+                <div class="flex space-x-4 text-sm text-gray-400">
+                    <span>Version 2.0</span>
+                    <span>•</span>
+                    <span id="uptime">Uptime: -</span>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- WebSocket Connection -->
+    <script>
+        let ws = null;
+        let connectionStatus = document.getElementById('connection-status');
+        let performanceIndicator = document.getElementById('performance-indicator');
+        let startTime = Date.now();
+        let messageCount = 0;
+        
+        function connectWebSocket() {
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsUrl = `${protocol}//${window.location.host}/ws/arbitrage/`;
+            
+            ws = new WebSocket(wsUrl);
+            
+            ws.onopen = function(event) {
+                connectionStatus.innerHTML = `
+                    <div class="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                    <span class="text-sm text-green-400">Connected</span>
+                `;
+                performanceIndicator.className = "w-2 h-2 bg-green-500 rounded-full animate-pulse";
+                console.log('WebSocket connected');
+            };
+            
+            ws.onclose = function(event) {
+                connectionStatus.innerHTML = `
+                    <div class="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
+                    <span class="text-sm text-red-400">Disconnected</span>
+                `;
+                performanceIndicator.className = "w-2 h-2 bg-red-500 rounded-full animate-pulse";
+                console.log('WebSocket disconnected');
+                
+                // Reconnect after 3 seconds
+                setTimeout(connectWebSocket, 3000);
+            };
+            
+            ws.onerror = function(error) {
+                console.error('WebSocket error:', error);
+                performanceIndicator.className = "w-2 h-2 bg-yellow-500 rounded-full animate-pulse";
+            };
+            
+            ws.onmessage = function(event) {
+                messageCount++;
+                const data = JSON.parse(event.data);
+                handleWebSocketMessage(data);
+                
+                // Update performance indicator
+                performanceIndicator.className = "w-2 h-2 bg-blue-500 rounded-full";
+                setTimeout(() => {
+                    performanceIndicator.className = "w-2 h-2 bg-green-500 rounded-full animate-pulse";
+                }, 100);
+            };
+        }
+        
+        // Update uptime
+        function updateUptime() {
+            const uptime = Math.floor((Date.now() - startTime) / 1000);
+            const hours = Math.floor(uptime / 3600);
+            const minutes = Math.floor((uptime % 3600) / 60);
+            const seconds = uptime % 60;
+            
+            document.getElementById('uptime').textContent = 
+                `Uptime: ${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+        
+        // Start WebSocket connection
+        connectWebSocket();
+        
+        // Update uptime every second
+        setInterval(updateUptime, 1000);
+    </script>
+    
+    {% block scripts %}{% endblock %}
+</body>
+</html>
