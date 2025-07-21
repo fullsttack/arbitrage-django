@@ -1,234 +1,337 @@
-import numpy as np
 import asyncio
 import json
 import logging
-from typing import List, Dict, Any, Tuple, Optional
 from decimal import Decimal
+from typing import Dict, List, Any, Optional
 from dataclasses import dataclass
-import redis.asyncio as redis
-from django.conf import settings
+from channels.layers import get_channel_layer
+from core.redis_manager import redis_manager
+from core.models import TradingPair
 
 logger = logging.getLogger(__name__)
+performance_logger = logging.getLogger('performance')
 
 @dataclass
 class PricePoint:
     exchange: str
     symbol: str
-    bid_price: float
-    ask_price: float
-    volume: float
+    bid_price: float  # highest buy price
+    ask_price: float  # lowest sell price
+    bid_volume: float  # buy volume
+    ask_volume: float  # sell volume
     timestamp: float
-    pair_id: int
+    # Trading pair settings
+    arbitrage_threshold: float
     min_volume: float
     max_volume: float
-    threshold: float
 
 @dataclass
 class ArbitrageOpportunity:
-    buy_exchange: str
-    sell_exchange: str
     base_currency: str
     quote_currency: str
-    buy_price: float
-    sell_price: float
+    buy_exchange: str  # exchange where we buy
+    sell_exchange: str  # exchange where we sell
+    buy_price: float  # buy price (ask price)
+    sell_price: float  # sell price (bid price)
+    profit_amount: float
     profit_percentage: float
     volume: float
     timestamp: float
 
 class FastArbitrageCalculator:
     def __init__(self):
-        self.redis_client = None
         self.is_running = False
-        self.price_matrix = {}
+        self.channel_layer = get_channel_layer()
+        self.trading_pairs_cache = {}
+        self.last_cache_update = 0
         
-    async def init_redis(self):
-        if not self.redis_client:
-            self.redis_client = redis.Redis(
-                host=getattr(settings, 'REDIS_HOST', 'localhost'),
-                port=getattr(settings, 'REDIS_PORT', 6379),
-                db=getattr(settings, 'REDIS_DB', 0),
-                decode_responses=True
-            )
-
     async def start_calculation(self):
-        """Start fast arbitrage calculation using NumPy"""
-        await self.init_redis()
+        """Start arbitrage calculation loop"""
         self.is_running = True
-        
-        logger.info("Starting fast arbitrage calculation...")
+        logger.info("FastArbitrageCalculator started")
         
         while self.is_running:
             try:
-                # Get all price data
-                price_data = await self._get_all_price_data()
+                start_time = asyncio.get_event_loop().time()
                 
-                if len(price_data) >= 2:
-                    # Calculate opportunities using NumPy
-                    opportunities = await self._calculate_opportunities_fast(price_data)
-                    
+                # Update trading pairs cache every 30 seconds
+                if start_time - self.last_cache_update > 30:
+                    await self._update_trading_pairs_cache()
+                    self.last_cache_update = start_time
+                
+                # Find arbitrage opportunities
+                opportunities = await self._find_arbitrage_opportunities()
+                
+                if opportunities:
                     # Save opportunities
                     await self._save_opportunities(opportunities)
                     
+                    # Broadcast to WebSocket
+                    await self._broadcast_opportunities(opportunities)
+                    
+                    performance_logger.info(f"Found {len(opportunities)} arbitrage opportunities")
+                
+                # Calculate processing time
+                processing_time = asyncio.get_event_loop().time() - start_time
+                performance_logger.debug(f"Arbitrage calculation took {processing_time:.4f}s")
+                
+                # Sleep to maintain 50ms cycle (high speed)
+                await asyncio.sleep(max(0.05 - processing_time, 0.01))
+                
             except Exception as e:
                 logger.error(f"Error in arbitrage calculation: {e}")
-                
-            await asyncio.sleep(0.02)  # Calculate every 20ms for maximum speed
+                await asyncio.sleep(1)
 
-    async def _get_all_price_data(self) -> Dict[str, List[PricePoint]]:
-        """Get all price data grouped by currency pairs"""
-        from ..models import TradingPair
-        
-        price_groups = {}
-        
-        # Get active pairs
-        active_pairs = TradingPair.objects.filter(
-            is_active=True,
-            exchange__is_active=True
-        ).select_related('exchange', 'base_currency', 'quote_currency')
-        
-        for pair in active_pairs:
-            symbol = pair.symbol_format if pair.exchange.name != 'ramzinex' else pair.pair_id
-            key = f"prices:{pair.exchange.name}:{symbol}"
+    async def _update_trading_pairs_cache(self):
+        """Update trading pairs cache from database"""
+        try:
+            # Get active trading pairs
+            pairs = TradingPair.objects.filter(
+                is_active=True,
+                exchange__is_active=True
+            ).select_related('exchange', 'base_currency', 'quote_currency')
             
-            data = await self.redis_client.get(key)
-            if data:
-                price_info = json.loads(data)
+            self.trading_pairs_cache = {}
+            
+            for pair in pairs:
+                key = f"{pair.base_currency.symbol}_{pair.quote_currency.symbol}"
+                if key not in self.trading_pairs_cache:
+                    self.trading_pairs_cache[key] = []
                 
-                currency_key = f"{pair.base_currency.symbol}_{pair.quote_currency.symbol}"
-                if currency_key not in price_groups:
-                    price_groups[currency_key] = []
-                
-                price_point = PricePoint(
-                    exchange=pair.exchange.name,
-                    symbol=symbol,
-                    bid_price=float(price_info['bid_price']),
-                    ask_price=float(price_info['ask_price']),
-                    volume=float(price_info['volume']),
-                    timestamp=float(price_info['timestamp']),
-                    pair_id=pair.id,
-                    min_volume=float(pair.min_volume),
-                    max_volume=float(pair.max_volume),
-                    threshold=float(pair.arbitrage_threshold)
-                )
-                
-                price_groups[currency_key].append(price_point)
-        
-        return price_groups
+                self.trading_pairs_cache[key].append({
+                    'exchange': pair.exchange.name,
+                    'symbol': pair.api_symbol,
+                    'arbitrage_threshold': float(pair.arbitrage_threshold),
+                    'min_volume': float(pair.min_volume),
+                    'max_volume': float(pair.max_volume)
+                })
+            
+            logger.debug(f"Updated trading pairs cache: {len(self.trading_pairs_cache)} currency pairs")
+            
+        except Exception as e:
+            logger.error(f"Error updating trading pairs cache: {e}")
 
-    async def _calculate_opportunities_fast(self, price_groups: Dict[str, List[PricePoint]]) -> List[ArbitrageOpportunity]:
-        """Fast calculation using NumPy vectorization"""
+    async def _find_arbitrage_opportunities(self) -> List[ArbitrageOpportunity]:
+        """Find arbitrage opportunities between exchanges"""
         opportunities = []
         
-        for currency_key, price_points in price_groups.items():
-            if len(price_points) < 2:
-                continue
+        try:
+            # Get all current prices from Redis
+            all_prices = await redis_manager.get_all_current_prices()
+            
+            if not all_prices:
+                return opportunities
+            
+            # Group prices by currency pair
+            price_groups = self._group_prices_by_pair(all_prices)
+            
+            # Check each currency pair for arbitrage opportunities
+            for currency_pair, prices in price_groups.items():
+                if len(prices) < 2:  # Need at least 2 exchanges
+                    continue
                 
-            base_currency, quote_currency = currency_key.split('_')
+                # Find opportunities within this currency pair
+                pair_opportunities = await self._check_pair_arbitrage(currency_pair, prices)
+                opportunities.extend(pair_opportunities)
             
-            # Convert to NumPy arrays for vectorized operations
-            n = len(price_points)
-            
-            # Create matrices
-            bid_prices = np.array([p.bid_price for p in price_points])
-            ask_prices = np.array([p.ask_price for p in price_points])
-            volumes = np.array([p.volume for p in price_points])
-            min_volumes = np.array([p.min_volume for p in price_points])
-            max_volumes = np.array([p.max_volume for p in price_points])
-            thresholds = np.array([p.threshold for p in price_points])
-            
-            # Vectorized calculation for all pairs
-            for i in range(n):
-                for j in range(n):
-                    if i == j:
-                        continue
-                    
-                    buy_price = ask_prices[i]  # خرید از صرافی i
-                    sell_price = bid_prices[j]  # فروش در صرافی j
-                    
-                    if sell_price <= buy_price:
-                        continue
-                    
-                    # Calculate profit percentage
-                    profit_pct = ((sell_price - buy_price) / buy_price) * 100
-                    
-                    # Check threshold
-                    min_threshold = min(thresholds[i], thresholds[j])
-                    if profit_pct < min_threshold:
-                        continue
-                    
-                    # Calculate volume constraints
-                    available_volume = min(volumes[i], volumes[j])
-                    min_vol = max(min_volumes[i], min_volumes[j])
-                    max_vol = min(max_volumes[i], max_volumes[j]) if max_volumes[i] > 0 and max_volumes[j] > 0 else available_volume
-                    
-                    if available_volume < min_vol or (max_vol > 0 and available_volume > max_vol):
-                        continue
-                    
-                    opportunity = ArbitrageOpportunity(
-                        buy_exchange=price_points[i].exchange,
-                        sell_exchange=price_points[j].exchange,
-                        base_currency=base_currency,
-                        quote_currency=quote_currency,
-                        buy_price=buy_price,
-                        sell_price=sell_price,
-                        profit_percentage=profit_pct,
-                        volume=available_volume,
-                        timestamp=asyncio.get_event_loop().time()
-                    )
-                    
-                    opportunities.append(opportunity)
+        except Exception as e:
+            logger.error(f"Error finding arbitrage opportunities: {e}")
         
         return opportunities
 
-    async def _save_opportunities(self, opportunities: List[ArbitrageOpportunity]):
-        """Save opportunities to Redis and broadcast"""
-        if not opportunities:
-            return
-            
-        # Save each opportunity
-        pipeline = self.redis_client.pipeline()
+    def _group_prices_by_pair(self, all_prices: Dict[str, Any]) -> Dict[str, List[PricePoint]]:
+        """Group prices by currency pair"""
+        price_groups = {}
         
-        for opp in opportunities:
-            timestamp = int(opp.timestamp * 1000)  # milliseconds
-            key = f"opportunity:{timestamp}:{opp.buy_exchange}:{opp.sell_exchange}:{opp.base_currency}"
+        for key, price_data in all_prices.items():
+            try:
+                # Extract exchange and symbol from key: "prices:exchange:symbol"
+                parts = key.split(':')
+                if len(parts) < 3:
+                    continue
+                    
+                exchange = parts[1]
+                symbol = parts[2]
+                
+                # Find corresponding trading pair in cache
+                trading_pair_info = None
+                currency_pair = None
+                
+                for cp, pairs in self.trading_pairs_cache.items():
+                    for pair in pairs:
+                        if pair['exchange'] == exchange and pair['symbol'] == symbol:
+                            trading_pair_info = pair
+                            currency_pair = cp
+                            break
+                    if trading_pair_info:
+                        break
+                
+                if not trading_pair_info or not currency_pair:
+                    continue
+                
+                # Create PricePoint
+                price_point = PricePoint(
+                    exchange=exchange,
+                    symbol=symbol,
+                    bid_price=price_data['bid_price'],
+                    ask_price=price_data['ask_price'],
+                    bid_volume=price_data.get('bid_volume', 0),
+                    ask_volume=price_data.get('ask_volume', 0),
+                    timestamp=price_data['timestamp'],
+                    arbitrage_threshold=trading_pair_info['arbitrage_threshold'],
+                    min_volume=trading_pair_info['min_volume'],
+                    max_volume=trading_pair_info['max_volume']
+                )
+                
+                if currency_pair not in price_groups:
+                    price_groups[currency_pair] = []
+                
+                price_groups[currency_pair].append(price_point)
+                
+            except Exception as e:
+                logger.error(f"Error processing price data for {key}: {e}")
+                continue
+        
+        return price_groups
+
+    async def _check_pair_arbitrage(self, currency_pair: str, prices: List[PricePoint]) -> List[ArbitrageOpportunity]:
+        """Check arbitrage opportunities for a specific currency pair"""
+        opportunities = []
+        
+        try:
+            base_currency, quote_currency = currency_pair.split('_')
             
-            data = {
-                'buy_exchange': opp.buy_exchange,
-                'sell_exchange': opp.sell_exchange,
+            # Compare all combinations of exchanges
+            for i, price1 in enumerate(prices):
+                for j, price2 in enumerate(prices):
+                    if i >= j:  # Avoid duplicate comparisons
+                        continue
+                    
+                    # Check if price1.bid > price2.ask (sell at price1, buy at price2)
+                    opportunity1 = self._calculate_opportunity(
+                        base_currency, quote_currency,
+                        buy_exchange=price2.exchange,
+                        sell_exchange=price1.exchange,
+                        buy_price=price2.ask_price,
+                        sell_price=price1.bid_price,
+                        buy_settings=price2,
+                        sell_settings=price1
+                    )
+                    
+                    if opportunity1:
+                        opportunities.append(opportunity1)
+                    
+                    # Check if price2.bid > price1.ask (sell at price2, buy at price1)
+                    opportunity2 = self._calculate_opportunity(
+                        base_currency, quote_currency,
+                        buy_exchange=price1.exchange,
+                        sell_exchange=price2.exchange,
+                        buy_price=price1.ask_price,
+                        sell_price=price2.bid_price,
+                        buy_settings=price1,
+                        sell_settings=price2
+                    )
+                    
+                    if opportunity2:
+                        opportunities.append(opportunity2)
+            
+        except Exception as e:
+            logger.error(f"Error checking arbitrage for {currency_pair}: {e}")
+        
+        return opportunities
+
+    def _calculate_opportunity(self, base_currency: str, quote_currency: str,
+                             buy_exchange: str, sell_exchange: str,
+                             buy_price: float, sell_price: float,
+                             buy_settings: PricePoint, sell_settings: PricePoint) -> Optional[ArbitrageOpportunity]:
+        """Calculate arbitrage opportunity"""
+        try:
+            # Check if profitable: sell_price > buy_price
+            if sell_price <= buy_price:
+                return None
+            
+            # Calculate profit percentage
+            profit_percentage = ((sell_price - buy_price) / buy_price) * 100
+            
+            # Use minimum threshold from both exchanges
+            min_threshold = min(buy_settings.arbitrage_threshold, sell_settings.arbitrage_threshold)
+            
+            # Check if profit meets threshold
+            if profit_percentage < min_threshold:
+                return None
+            
+            # Calculate volume constraints
+            min_volume = max(buy_settings.min_volume, sell_settings.min_volume)
+            max_volume = min(buy_settings.max_volume, sell_settings.max_volume)
+            
+            # For buy from exchange A, we need to check ask_volume of that exchange
+            # For sell to exchange B, we need to check bid_volume of that exchange
+            available_volume = min(buy_settings.ask_volume, sell_settings.bid_volume)
+            
+            # Tradeable volume
+            trade_volume = min(available_volume, max_volume)
+            
+            # Check if volume is within constraints
+            if trade_volume < min_volume:
+                return None
+            
+            # Calculate profit amount
+            profit_amount = (sell_price - buy_price) * trade_volume
+            
+            return ArbitrageOpportunity(
+                base_currency=base_currency,
+                quote_currency=quote_currency,
+                buy_exchange=buy_exchange,
+                sell_exchange=sell_exchange,
+                buy_price=buy_price,
+                sell_price=sell_price,
+                profit_amount=profit_amount,
+                profit_percentage=profit_percentage,
+                volume=trade_volume,
+                timestamp=asyncio.get_event_loop().time()
+            )
+            
+        except Exception as e:
+            logger.error(f"Error calculating opportunity: {e}")
+            return None
+
+    async def _save_opportunities(self, opportunities: List[ArbitrageOpportunity]):
+        """Save opportunities to Redis"""
+        for opp in opportunities:
+            opportunity_data = {
                 'base_currency': opp.base_currency,
                 'quote_currency': opp.quote_currency,
+                'symbol': f"{opp.base_currency}/{opp.quote_currency}",
+                'buy_exchange': opp.buy_exchange,
+                'sell_exchange': opp.sell_exchange,
                 'buy_price': opp.buy_price,
                 'sell_price': opp.sell_price,
+                'profit_amount': opp.profit_amount,
                 'profit_percentage': round(opp.profit_percentage, 2),
                 'volume': opp.volume,
                 'timestamp': opp.timestamp
             }
             
-            pipeline.setex(key, 30, json.dumps(data))
-        
-        await pipeline.execute()
-        
-        # Broadcast to WebSocket
-        from channels.layers import get_channel_layer
-        channel_layer = get_channel_layer()
-        
-        if channel_layer:
-            opportunities_data = [
-                {
+            await redis_manager.save_arbitrage_opportunity(opportunity_data)
+
+    async def _broadcast_opportunities(self, opportunities: List[ArbitrageOpportunity]):
+        """Broadcast opportunities to WebSocket"""
+        if self.channel_layer:
+            opportunities_data = []
+            for opp in opportunities:
+                opportunities_data.append({
+                    'symbol': f"{opp.base_currency}/{opp.quote_currency}",
                     'buy_exchange': opp.buy_exchange,
                     'sell_exchange': opp.sell_exchange,
-                    'base_currency': opp.base_currency,
-                    'quote_currency': opp.quote_currency,
-                    'buy_price': round(opp.buy_price, 6),
-                    'sell_price': round(opp.sell_price, 6),
                     'profit_percentage': round(opp.profit_percentage, 2),
-                    'volume': round(opp.volume, 4),
+                    'profit_amount': round(opp.profit_amount, 4),
+                    'volume': opp.volume,
+                    'buy_price': opp.buy_price,
+                    'sell_price': opp.sell_price,
                     'timestamp': opp.timestamp
-                }
-                for opp in opportunities[:50]  # Send only top 50
-            ]
+                })
             
-            await channel_layer.group_send(
+            await self.channel_layer.group_send(
                 'arbitrage_updates',
                 {
                     'type': 'send_opportunities',
@@ -237,8 +340,6 @@ class FastArbitrageCalculator:
             )
 
     async def stop_calculation(self):
-        """Stop calculation"""
+        """Stop arbitrage calculation"""
         self.is_running = False
-        if self.redis_client:
-            await self.redis_client.close()
-        logger.info("Fast arbitrage calculation stopped")
+        logger.info("FastArbitrageCalculator stopped")

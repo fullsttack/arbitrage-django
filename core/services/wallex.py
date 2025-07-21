@@ -1,6 +1,7 @@
 import asyncio
-import aiohttp
+import json
 import logging
+import websockets
 from decimal import Decimal
 from typing import Dict, Any, Optional, List
 from .base import BaseExchangeService
@@ -10,88 +11,108 @@ logger = logging.getLogger(__name__)
 class WallexService(BaseExchangeService):
     def __init__(self):
         super().__init__('wallex')
-        self.base_url = 'https://api.wallex.ir'
-        self.session = None
-        self.polling_tasks = {}
-
+        self.websocket_url = 'wss://api.wallex.ir/v1/ws'
+        self.websocket = None
+        self.subscribed_pairs = set()
+        
     async def connect(self):
-        if not self.session:
-            timeout = aiohttp.ClientTimeout(total=5)
-            self.session = aiohttp.ClientSession(timeout=timeout)
-        self.is_connected = True
-        logger.info("Wallex service connected")
+        """Connect to Wallex WebSocket"""
+        try:
+            self.websocket = await websockets.connect(
+                self.websocket_url,
+                ping_interval=20,
+                ping_timeout=10,
+                close_timeout=10
+            )
+            
+            self.is_connected = True
+            
+            # Start message listener
+            asyncio.create_task(self._listen_messages())
+            logger.info("Wallex WebSocket connected")
+            
+        except Exception as e:
+            logger.error(f"Wallex WebSocket connection failed: {e}")
+            self.is_connected = False
 
     async def subscribe_to_pairs(self, pairs: List[str]):
-        await self.connect()
+        """Subscribe to trading pairs"""
+        if not self.is_connected:
+            await self.connect()
         
-        # Start concurrent polling for all pairs
-        tasks = []
-        for pair in pairs:
-            if pair not in self.polling_tasks:
-                task = asyncio.create_task(self._poll_pair(pair))
-                self.polling_tasks[pair] = task
-                tasks.append(task)
-        
-        if tasks:
-            await asyncio.gather(*tasks, return_exceptions=True)
+        for symbol in pairs:
+            if symbol not in self.subscribed_pairs:
+                try:
+                    # Subscribe to orderbook updates
+                    subscribe_msg = {
+                        "method": "SUBSCRIBE",
+                        "params": [f"{symbol.lower()}@depth"],
+                        "id": len(self.subscribed_pairs) + 1
+                    }
+                    
+                    await self.websocket.send(json.dumps(subscribe_msg))
+                    self.subscribed_pairs.add(symbol)
+                    logger.info(f"Wallex subscribed to {symbol}")
+                    
+                except Exception as e:
+                    logger.error(f"Wallex subscription error for {symbol}: {e}")
 
-    async def _poll_pair(self, symbol: str):
-        """Ultra-fast polling with minimal overhead"""
-        url = f"{self.base_url}/v1/depth"
-        params = {'symbol': symbol}
-        
-        while self.is_connected:
+    async def _listen_messages(self):
+        """Listen for WebSocket messages"""
+        while self.is_connected and self.websocket:
             try:
-                async with self.session.get(url, params=params) as response:
-                    if response.status == 200:
-                        data = await response.json()
-                        parsed_data = self.parse_price_data(data)
-                        
-                        if parsed_data:
-                            await self.save_price_data(
-                                symbol=symbol,
-                                bid_price=parsed_data['bid_price'],
-                                ask_price=parsed_data['ask_price'],
-                                volume=parsed_data['volume']
-                            )
-                            
-            except Exception as e:
-                logger.debug(f"Wallex polling error for {symbol}: {e}")
+                message = await self.websocket.recv()
+                data = json.loads(message)
                 
-            await asyncio.sleep(0.05)  # Poll every 50ms
+                # Process depth data
+                if 'stream' in data and 'data' in data:
+                    await self._process_depth_data(data)
+                
+            except websockets.exceptions.ConnectionClosed:
+                logger.warning("Wallex WebSocket connection closed")
+                self.is_connected = False
+                break
+            except Exception as e:
+                logger.error(f"Wallex message processing error: {e}")
+                continue
+
+    async def _process_depth_data(self, data: Dict[str, Any]):
+        """Process depth data from Wallex WebSocket"""
+        try:
+            stream = data.get('stream', '')
+            depth_data = data.get('data', {})
+            
+            # Extract symbol from stream name (e.g., "btcusdt@depth")
+            symbol = stream.replace('@depth', '').upper()
+            
+            # Get best bid and ask
+            asks = depth_data.get('asks', [])
+            bids = depth_data.get('bids', [])
+            
+            if asks and bids:
+                # Best ask (کمترین قیمت فروش)
+                ask_price = Decimal(str(asks[0][0]))
+                ask_volume = Decimal(str(asks[0][1]))
+                
+                # Best bid (بیشترین قیمت خرید)
+                bid_price = Decimal(str(bids[0][0]))
+                bid_volume = Decimal(str(bids[0][1]))
+                
+                # Save price data with separate volumes
+                await self.save_price_data(symbol, bid_price, ask_price, bid_volume, ask_volume)
+                
+                logger.debug(f"Wallex {symbol}: bid={bid_price}({bid_volume}), ask={ask_price}({ask_volume})")
+            
+        except Exception as e:
+            logger.error(f"Wallex depth data processing error: {e}")
 
     def parse_price_data(self, data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
-        try:
-            if not data.get('success'):
-                return None
-                
-            result = data.get('result', {})
-            asks = result.get('ask', [])
-            bids = result.get('bid', [])
-            
-            if not asks or not bids:
-                return None
-                
-            ask_price = Decimal(str(asks[0]['price']))
-            bid_price = Decimal(str(bids[0]['price']))
-            volume = Decimal(str(asks[0].get('quantity', 0)))
-            
-            return {
-                'bid_price': bid_price,
-                'ask_price': ask_price,
-                'volume': volume
-            }
-            
-        except (KeyError, IndexError, ValueError):
-            return None
+        """Parse price data (handled in _process_depth_data)"""
+        return None
 
     async def disconnect(self):
-        await super().disconnect()
-        
-        for task in self.polling_tasks.values():
-            task.cancel()
-        self.polling_tasks.clear()
-        
-        if self.session:
-            await self.session.close()
-            self.session = None
+        """Disconnect from Wallex"""
+        self.is_connected = False
+        if self.websocket:
+            await self.websocket.close()
+        logger.info("Wallex WebSocket disconnected")

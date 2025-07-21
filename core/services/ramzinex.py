@@ -1,7 +1,7 @@
 import asyncio
-import websockets
 import json
 import logging
+import websockets
 from decimal import Decimal
 from typing import Dict, Any, Optional, List
 from .base import BaseExchangeService
@@ -14,13 +14,15 @@ class RamzinexService(BaseExchangeService):
         self.websocket_url = 'wss://websocket.ramzinex.com/websocket'
         self.websocket = None
         self.subscribed_pairs = set()
-
+        
     async def connect(self):
+        """Connect to Ramzinex WebSocket"""
         try:
             self.websocket = await websockets.connect(
                 self.websocket_url,
                 ping_interval=20,
-                ping_timeout=10
+                ping_timeout=10,
+                close_timeout=10
             )
             
             # Send connection message
@@ -34,95 +36,95 @@ class RamzinexService(BaseExchangeService):
             logger.info("Ramzinex WebSocket connected")
             
         except Exception as e:
-            logger.error(f"Ramzinex connection failed: {e}")
+            logger.error(f"Ramzinex WebSocket connection failed: {e}")
             self.is_connected = False
 
     async def subscribe_to_pairs(self, pairs: List[str]):
+        """Subscribe to trading pairs (using pair IDs)"""
         if not self.is_connected:
             await self.connect()
-            
-        # Subscribe to all pairs
-        for i, pair_id in enumerate(pairs):
+        
+        for pair_id in pairs:
             if pair_id not in self.subscribed_pairs:
-                subscribe_msg = {
-                    'subscribe': {
-                        'channel': f'orderbook:{pair_id}',
-                        'recover': True,
-                        'delta': 'fossil'
-                    },
-                    'id': i + 2
-                }
-                
-                await self.websocket.send(json.dumps(subscribe_msg))
-                self.subscribed_pairs.add(pair_id)
-                logger.info(f"Ramzinex subscribed to: {pair_id}")
+                try:
+                    # Subscribe to orderbook channel
+                    subscribe_msg = {
+                        'subscribe': {
+                            'channel': f'orderbook-{pair_id}'
+                        },
+                        'id': len(self.subscribed_pairs) + 2
+                    }
+                    
+                    await self.websocket.send(json.dumps(subscribe_msg))
+                    self.subscribed_pairs.add(pair_id)
+                    logger.info(f"Ramzinex subscribed to pair ID {pair_id}")
+                    
+                except Exception as e:
+                    logger.error(f"Ramzinex subscription error for pair {pair_id}: {e}")
 
     async def _listen_messages(self):
-        try:
-            async for message in self.websocket:
-                if not message or message == '{}':
-                    await self.websocket.send('{}')  # Pong
-                    continue
-                    
+        """Listen for WebSocket messages"""
+        while self.is_connected and self.websocket:
+            try:
+                message = await self.websocket.recv()
                 data = json.loads(message)
                 
-                # Handle orderbook data
-                if 'push' in data:
-                    await self._process_orderbook_data(data['push'])
-                        
-        except websockets.exceptions.ConnectionClosed:
-            logger.warning("Ramzinex WebSocket connection closed")
-            self.is_connected = False
-        except Exception as e:
-            logger.error(f"Ramzinex WebSocket error: {e}")
-
-    async def _process_orderbook_data(self, push_data: Dict[str, Any]):
-        if 'orderbook:' in push_data.get('channel', ''):
-            parsed_data = self.parse_price_data(push_data)
-            if parsed_data:
-                channel = push_data['channel']
-                pair_id = channel.split(':')[1]
+                # Process orderbook data
+                if 'channel' in data and 'data' in data:
+                    await self._process_orderbook_data(data)
                 
-                await self.save_price_data(
-                    symbol=pair_id,
-                    bid_price=parsed_data['bid_price'],
-                    ask_price=parsed_data['ask_price'],
-                    volume=parsed_data['volume']
-                )
+            except websockets.exceptions.ConnectionClosed:
+                logger.warning("Ramzinex WebSocket connection closed")
+                self.is_connected = False
+                break
+            except Exception as e:
+                logger.error(f"Ramzinex message processing error: {e}")
+                continue
+
+    async def _process_orderbook_data(self, data: Dict[str, Any]):
+        """Process orderbook data from Ramzinex WebSocket"""
+        try:
+            channel = data.get('channel', '')
+            orderbook_data = data.get('data', {})
+            
+            # Extract pair ID from channel name (e.g., "orderbook-2")
+            if not channel.startswith('orderbook-'):
+                return
+                
+            pair_id = channel.replace('orderbook-', '')
+            
+            # Get buys and sells
+            buys = orderbook_data.get('buys', [])
+            sells = orderbook_data.get('sells', [])
+            
+            if buys and sells:
+                # طبق مشخصات Ramzinex:
+                # Sells (sells): lowest price in the last list element
+                # Buys (buys): highest price in the first list element
+                
+                # Best bid (highest buy price)
+                bid_price = Decimal(str(buys[0]['price']))
+                bid_volume = Decimal(str(buys[0]['amount']))
+                
+                # Best ask (کمترین قیمت فروش)
+                ask_price = Decimal(str(sells[-1]['price']))
+                ask_volume = Decimal(str(sells[-1]['amount']))
+                
+                # Save price data with separate volumes
+                await self.save_price_data(pair_id, bid_price, ask_price, bid_volume, ask_volume)
+                
+                logger.debug(f"Ramzinex pair {pair_id}: bid={bid_price}({bid_volume}), ask={ask_price}({ask_volume})")
+            
+        except Exception as e:
+            logger.error(f"Ramzinex orderbook data processing error: {e}")
 
     def parse_price_data(self, data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
-        try:
-            pub_data = data.get('pub', {})
-            
-            # Handle JSON string data
-            if isinstance(pub_data.get('data'), str):
-                order_data = json.loads(pub_data['data'])
-            else:
-                order_data = pub_data.get('data', {})
-            
-            buys = order_data.get('buys', [])
-            sells = order_data.get('sells', [])
-            
-            if not buys or not sells:
-                return None
-                
-            # بیشترین قیمت خرید در اول buys
-            # کمترین قیمت فروش در آخر sells
-            bid_price = Decimal(str(buys[0][0]))
-            ask_price = Decimal(str(sells[-1][0]))
-            volume = Decimal(str(buys[0][1]))
-            
-            return {
-                'bid_price': bid_price,
-                'ask_price': ask_price,
-                'volume': volume
-            }
-            
-        except (KeyError, IndexError, ValueError, json.JSONDecodeError):
-            return None
+        """Parse price data (handled in _process_orderbook_data)"""
+        return None
 
     async def disconnect(self):
-        await super().disconnect()
+        """Disconnect from Ramzinex"""
+        self.is_connected = False
         if self.websocket:
             await self.websocket.close()
-            self.websocket = None
+        logger.info("Ramzinex WebSocket disconnected")

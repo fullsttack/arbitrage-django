@@ -2,100 +2,73 @@ import json
 import asyncio
 import logging
 from channels.generic.websocket import AsyncWebsocketConsumer
-import redis.asyncio as redis
-from django.conf import settings
+from core.redis_manager import redis_manager
 
 logger = logging.getLogger(__name__)
 
 class ArbitrageConsumer(AsyncWebsocketConsumer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.redis_client = None
         self.monitor_task = None
 
     async def connect(self):
+        """Connect to WebSocket"""
         await self.channel_layer.group_add('arbitrage_updates', self.channel_name)
-        await self.channel_layer.group_add('price_updates', self.channel_name)
         await self.accept()
         
-        # Initialize Redis
-        self.redis_client = redis.Redis(
-            host=getattr(settings, 'REDIS_HOST', 'localhost'),
-            port=getattr(settings, 'REDIS_PORT', 6379),
-            db=getattr(settings, 'REDIS_DB', 0),
-            decode_responses=True
-        )
+        # Initialize Redis connection
+        await redis_manager.connect()
         
         # Start Redis monitoring
         self.monitor_task = asyncio.create_task(self._monitor_redis())
         
         # Send initial data
         await self.send_initial_data()
+        
+        logger.info("ArbitrageConsumer connected")
 
     async def disconnect(self, close_code):
+        """Disconnect from WebSocket"""
         await self.channel_layer.group_discard('arbitrage_updates', self.channel_name)
-        await self.channel_layer.group_discard('price_updates', self.channel_name)
         
         if self.monitor_task:
             self.monitor_task.cancel()
         
-        if self.redis_client:
-            await self.redis_client.close()
+        logger.info(f"ArbitrageConsumer disconnected: {close_code}")
 
     async def _monitor_redis(self):
-        """Monitor Redis stats and send updates every 2 seconds"""
+        """Monitor Redis stats and send updates"""
         while True:
             try:
-                # Get Redis info
-                redis_info = await self.redis_client.info()
+                # Get Redis statistics
+                stats = await redis_manager.get_redis_stats()
+                opportunities_count = await redis_manager.get_opportunities_count()
+                prices_count = await redis_manager.get_active_prices_count()
                 
-                # Get key counts
-                price_keys = await self.redis_client.keys("prices:*")
-                opportunity_keys = await self.redis_client.keys("opportunity:*")
-                
-                # Get memory usage
-                memory_used = redis_info.get('used_memory_human', '0B')
-                memory_peak = redis_info.get('used_memory_peak_human', '0B')
-                
-                # Get connection info
-                connected_clients = redis_info.get('connected_clients', 0)
-                total_commands = redis_info.get('total_commands_processed', 0)
-                
-                redis_stats = {
-                    'connected_clients': connected_clients,
-                    'total_commands': total_commands,
-                    'memory_used': memory_used,
-                    'memory_peak': memory_peak,
-                    'price_keys_count': len(price_keys),
-                    'opportunity_keys_count': len(opportunity_keys),
-                    'uptime_seconds': redis_info.get('uptime_in_seconds', 0),
-                    'version': redis_info.get('redis_version', 'Unknown'),
-                    'keyspace_hits': redis_info.get('keyspace_hits', 0),
-                    'keyspace_misses': redis_info.get('keyspace_misses', 0),
-                }
-                
+                # Send stats update
                 await self.send(text_data=json.dumps({
                     'type': 'redis_stats',
-                    'data': redis_stats
+                    'data': {
+                        'opportunities_count': opportunities_count,
+                        'prices_count': prices_count,
+                        'redis_memory': stats.get('memory_used', 'N/A'),
+                        'redis_clients': stats.get('connected_clients', 0),
+                        'redis_ops_per_sec': stats.get('operations_per_sec', 0),
+                        'uptime': stats.get('uptime_seconds', 0)
+                    }
                 }))
                 
-            except Exception as e:
-                logger.error(f"Error monitoring Redis: {e}")
+                await asyncio.sleep(2)  # Update every 2 seconds
                 
-            await asyncio.sleep(2)  # Update every 2 seconds
+            except Exception as e:
+                logger.error(f"Redis monitoring error: {e}")
+                await asyncio.sleep(5)
 
     async def send_initial_data(self):
         """Send initial opportunities and prices"""
         try:
             # Get recent opportunities
-            opportunity_keys = await self.redis_client.keys("opportunity:*")
-            opportunity_keys.sort(reverse=True)
-            
-            opportunities = []
-            for key in opportunity_keys[:50]:  # Latest 50
-                data = await self.redis_client.get(key)
-                if data:
-                    opportunities.append(json.loads(data))
+            opportunities = await redis_manager.get_latest_opportunities(50)
             
             await self.send(text_data=json.dumps({
                 'type': 'initial_opportunities',
@@ -103,17 +76,23 @@ class ArbitrageConsumer(AsyncWebsocketConsumer):
             }))
             
             # Get current prices
-            price_keys = await self.redis_client.keys("prices:*")
-            prices = []
+            prices = await redis_manager.get_all_current_prices()
+            prices_list = []
             
-            for key in price_keys:
-                data = await self.redis_client.get(key)
-                if data:
-                    prices.append(json.loads(data))
+            for key, price_data in prices.items():
+                # Convert key format "prices:exchange:symbol" to readable format
+                parts = key.split(':')
+                if len(parts) >= 3:
+                    price_data['exchange'] = parts[1]
+                    price_data['symbol'] = parts[2]
+                    # Ensure bid_volume and ask_volume are present
+                    price_data['bid_volume'] = price_data.get('bid_volume', 0)
+                    price_data['ask_volume'] = price_data.get('ask_volume', 0)
+                    prices_list.append(price_data)
             
             await self.send(text_data=json.dumps({
                 'type': 'initial_prices',
-                'data': prices
+                'data': prices_list
             }))
             
         except Exception as e:

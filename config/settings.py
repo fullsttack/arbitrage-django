@@ -1,29 +1,21 @@
-"""
-High-Performance Django settings for Arbitrage Monitor
-"""
-
-from pathlib import Path
 import os
+from pathlib import Path
 from dotenv import load_dotenv
 
 # Load environment variables
 load_dotenv()
 
+# Build paths inside the project
 BASE_DIR = Path(__file__).resolve().parent.parent
-
-# Create logs directory
 LOGS_DIR = BASE_DIR / 'logs'
 LOGS_DIR.mkdir(exist_ok=True)
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-change-me-in-production')
-
-# SECURITY WARNING: don't run with debug turned on in production!
+# Security
+SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-@9t@4rn2xrlbuh95k9nv16$vhoy%s7eallm3s2&q%6=1p+v^7n')
 DEBUG = os.getenv('DEBUG', 'True').lower() == 'true'
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1,0.0.0.0').split(',')
 
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
-
-# Application definition
+# Applications
 INSTALLED_APPS = [
     'daphne',
     'django.contrib.admin',
@@ -64,72 +56,60 @@ TEMPLATES = [
     },
 ]
 
-# ASGI Configuration
+WSGI_APPLICATION = 'config.wsgi.application'
 ASGI_APPLICATION = 'config.asgi.application'
 
-# High-Performance Channel Layers with Redis
+# Database Configuration
+DB_ENGINE = os.getenv('DB_ENGINE', 'django.db.backends.postgresql')
+DB_NAME = os.getenv('DB_NAME', 'arbit')
+DB_USER = os.getenv('DB_USER', 'mohsen')
+DB_PASSWORD = os.getenv('DB_PASSWORD', '')
+DB_HOST = os.getenv('DB_HOST', 'localhost')
+DB_PORT = os.getenv('DB_PORT', '5432')
+
+DATABASES = {
+    'default': {
+        'ENGINE': DB_ENGINE,
+        'NAME': DB_NAME,
+        'USER': DB_USER,
+        'PASSWORD': DB_PASSWORD,
+        'HOST': DB_HOST,
+        'PORT': DB_PORT,
+        'OPTIONS': {
+            'options': '-c default_transaction_isolation=repeatable_read'
+        }
+    }
+}
+
+# Redis Configuration (for prices and opportunities only)
+REDIS_HOST = os.getenv('REDIS_HOST', 'localhost')
+REDIS_PORT = int(os.getenv('REDIS_PORT', 6379))
+REDIS_DB = int(os.getenv('REDIS_DB', 0))
+REDIS_PASSWORD = os.getenv('REDIS_PASSWORD', '')
+
+# Channels Configuration
 CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels_redis.core.RedisChannelLayer',
         'CONFIG': {
-            "hosts": [(
-                os.getenv('REDIS_HOST', 'localhost'),
-                int(os.getenv('REDIS_PORT', 6379))
-            )],
-            'capacity': 5000,  # Increased capacity
-            'expiry': 60,      # Message expiry
+            'hosts': [(REDIS_HOST, REDIS_PORT)],
         },
     },
 }
-
-# High-Performance PostgreSQL Database
-DATABASES = {
-    'default': {
-        'ENGINE': os.getenv('DB_ENGINE', 'django.db.backends.postgresql'),
-        'NAME': os.getenv('DB_NAME', 'arbit'),
-        'USER': os.getenv('DB_USER', 'mohsen'),
-        'PASSWORD': os.getenv('DB_PASSWORD', ''),
-        'HOST': os.getenv('DB_HOST', 'localhost'),
-        'PORT': os.getenv('DB_PORT', '5432'),
-        'OPTIONS': {
-            'options': '-c default_transaction_isolation=serializable',
-        },
-        'CONN_MAX_AGE': 600,  # Connection pooling
-    }
-}
-
-# Redis Configuration for High Performance
-REDIS_CONFIG = {
-    'HOST': os.getenv('REDIS_HOST', 'localhost'),
-    'PORT': int(os.getenv('REDIS_PORT', 6379)),
-    'DB': int(os.getenv('REDIS_DB', 0)),
-    'PASSWORD': os.getenv('REDIS_PASSWORD', None),
-    'CONNECTION_POOL_KWARGS': {
-        'max_connections': 100,
-        'retry_on_timeout': True,
-        'socket_keepalive': True,
-        'socket_keepalive_options': {},
-    }
-}
-
-# Performance Settings
-WORKER_COUNT = int(os.getenv('WORKER_COUNT', 8))
-ASGI_WORKERS = int(os.getenv('ASGI_WORKERS', 4))
-MAX_CONNECTIONS = int(os.getenv('MAX_CONNECTIONS', 1000))
 
 # Cache Configuration (Redis)
 CACHES = {
     'default': {
         'BACKEND': 'django_redis.cache.RedisCache',
-        'LOCATION': f"redis://{REDIS_CONFIG['HOST']}:{REDIS_CONFIG['PORT']}/{REDIS_CONFIG['DB']}",
+        'LOCATION': f'redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}',
         'OPTIONS': {
             'CLIENT_CLASS': 'django_redis.client.DefaultClient',
-            'CONNECTION_POOL_KWARGS': REDIS_CONFIG['CONNECTION_POOL_KWARGS'],
+            'PASSWORD': REDIS_PASSWORD,
         }
     }
 }
 
-# Session engine
+# Session Configuration
 SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
 SESSION_CACHE_ALIAS = 'default'
 
@@ -159,6 +139,16 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_DIRS = [BASE_DIR / 'static']
+
+# Performance Settings
+WORKER_COUNT = int(os.getenv('WORKER_COUNT', 8))
+ASGI_WORKERS = int(os.getenv('ASGI_WORKERS', 4))
+MAX_CONNECTIONS = int(os.getenv('MAX_CONNECTIONS', 1000))
+
+# Exchange API Configuration
+WALLEX_API_KEY = os.getenv('WALLEX_API_KEY', '')
+LBANK_API_KEY = os.getenv('LBANK_API_KEY', '')
+RAMZINEX_API_KEY = os.getenv('RAMZINEX_API_KEY', '')
 
 # High-Performance Logging Configuration
 LOG_LEVEL = os.getenv('LOG_LEVEL', 'INFO')
@@ -226,55 +216,29 @@ LOGGING = {
             'formatter': 'detailed',
             'level': 'ERROR',
         },
-        'file_arbitrage': {
-            'class': 'logging.handlers.RotatingFileHandler',
-            'filename': LOGS_DIR / 'arbitrage.log',
-            'maxBytes': parse_size(LOG_MAX_SIZE) * 2,  # Larger for arbitrage logs
-            'backupCount': LOG_BACKUP_COUNT,
-            'formatter': 'performance',
-            'level': 'DEBUG',
-        },
-        'file_exchanges': {
-            'class': 'logging.handlers.RotatingFileHandler',
-            'filename': LOGS_DIR / 'exchanges.log',
-            'maxBytes': parse_size(LOG_MAX_SIZE) * 2,
-            'backupCount': LOG_BACKUP_COUNT,
-            'formatter': 'detailed',
-            'level': 'DEBUG',
-        },
         'file_performance': {
             'class': 'logging.handlers.RotatingFileHandler',
             'filename': LOGS_DIR / 'performance.log',
             'maxBytes': parse_size(LOG_MAX_SIZE),
-            'backupCount': 5,
+            'backupCount': LOG_BACKUP_COUNT,
             'formatter': 'performance',
-            'level': 'DEBUG',
+            'level': 'INFO',
         },
     },
     'loggers': {
         'django': {
-            'handlers': ['console', 'file_info', 'file_error'],
+            'handlers': ['console', 'file_info'],
             'level': LOG_LEVEL,
-            'propagate': False,
+            'propagate': True,
         },
         'core': {
             'handlers': ['console', 'file_debug', 'file_error'],
             'level': 'DEBUG',
             'propagate': False,
         },
-        'core.arbitrage': {
-            'handlers': ['console', 'file_arbitrage', 'file_performance', 'file_error'],
-            'level': 'DEBUG',
-            'propagate': False,
-        },
-        'core.services': {
-            'handlers': ['console', 'file_exchanges', 'file_performance', 'file_error'],
-            'level': 'DEBUG',
-            'propagate': False,
-        },
         'performance': {
-            'handlers': ['file_performance'],
-            'level': 'DEBUG',
+            'handlers': ['console', 'file_performance'],
+            'level': 'INFO',
             'propagate': False,
         },
     },
@@ -284,11 +248,5 @@ LOGGING = {
     },
 }
 
-# Security settings
-SECURE_SSL_REDIRECT = os.getenv('SECURE_SSL_REDIRECT', 'False').lower() == 'true'
-SECURE_HSTS_SECONDS = int(os.getenv('SECURE_HSTS_SECONDS', 0))
-
+# Default ID
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
-# Performance monitoring
-ENABLE_METRICS = os.getenv('ENABLE_METRICS', 'True').lower() == 'true'

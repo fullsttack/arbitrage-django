@@ -1,7 +1,7 @@
 import asyncio
-import websockets
 import json
 import logging
+import websockets
 from decimal import Decimal
 from typing import Dict, Any, Optional, List
 from .base import BaseExchangeService
@@ -14,8 +14,9 @@ class LBankService(BaseExchangeService):
         self.websocket_url = 'wss://www.lbkex.net/ws/V2/'
         self.websocket = None
         self.subscribed_pairs = set()
-
+        
     async def connect(self):
+        """Connect to LBank WebSocket"""
         try:
             self.websocket = await websockets.connect(
                 self.websocket_url,
@@ -23,6 +24,7 @@ class LBankService(BaseExchangeService):
                 ping_timeout=10,
                 close_timeout=10
             )
+            
             self.is_connected = True
             
             # Start message listener
@@ -30,90 +32,85 @@ class LBankService(BaseExchangeService):
             logger.info("LBank WebSocket connected")
             
         except Exception as e:
-            logger.error(f"LBank connection failed: {e}")
+            logger.error(f"LBank WebSocket connection failed: {e}")
             self.is_connected = False
 
     async def subscribe_to_pairs(self, pairs: List[str]):
+        """Subscribe to trading pairs"""
         if not self.is_connected:
             await self.connect()
-            
-        # Subscribe to all pairs concurrently
-        subscribe_tasks = []
-        for pair in pairs:
-            if pair not in self.subscribed_pairs:
-                subscribe_tasks.append(self._subscribe_pair(pair))
         
-        if subscribe_tasks:
-            await asyncio.gather(*subscribe_tasks)
-
-    async def _subscribe_pair(self, pair: str):
-        subscribe_msg = {
-            "action": "subscribe",
-            "subscribe": "depth",
-            "depth": "1",
-            "pair": pair
-        }
-        
-        await self.websocket.send(json.dumps(subscribe_msg))
-        self.subscribed_pairs.add(pair)
-        logger.info(f"LBank subscribed to: {pair}")
+        for symbol in pairs:
+            if symbol not in self.subscribed_pairs:
+                try:
+                    # Subscribe to depth updates
+                    subscribe_msg = {
+                        "action": "subscribe",
+                        "subscribe": "depth",
+                        "pair": symbol,
+                        "depth": 5
+                    }
+                    
+                    await self.websocket.send(json.dumps(subscribe_msg))
+                    self.subscribed_pairs.add(symbol)
+                    logger.info(f"LBank subscribed to {symbol}")
+                    
+                except Exception as e:
+                    logger.error(f"LBank subscription error for {symbol}: {e}")
 
     async def _listen_messages(self):
-        try:
-            async for message in self.websocket:
+        """Listen for WebSocket messages"""
+        while self.is_connected and self.websocket:
+            try:
+                message = await self.websocket.recv()
                 data = json.loads(message)
                 
-                # Handle ping/pong
-                if data.get('action') == 'ping':
-                    pong_msg = {"action": "pong", "pong": data.get('ping')}
-                    await self.websocket.send(json.dumps(pong_msg))
-                    continue
-                
-                # Handle depth data
-                if data.get('type') == 'depth':
+                # Process depth data
+                if data.get('type') == 'depth' and 'data' in data:
                     await self._process_depth_data(data)
-                        
-        except websockets.exceptions.ConnectionClosed:
-            logger.warning("LBank WebSocket connection closed")
-            self.is_connected = False
-        except Exception as e:
-            logger.error(f"LBank WebSocket error: {e}")
+                
+            except websockets.exceptions.ConnectionClosed:
+                logger.warning("LBank WebSocket connection closed")
+                self.is_connected = False
+                break
+            except Exception as e:
+                logger.error(f"LBank message processing error: {e}")
+                continue
 
     async def _process_depth_data(self, data: Dict[str, Any]):
-        parsed_data = self.parse_price_data(data)
-        if parsed_data:
-            pair = data.get('pair', '')
-            await self.save_price_data(
-                symbol=pair,
-                bid_price=parsed_data['bid_price'],
-                ask_price=parsed_data['ask_price'],
-                volume=parsed_data['volume']
-            )
-
-    def parse_price_data(self, data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        """Process depth data from LBank WebSocket"""
         try:
-            depth_data = data.get('depth', {})
+            depth_data = data.get('data', {})
+            symbol = data.get('pair', '')
+            
+            # Get best bid and ask
             asks = depth_data.get('asks', [])
             bids = depth_data.get('bids', [])
             
-            if not asks or not bids:
-                return None
+            if asks and bids and symbol:
+                # Best ask (lowest sell price)  
+                ask_price = Decimal(str(asks[0][0]))
+                ask_volume = Decimal(str(asks[0][1]))
                 
-            ask_price = Decimal(str(asks[0][0]))
-            bid_price = Decimal(str(bids[0][0]))
-            volume = Decimal(str(asks[0][1]))
+                # Best bid (highest buy price)
+                bid_price = Decimal(str(bids[0][0]))
+                bid_volume = Decimal(str(bids[0][1]))
+                
+                # Save price data with separate volumes
+                await self.save_price_data(symbol, bid_price, ask_price, bid_volume, ask_volume)
+                
+                logger.debug(f"LBank {symbol}: bid={bid_price}({bid_volume}), ask={ask_price}({ask_volume})")
             
-            return {
-                'bid_price': bid_price,
-                'ask_price': ask_price,
-                'volume': volume
-            }
-            
-        except (KeyError, IndexError, ValueError):
-            return None
+        except Exception as e:
+            logger.error(f"LBank depth data processing error: {e}")
+
+    def parse_price_data(self, data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        """Parse price data (handled in _process_depth_data)"""
+        return None
 
     async def disconnect(self):
-        await super().disconnect()
+        """Disconnect from LBank"""
+        self.is_connected = False
         if self.websocket:
             await self.websocket.close()
-            self.websocket = None
+        logger.info("LBank WebSocket disconnected")

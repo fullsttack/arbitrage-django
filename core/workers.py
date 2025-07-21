@@ -10,6 +10,7 @@ from .services.lbank import LBankService
 from .services.ramzinex import RamzinexService
 from .arbitrage.calculator import FastArbitrageCalculator
 from .models import TradingPair
+from .redis_manager import redis_manager
 
 logger = logging.getLogger(__name__)
 performance_logger = logging.getLogger('performance')
@@ -17,18 +18,24 @@ performance_logger = logging.getLogger('performance')
 class HighPerformanceWorkersManager:
     def __init__(self, worker_count=None):
         # Use uvloop for better performance
-        asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
+        try:
+            asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
+        except:
+            logger.warning("uvloop not available, using default event loop")
         
         self.worker_count = worker_count or getattr(settings, 'WORKER_COUNT', multiprocessing.cpu_count() * 2)
+        
+        # Exchange services
         self.services = {
             'wallex': WallexService(),
             'lbank': LBankService(),
             'ramzinex': RamzinexService()
         }
+        
+        # Arbitrage calculators
         self.arbitrage_calculators = []
         self.is_running = False
         self.worker_tasks = []
-        self.thread_executor = ThreadPoolExecutor(max_workers=self.worker_count)
         
         performance_logger.info(f"Initialized with {self.worker_count} workers")
 
@@ -37,221 +44,172 @@ class HighPerformanceWorkersManager:
         self.is_running = True
         performance_logger.info(f"Starting {self.worker_count} high-performance workers...")
         
-        # Get trading pairs
+        # Initialize Redis
+        await redis_manager.connect()
+        
+        # Get trading pairs by exchange
         pairs_by_exchange = await self._get_trading_pairs()
         
-        # Create multiple arbitrage calculators for parallel processing
-        for i in range(min(4, self.worker_count)):  # Max 4 arbitrage workers
+        # Create arbitrage calculators (2-4 instances for parallel processing)
+        calculator_count = min(4, max(2, self.worker_count // 2))
+        for i in range(calculator_count):
             calc = FastArbitrageCalculator()
             self.arbitrage_calculators.append(calc)
         
         # Start all workers concurrently
         worker_tasks = [
-            # Exchange workers (concurrent connections)
-            self._start_exchange_workers(pairs_by_exchange),
+            # Worker 1-3: Exchange price updaters
+            self._start_wallex_worker(pairs_by_exchange.get('wallex', [])),
+            self._start_lbank_worker(pairs_by_exchange.get('lbank', [])),
+            self._start_ramzinex_worker(pairs_by_exchange.get('ramzinex', [])),
             
-            # Multiple arbitrage calculators for parallel processing
+            # Worker 4-7: Arbitrage calculators
             *[calc.start_calculation() for calc in self.arbitrage_calculators],
             
-            # Utility workers
+            # Worker 8: Cleanup and monitoring
             self._start_cleanup_worker(),
-            self._start_performance_monitor(),
-            self._start_connection_monitor(),
+            self._start_monitoring_worker(),
         ]
         
         self.worker_tasks = [asyncio.create_task(task) for task in worker_tasks]
         
-        # Wait for all workers to start and run
+        performance_logger.info(f"Started {len(self.worker_tasks)} worker tasks")
+        
+        # Wait for all workers to run
         try:
             await asyncio.gather(*self.worker_tasks, return_exceptions=True)
         except Exception as e:
             logger.error(f"Worker error: {e}")
 
     async def _get_trading_pairs(self) -> Dict[str, List[str]]:
-        """Get active trading pairs with caching"""
+        """Get active trading pairs from database"""
         pairs_by_exchange = {}
         
-        # Use database connection pooling for better performance
-        active_pairs = TradingPair.objects.filter(
-            is_active=True,
-            exchange__is_active=True
-        ).select_related('exchange', 'base_currency', 'quote_currency').prefetch_related()
-        
-        for pair in active_pairs:
-            exchange_name = pair.exchange.name
-            if exchange_name not in pairs_by_exchange:
-                pairs_by_exchange[exchange_name] = []
+        try:
+            # Get active trading pairs
+            active_pairs = TradingPair.objects.filter(
+                is_active=True,
+                exchange__is_active=True
+            ).select_related('exchange', 'base_currency', 'quote_currency')
             
-            symbol = pair.symbol_format if exchange_name != 'ramzinex' else pair.pair_id
-            pairs_by_exchange[exchange_name].append(symbol)
+            for pair in active_pairs:
+                exchange_name = pair.exchange.name
+                if exchange_name not in pairs_by_exchange:
+                    pairs_by_exchange[exchange_name] = []
+                
+                # Use appropriate symbol/ID for each exchange
+                symbol = pair.api_symbol
+                pairs_by_exchange[exchange_name].append(symbol)
+            
+            total_pairs = sum(len(pairs) for pairs in pairs_by_exchange.values())
+            performance_logger.info(f"Loaded {total_pairs} trading pairs across {len(pairs_by_exchange)} exchanges")
+            
+        except Exception as e:
+            logger.error(f"Error loading trading pairs: {e}")
         
-        performance_logger.info(f"Loaded {sum(len(pairs) for pairs in pairs_by_exchange.values())} trading pairs")
         return pairs_by_exchange
 
-    async def _start_exchange_workers(self, pairs_by_exchange: Dict[str, List[str]]):
-        """Start all exchange services with concurrent connections"""
-        connection_tasks = []
+    async def _start_wallex_worker(self, pairs: List[str]):
+        """Worker 1: Wallex price updater"""
+        if not pairs:
+            logger.info("No Wallex pairs configured")
+            return
         
-        for exchange_name, service in self.services.items():
-            if exchange_name in pairs_by_exchange:
-                pairs = pairs_by_exchange[exchange_name]
-                
-                # Create multiple instances for high throughput
-                num_instances = min(3, len(pairs) // 5 + 1)  # Scale based on pairs count
-                
-                for i in range(num_instances):
-                    pairs_subset = pairs[i::num_instances]  # Distribute pairs
-                    if pairs_subset:
-                        task = self._start_single_exchange_instance(
-                            service.__class__(), pairs_subset, f"{exchange_name}_{i}"
-                        )
-                        connection_tasks.append(task)
-        
-        if connection_tasks:
-            await asyncio.gather(*connection_tasks, return_exceptions=True)
-
-    async def _start_single_exchange_instance(self, service, pairs: List[str], instance_name: str):
-        """Start a single exchange service instance"""
         try:
-            performance_logger.info(f"Starting {instance_name} with {len(pairs)} pairs")
-            
+            service = self.services['wallex']
             await service.connect()
             await service.subscribe_to_pairs(pairs)
             
-            # Keep connection alive with health checks
+            performance_logger.info(f"Wallex worker started with {len(pairs)} pairs")
+            
+            # Keep worker alive
             while self.is_running:
-                if not service.is_connected:
-                    performance_logger.warning(f"{instance_name} disconnected, reconnecting...")
-                    await service.connect()
-                    await service.subscribe_to_pairs(pairs)
-                
-                await asyncio.sleep(5)  # Health check every 5 seconds
+                await asyncio.sleep(1)
                 
         except Exception as e:
-            logger.error(f"Error in {instance_name}: {e}")
+            logger.error(f"Wallex worker error: {e}")
+        finally:
+            await service.disconnect()
 
-    async def _start_performance_monitor(self):
-        """Monitor and log performance metrics"""
-        import psutil
-        import gc
+    async def _start_lbank_worker(self, pairs: List[str]):
+        """Worker 2: LBank price updater"""
+        if not pairs:
+            logger.info("No LBank pairs configured")
+            return
         
-        while self.is_running:
-            try:
-                # System metrics
-                cpu_percent = psutil.cpu_percent(interval=1)
-                memory = psutil.virtual_memory()
+        try:
+            service = self.services['lbank']
+            await service.connect()
+            await service.subscribe_to_pairs(pairs)
+            
+            performance_logger.info(f"LBank worker started with {len(pairs)} pairs")
+            
+            # Keep worker alive
+            while self.is_running:
+                await asyncio.sleep(1)
                 
-                # Python garbage collection
-                gc_stats = gc.get_stats()
-                
-                performance_logger.info(
-                    f"METRICS - CPU: {cpu_percent}%, Memory: {memory.percent}%, "
-                    f"GC: {sum(stat['collections'] for stat in gc_stats)}"
-                )
-                
-                # Force garbage collection if memory usage is high
-                if memory.percent > 80:
-                    gc.collect()
-                    performance_logger.warning("High memory usage, forced garbage collection")
-                
-            except Exception as e:
-                logger.error(f"Performance monitor error: {e}")
-                
-            await asyncio.sleep(10)  # Monitor every 10 seconds
+        except Exception as e:
+            logger.error(f"LBank worker error: {e}")
+        finally:
+            await service.disconnect()
 
-    async def _start_connection_monitor(self):
-        """Monitor connection health and auto-reconnect"""
-        import redis.asyncio as redis
+    async def _start_ramzinex_worker(self, pairs: List[str]):
+        """Worker 3: Ramzinex price updater"""
+        if not pairs:
+            logger.info("No Ramzinex pairs configured")
+            return
         
-        redis_client = redis.Redis(
-            host=settings.REDIS_CONFIG['HOST'],
-            port=settings.REDIS_CONFIG['PORT'],
-            db=settings.REDIS_CONFIG['DB'],
-            **settings.REDIS_CONFIG['CONNECTION_POOL_KWARGS']
-        )
-        
-        while self.is_running:
-            try:
-                # Test Redis connection
-                await redis_client.ping()
+        try:
+            service = self.services['ramzinex']
+            await service.connect()
+            await service.subscribe_to_pairs(pairs)
+            
+            performance_logger.info(f"Ramzinex worker started with {len(pairs)} pairs")
+            
+            # Keep worker alive
+            while self.is_running:
+                await asyncio.sleep(1)
                 
-                # Test exchange connections
-                for exchange_name, service in self.services.items():
-                    if not service.is_connected:
-                        performance_logger.warning(f"{exchange_name} disconnected")
-                
-            except Exception as e:
-                logger.error(f"Connection monitor error: {e}")
-                
-            await asyncio.sleep(5)
-        
-        await redis_client.close()
+        except Exception as e:
+            logger.error(f"Ramzinex worker error: {e}")
+        finally:
+            await service.disconnect()
 
     async def _start_cleanup_worker(self):
-        """Enhanced cleanup with batch operations"""
-        import redis.asyncio as redis
-        
-        redis_client = redis.Redis(
-            host=settings.REDIS_CONFIG['HOST'],
-            port=settings.REDIS_CONFIG['PORT'],
-            db=settings.REDIS_CONFIG['DB'],
-            **settings.REDIS_CONFIG['CONNECTION_POOL_KWARGS']
-        )
+        """Worker: Cleanup old data"""
+        performance_logger.info("Cleanup worker started")
         
         while self.is_running:
             try:
-                current_time = asyncio.get_event_loop().time()
+                await redis_manager.cleanup_old_data()
+                await asyncio.sleep(30)  # Cleanup every 30 seconds
                 
-                # Batch cleanup for better performance
-                async with redis_client.pipeline() as pipe:
-                    # Clean old opportunities (batch operation)
-                    opportunity_keys = await redis_client.keys("opportunity:*")
-                    old_keys = []
-                    
-                    for key in opportunity_keys:
-                        try:
-                            timestamp_ms = int(key.split(':')[1])
-                            timestamp = timestamp_ms / 1000
-                            if current_time - timestamp > 60:  # 1 minute old
-                                old_keys.append(key)
-                        except (IndexError, ValueError):
-                            continue
-                    
-                    if old_keys:
-                        pipe.delete(*old_keys)
-                    
-                    # Clean old price data
-                    price_keys = await redis_client.keys("prices:*")
-                    old_price_keys = []
-                    
-                    for key in price_keys:
-                        data = await redis_client.get(key)
-                        if data:
-                            try:
-                                import json
-                                price_data = json.loads(data)
-                                if current_time - price_data['timestamp'] > 30:  # 30 seconds old
-                                    old_price_keys.append(key)
-                            except:
-                                continue
-                    
-                    if old_price_keys:
-                        pipe.delete(*old_price_keys)
-                    
-                    # Execute batch operations
-                    await pipe.execute()
-                    
-                    if old_keys or old_price_keys:
-                        performance_logger.info(
-                            f"Cleaned {len(old_keys)} opportunities, {len(old_price_keys)} prices"
-                        )
-                    
             except Exception as e:
                 logger.error(f"Cleanup worker error: {e}")
-                
-            await asyncio.sleep(15)  # Cleanup every 15 seconds
+                await asyncio.sleep(10)
+
+    async def _start_monitoring_worker(self):
+        """Worker: System monitoring"""
+        performance_logger.info("Monitoring worker started")
         
-        await redis_client.close()
+        while self.is_running:
+            try:
+                # Log system statistics
+                stats = await redis_manager.get_redis_stats()
+                opportunities_count = await redis_manager.get_opportunities_count()
+                prices_count = await redis_manager.get_active_prices_count()
+                
+                performance_logger.info(
+                    f"System stats - Opportunities: {opportunities_count}, "
+                    f"Prices: {prices_count}, "
+                    f"Redis memory: {stats.get('memory_used', 'N/A')}"
+                )
+                
+                await asyncio.sleep(60)  # Monitor every minute
+                
+            except Exception as e:
+                logger.error(f"Monitoring worker error: {e}")
+                await asyncio.sleep(30)
 
     async def stop_all_workers(self):
         """Stop all workers gracefully"""
@@ -268,10 +226,15 @@ class HighPerformanceWorkersManager:
         
         # Cancel all tasks
         for task in self.worker_tasks:
-            task.cancel()
+            if not task.done():
+                task.cancel()
         
-        # Shutdown thread executor
-        self.thread_executor.shutdown(wait=True)
+        # Wait for tasks to complete
+        if self.worker_tasks:
+            await asyncio.gather(*self.worker_tasks, return_exceptions=True)
+        
+        # Close Redis connection
+        await redis_manager.close()
         
         performance_logger.info("All workers stopped")
 

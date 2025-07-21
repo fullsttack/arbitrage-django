@@ -212,3 +212,6 @@ INFO 2025-07-21 18:20:45,987 runserver 32861 6150287360 [36mHTTP GET /static/ad
 INFO 2025-07-21 18:20:45,991 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/nav_sidebar.js 304 [0.00, 127.0.0.1:50888][0m
 INFO 2025-07-21 18:20:45,994 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/change_form.js 304 [0.00, 127.0.0.1:50888][0m
 INFO 2025-07-21 18:20:46,071 runserver 32861 6150287360 [mHTTP GET /admin/jsi18n/ 200 [0.11, 127.0.0.1:50839][0m
+INFO 2025-07-21 19:27:41,364 autoreload 32861 8444927744 /Users/mohsen/Desktop/fastapi/arbitrage/config/settings.py changed, reloading.
+INFO 2025-07-21 19:27:42,173 autoreload 34079 8444927744 Watching for file changes with StatReloader
+INFO 2025-07-21 19:27:42,173 autoreload 34079 8444927744 Watching for file changes with StatReloader
