@@ -92,10 +92,7 @@ DATABASES = {
         'HOST': os.getenv('DB_HOST', 'localhost'),
         'PORT': os.getenv('DB_PORT', '5432'),
         'OPTIONS': {
-            'MAX_CONNS': 100,
-            'OPTIONS': {
-                '-c default_transaction_isolation=serializable',
-            }
+            'options': '-c default_transaction_isolation=serializable',
         },
         'CONN_MAX_AGE': 600,  # Connection pooling
     }

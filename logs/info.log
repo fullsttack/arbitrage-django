@@ -1,0 +1,214 @@
+INFO 2025-07-21 18:19:42,966 autoreload 32861 8444927744 Watching for file changes with StatReloader
+INFO 2025-07-21 18:19:43,200 server 32861 6150287360 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-07-21 18:19:43,200 server 32861 6150287360 Configuring endpoint tcp:port=8000:interface=127.0.0.1
+INFO 2025-07-21 18:19:43,201 server 32861 6150287360 Listening on TCP address 127.0.0.1:8000
+INFO 2025-07-21 18:19:44,168 runserver 32861 6150287360 WebSocket HANDSHAKING /ws/arbitrage/ [127.0.0.1:50772]
+INFO 2025-07-21 18:19:45,088 runserver 32861 6150287360 WebSocket CONNECT /ws/arbitrage/ [127.0.0.1:50772]
+INFO 2025-07-21 18:19:49,596 runserver 32861 6150287360 WebSocket HANDSHAKING /ws/system/ [127.0.0.1:50819]
+ERROR 2025-07-21 18:19:50,204 server 32861 6150287360 Exception inside application: No route found for path 'ws/system/'.
+Traceback (most recent call last):
+  File "/Users/mohsen/Desktop/fastapi/arbitrage/.venv/lib/python3.13/site-packages/django/contrib/staticfiles/handlers.py", line 101, in __call__
+    return await self.application(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mohsen/Desktop/fastapi/arbitrage/.venv/lib/python3.13/site-packages/channels/routing.py", line 48, in __call__
+    return await application(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mohsen/Desktop/fastapi/arbitrage/.venv/lib/python3.13/site-packages/channels/sessions.py", line 44, in __call__
+    return await self.inner(dict(scope, cookies=cookies), receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mohsen/Desktop/fastapi/arbitrage/.venv/lib/python3.13/site-packages/channels/sessions.py", line 261, in __call__
+    return await self.inner(wrapper.scope, receive, wrapper.send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mohsen/Desktop/fastapi/arbitrage/.venv/lib/python3.13/site-packages/channels/auth.py", line 185, in __call__
+    return await super().__call__(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mohsen/Desktop/fastapi/arbitrage/.venv/lib/python3.13/site-packages/channels/middleware.py", line 24, in __call__
+    return await self.inner(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mohsen/Desktop/fastapi/arbitrage/.venv/lib/python3.13/site-packages/channels/routing.py", line 136, in __call__
+    raise ValueError("No route found for path %r." % path)
+ValueError: No route found for path 'ws/system/'.
+INFO 2025-07-21 18:19:50,209 runserver 32861 6150287360 WebSocket DISCONNECT /ws/system/ [127.0.0.1:50819]
+INFO 2025-07-21 18:19:51,229 runserver 32861 6150287360 WebSocket HANDSHAKING /ws/prices/ [127.0.0.1:50829]
+ERROR 2025-07-21 18:19:52,211 server 32861 6150287360 Exception inside application: No route found for path 'ws/prices/'.
+Traceback (most recent call last):
+  File "/Users/mohsen/Desktop/fastapi/arbitrage/.venv/lib/python3.13/site-packages/django/contrib/staticfiles/handlers.py", line 101, in __call__
+    return await self.application(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mohsen/Desktop/fastapi/arbitrage/.venv/lib/python3.13/site-packages/channels/routing.py", line 48, in __call__
+    return await application(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mohsen/Desktop/fastapi/arbitrage/.venv/lib/python3.13/site-packages/channels/sessions.py", line 44, in __call__
+    return await self.inner(dict(scope, cookies=cookies), receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mohsen/Desktop/fastapi/arbitrage/.venv/lib/python3.13/site-packages/channels/sessions.py", line 261, in __call__
+    return await self.inner(wrapper.scope, receive, wrapper.send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mohsen/Desktop/fastapi/arbitrage/.venv/lib/python3.13/site-packages/channels/auth.py", line 185, in __call__
+    return await super().__call__(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mohsen/Desktop/fastapi/arbitrage/.venv/lib/python3.13/site-packages/channels/middleware.py", line 24, in __call__
+    return await self.inner(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mohsen/Desktop/fastapi/arbitrage/.venv/lib/python3.13/site-packages/channels/routing.py", line 136, in __call__
+    raise ValueError("No route found for path %r." % path)
+ValueError: No route found for path 'ws/prices/'.
+INFO 2025-07-21 18:19:52,214 runserver 32861 6150287360 WebSocket DISCONNECT /ws/prices/ [127.0.0.1:50829]
+INFO 2025-07-21 18:19:52,227 runserver 32861 6150287360 WebSocket HANDSHAKING /ws/arbitrage/ [127.0.0.1:50832]
+INFO 2025-07-21 18:19:52,287 runserver 32861 6150287360 WebSocket CONNECT /ws/arbitrage/ [127.0.0.1:50832]
+WARNING 2025-07-21 18:19:55,896 log 32861 6185086976 Not Found: /api/market-prices/redis/
+WARNING 2025-07-21 18:19:55,896 log 32861 6235566080 Not Found: /api/system/health
+WARNING 2025-07-21 18:19:55,897 runserver 32861 6150287360 [33mHTTP GET /api/market-prices/redis/ 404 [0.03, 127.0.0.1:50839][0m
+WARNING 2025-07-21 18:19:55,897 runserver 32861 6150287360 [33mHTTP GET /api/system/health 404 [0.03, 127.0.0.1:50840][0m
+INFO 2025-07-21 18:19:56,731 runserver 32861 6150287360 WebSocket DISCONNECT /ws/arbitrage/ [127.0.0.1:50832]
+INFO 2025-07-21 18:19:56,831 runserver 32861 6150287360 [mHTTP GET / 200 [0.10, 127.0.0.1:50840][0m
+INFO 2025-07-21 18:19:56,839 runserver 32861 6150287360 WebSocket DISCONNECT /ws/arbitrage/ [127.0.0.1:50772]
+INFO 2025-07-21 18:19:58,845 runserver 32861 6150287360 WebSocket HANDSHAKING /ws/arbitrage/ [127.0.0.1:50853]
+INFO 2025-07-21 18:19:58,876 runserver 32861 6150287360 WebSocket CONNECT /ws/arbitrage/ [127.0.0.1:50853]
+INFO 2025-07-21 18:20:05,178 runserver 32861 6150287360 [32mHTTP GET /admin/ 302 [0.02, 127.0.0.1:50840][0m
+INFO 2025-07-21 18:20:05,211 runserver 32861 6150287360 [mHTTP GET /admin/login/?next=/admin/ 200 [0.03, 127.0.0.1:50840][0m
+INFO 2025-07-21 18:20:05,233 runserver 32861 6150287360 WebSocket DISCONNECT /ws/arbitrage/ [127.0.0.1:50853]
+INFO 2025-07-21 18:20:05,241 runserver 32861 6150287360 [36mHTTP GET /static/admin/css/base.css 304 [0.01, 127.0.0.1:50840][0m
+INFO 2025-07-21 18:20:05,243 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/theme.js 304 [0.01, 127.0.0.1:50839][0m
+INFO 2025-07-21 18:20:05,243 runserver 32861 6150287360 [36mHTTP GET /static/admin/css/dark_mode.css 304 [0.01, 127.0.0.1:50888][0m
+INFO 2025-07-21 18:20:05,244 runserver 32861 6150287360 [36mHTTP GET /static/admin/css/responsive.css 304 [0.01, 127.0.0.1:50894][0m
+INFO 2025-07-21 18:20:05,244 runserver 32861 6150287360 [36mHTTP GET /static/admin/css/login.css 304 [0.01, 127.0.0.1:50891][0m
+INFO 2025-07-21 18:20:05,244 runserver 32861 6150287360 [36mHTTP GET /static/admin/css/nav_sidebar.css 304 [0.01, 127.0.0.1:50892][0m
+INFO 2025-07-21 18:20:05,250 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/nav_sidebar.js 304 [0.00, 127.0.0.1:50892][0m
+INFO 2025-07-21 18:20:09,690 runserver 32861 6150287360 [32mHTTP POST /admin/login/?next=/admin/ 302 [0.52, 127.0.0.1:50892][0m
+INFO 2025-07-21 18:20:09,915 runserver 32861 6150287360 [mHTTP GET /admin/ 200 [0.22, 127.0.0.1:50892][0m
+INFO 2025-07-21 18:20:09,957 runserver 32861 6150287360 [36mHTTP GET /static/admin/css/base.css 304 [0.00, 127.0.0.1:50892][0m
+INFO 2025-07-21 18:20:09,966 runserver 32861 6150287360 [36mHTTP GET /static/admin/css/dark_mode.css 304 [0.01, 127.0.0.1:50891][0m
+INFO 2025-07-21 18:20:09,966 runserver 32861 6150287360 [36mHTTP GET /static/admin/css/nav_sidebar.css 304 [0.01, 127.0.0.1:50894][0m
+INFO 2025-07-21 18:20:09,966 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/theme.js 304 [0.01, 127.0.0.1:50888][0m
+INFO 2025-07-21 18:20:09,967 runserver 32861 6150287360 [36mHTTP GET /static/admin/css/dashboard.css 304 [0.00, 127.0.0.1:50892][0m
+INFO 2025-07-21 18:20:09,967 runserver 32861 6150287360 [36mHTTP GET /static/admin/css/responsive.css 304 [0.00, 127.0.0.1:50839][0m
+INFO 2025-07-21 18:20:09,972 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/nav_sidebar.js 304 [0.00, 127.0.0.1:50839][0m
+INFO 2025-07-21 18:20:09,979 runserver 32861 6150287360 [36mHTTP GET /static/admin/img/icon-changelink.svg 304 [0.00, 127.0.0.1:50892][0m
+INFO 2025-07-21 18:20:09,979 runserver 32861 6150287360 [36mHTTP GET /static/admin/img/icon-addlink.svg 304 [0.00, 127.0.0.1:50839][0m
+INFO 2025-07-21 18:20:13,758 runserver 32861 6150287360 [mHTTP GET /admin/core/exchange/add/ 200 [0.28, 127.0.0.1:50839][0m
+INFO 2025-07-21 18:20:13,780 runserver 32861 6150287360 [36mHTTP GET /static/admin/css/base.css 304 [0.00, 127.0.0.1:50839][0m
+INFO 2025-07-21 18:20:13,797 runserver 32861 6150287360 [36mHTTP GET /static/admin/css/dark_mode.css 304 [0.01, 127.0.0.1:50892][0m
+INFO 2025-07-21 18:20:13,798 runserver 32861 6150287360 [36mHTTP GET /static/admin/css/nav_sidebar.css 304 [0.01, 127.0.0.1:50894][0m
+INFO 2025-07-21 18:20:13,798 runserver 32861 6150287360 [36mHTTP GET /static/admin/css/forms.css 304 [0.01, 127.0.0.1:50891][0m
+INFO 2025-07-21 18:20:13,799 runserver 32861 6150287360 [36mHTTP GET /static/admin/css/responsive.css 304 [0.00, 127.0.0.1:50840][0m
+INFO 2025-07-21 18:20:13,799 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/theme.js 304 [0.01, 127.0.0.1:50888][0m
+INFO 2025-07-21 18:20:13,807 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/core.js 304 [0.00, 127.0.0.1:50891][0m
+INFO 2025-07-21 18:20:13,809 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/jquery.init.js 304 [0.01, 127.0.0.1:50894][0m
+INFO 2025-07-21 18:20:13,809 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/vendor/jquery/jquery.js 304 [0.01, 127.0.0.1:50892][0m
+INFO 2025-07-21 18:20:13,810 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/actions.js 304 [0.01, 127.0.0.1:50888][0m
+INFO 2025-07-21 18:20:13,810 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/admin/RelatedObjectLookups.js 304 [0.01, 127.0.0.1:50840][0m
+INFO 2025-07-21 18:20:13,816 runserver 32861 6150287360 [36mHTTP GET /static/admin/css/widgets.css 304 [0.01, 127.0.0.1:50891][0m
+INFO 2025-07-21 18:20:13,818 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/prepopulate_init.js 304 [0.00, 127.0.0.1:50840][0m
+INFO 2025-07-21 18:20:13,819 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/prepopulate.js 304 [0.00, 127.0.0.1:50892][0m
+INFO 2025-07-21 18:20:13,819 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/vendor/xregexp/xregexp.js 304 [0.00, 127.0.0.1:50888][0m
+INFO 2025-07-21 18:20:13,819 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/urlify.js 304 [0.01, 127.0.0.1:50894][0m
+INFO 2025-07-21 18:20:13,829 runserver 32861 6150287360 [mHTTP GET /admin/jsi18n/ 200 [0.04, 127.0.0.1:50839][0m
+INFO 2025-07-21 18:20:13,833 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/nav_sidebar.js 304 [0.00, 127.0.0.1:50839][0m
+INFO 2025-07-21 18:20:13,834 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/change_form.js 304 [0.00, 127.0.0.1:50894][0m
+INFO 2025-07-21 18:20:33,459 runserver 32861 6150287360 [mHTTP GET /admin/core/tradingpair/ 200 [0.20, 127.0.0.1:50894][0m
+INFO 2025-07-21 18:20:33,477 runserver 32861 6150287360 [36mHTTP GET /static/admin/css/base.css 304 [0.00, 127.0.0.1:50894][0m
+INFO 2025-07-21 18:20:33,488 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/vendor/jquery/jquery.js 304 [0.00, 127.0.0.1:50891][0m
+INFO 2025-07-21 18:20:33,489 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/theme.js 304 [0.01, 127.0.0.1:50839][0m
+INFO 2025-07-21 18:20:33,489 runserver 32861 6150287360 [36mHTTP GET /static/admin/css/forms.css 304 [0.00, 127.0.0.1:50840][0m
+INFO 2025-07-21 18:20:33,490 runserver 32861 6150287360 [36mHTTP GET /static/admin/css/nav_sidebar.css 304 [0.01, 127.0.0.1:50892][0m
+INFO 2025-07-21 18:20:33,490 runserver 32861 6150287360 [36mHTTP GET /static/admin/css/dark_mode.css 304 [0.01, 127.0.0.1:50888][0m
+INFO 2025-07-21 18:20:33,496 runserver 32861 6150287360 [36mHTTP GET /static/admin/css/changelists.css 304 [0.01, 127.0.0.1:50891][0m
+INFO 2025-07-21 18:20:33,496 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/jquery.init.js 304 [0.00, 127.0.0.1:50840][0m
+INFO 2025-07-21 18:20:33,496 runserver 32861 6150287360 [36mHTTP GET /static/admin/css/responsive.css 304 [0.00, 127.0.0.1:50839][0m
+INFO 2025-07-21 18:20:33,497 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/core.js 304 [0.00, 127.0.0.1:50892][0m
+INFO 2025-07-21 18:20:33,497 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/admin/RelatedObjectLookups.js 304 [0.00, 127.0.0.1:50888][0m
+INFO 2025-07-21 18:20:33,504 runserver 32861 6150287360 [36mHTTP GET /static/admin/css/widgets.css 304 [0.00, 127.0.0.1:50891][0m
+INFO 2025-07-21 18:20:33,504 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/actions.js 304 [0.00, 127.0.0.1:50840][0m
+INFO 2025-07-21 18:20:33,504 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/vendor/xregexp/xregexp.js 304 [0.00, 127.0.0.1:50888][0m
+INFO 2025-07-21 18:20:33,505 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/prepopulate.js 304 [0.00, 127.0.0.1:50892][0m
+INFO 2025-07-21 18:20:33,505 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/urlify.js 304 [0.00, 127.0.0.1:50839][0m
+INFO 2025-07-21 18:20:33,510 runserver 32861 6150287360 [36mHTTP GET /static/admin/img/search.svg 304 [0.00, 127.0.0.1:50839][0m
+INFO 2025-07-21 18:20:33,512 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/nav_sidebar.js 304 [0.00, 127.0.0.1:50839][0m
+INFO 2025-07-21 18:20:33,515 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/filters.js 304 [0.00, 127.0.0.1:50839][0m
+INFO 2025-07-21 18:20:33,527 runserver 32861 6150287360 [mHTTP GET /admin/jsi18n/ 200 [0.05, 127.0.0.1:50894][0m
+INFO 2025-07-21 18:20:33,541 runserver 32861 6150287360 [36mHTTP GET /static/admin/img/tooltag-add.svg 304 [0.00, 127.0.0.1:50894][0m
+INFO 2025-07-21 18:20:33,541 runserver 32861 6150287360 [36mHTTP GET /static/admin/img/icon-viewlink.svg 304 [0.00, 127.0.0.1:50839][0m
+INFO 2025-07-21 18:20:34,892 runserver 32861 6150287360 [mHTTP GET /admin/core/exchange/ 200 [0.09, 127.0.0.1:50839][0m
+INFO 2025-07-21 18:20:34,911 runserver 32861 6150287360 [36mHTTP GET /static/admin/css/base.css 304 [0.00, 127.0.0.1:50839][0m
+INFO 2025-07-21 18:20:34,924 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/theme.js 304 [0.00, 127.0.0.1:50891][0m
+INFO 2025-07-21 18:20:34,925 runserver 32861 6150287360 [36mHTTP GET /static/admin/css/forms.css 304 [0.01, 127.0.0.1:50840][0m
+INFO 2025-07-21 18:20:34,925 runserver 32861 6150287360 [36mHTTP GET /static/admin/css/dark_mode.css 304 [0.01, 127.0.0.1:50839][0m
+INFO 2025-07-21 18:20:34,925 runserver 32861 6150287360 [36mHTTP GET /static/admin/css/changelists.css 304 [0.01, 127.0.0.1:50888][0m
+INFO 2025-07-21 18:20:34,925 runserver 32861 6150287360 [36mHTTP GET /static/admin/css/nav_sidebar.css 304 [0.01, 127.0.0.1:50892][0m
+INFO 2025-07-21 18:20:34,934 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/admin/RelatedObjectLookups.js 304 [0.00, 127.0.0.1:50892][0m
+INFO 2025-07-21 18:20:34,935 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/core.js 304 [0.01, 127.0.0.1:50888][0m
+INFO 2025-07-21 18:20:34,935 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/vendor/jquery/jquery.js 304 [0.01, 127.0.0.1:50840][0m
+INFO 2025-07-21 18:20:34,936 runserver 32861 6150287360 [36mHTTP GET /static/admin/css/responsive.css 304 [0.01, 127.0.0.1:50891][0m
+INFO 2025-07-21 18:20:34,937 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/jquery.init.js 304 [0.01, 127.0.0.1:50839][0m
+INFO 2025-07-21 18:20:34,941 runserver 32861 6150287360 [36mHTTP GET /static/admin/css/widgets.css 304 [0.01, 127.0.0.1:50892][0m
+INFO 2025-07-21 18:20:34,942 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/prepopulate.js 304 [0.00, 127.0.0.1:50891][0m
+INFO 2025-07-21 18:20:34,942 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/actions.js 304 [0.00, 127.0.0.1:50888][0m
+INFO 2025-07-21 18:20:34,942 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/urlify.js 304 [0.00, 127.0.0.1:50840][0m
+INFO 2025-07-21 18:20:34,942 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/vendor/xregexp/xregexp.js 304 [0.00, 127.0.0.1:50839][0m
+INFO 2025-07-21 18:20:34,946 runserver 32861 6150287360 [36mHTTP GET /static/admin/img/search.svg 304 [0.00, 127.0.0.1:50839][0m
+INFO 2025-07-21 18:20:34,948 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/nav_sidebar.js 304 [0.00, 127.0.0.1:50839][0m
+INFO 2025-07-21 18:20:34,951 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/filters.js 304 [0.00, 127.0.0.1:50839][0m
+INFO 2025-07-21 18:20:35,025 runserver 32861 6150287360 [mHTTP GET /admin/jsi18n/ 200 [0.11, 127.0.0.1:50894][0m
+INFO 2025-07-21 18:20:39,357 runserver 32861 6150287360 [mHTTP GET /admin/core/currency/ 200 [0.07, 127.0.0.1:50894][0m
+INFO 2025-07-21 18:20:39,418 runserver 32861 6150287360 [36mHTTP GET /static/admin/css/base.css 304 [0.01, 127.0.0.1:50894][0m
+INFO 2025-07-21 18:20:39,419 runserver 32861 6150287360 [36mHTTP GET /static/admin/css/nav_sidebar.css 304 [0.01, 127.0.0.1:50891][0m
+INFO 2025-07-21 18:20:39,419 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/theme.js 304 [0.01, 127.0.0.1:50888][0m
+INFO 2025-07-21 18:20:39,420 runserver 32861 6150287360 [36mHTTP GET /static/admin/css/changelists.css 304 [0.01, 127.0.0.1:50892][0m
+INFO 2025-07-21 18:20:39,420 runserver 32861 6150287360 [36mHTTP GET /static/admin/css/dark_mode.css 304 [0.01, 127.0.0.1:50840][0m
+INFO 2025-07-21 18:20:39,426 runserver 32861 6150287360 [36mHTTP GET /static/admin/css/responsive.css 304 [0.01, 127.0.0.1:50891][0m
+INFO 2025-07-21 18:20:39,426 runserver 32861 6150287360 [36mHTTP GET /static/admin/css/forms.css 304 [0.01, 127.0.0.1:50894][0m
+INFO 2025-07-21 18:20:39,426 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/core.js 304 [0.00, 127.0.0.1:50840][0m
+INFO 2025-07-21 18:20:39,427 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/vendor/jquery/jquery.js 304 [0.00, 127.0.0.1:50888][0m
+INFO 2025-07-21 18:20:39,427 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/jquery.init.js 304 [0.00, 127.0.0.1:50892][0m
+INFO 2025-07-21 18:20:39,432 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/admin/RelatedObjectLookups.js 304 [0.00, 127.0.0.1:50891][0m
+INFO 2025-07-21 18:20:39,432 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/actions.js 304 [0.00, 127.0.0.1:50894][0m
+INFO 2025-07-21 18:20:39,434 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/urlify.js 304 [0.00, 127.0.0.1:50888][0m
+INFO 2025-07-21 18:20:39,434 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/vendor/xregexp/xregexp.js 304 [0.00, 127.0.0.1:50892][0m
+INFO 2025-07-21 18:20:39,435 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/prepopulate.js 304 [0.01, 127.0.0.1:50840][0m
+INFO 2025-07-21 18:20:39,438 runserver 32861 6150287360 [36mHTTP GET /static/admin/css/widgets.css 304 [0.00, 127.0.0.1:50891][0m
+INFO 2025-07-21 18:20:39,439 runserver 32861 6150287360 [36mHTTP GET /static/admin/img/search.svg 304 [0.00, 127.0.0.1:50840][0m
+INFO 2025-07-21 18:20:39,440 runserver 32861 6150287360 [mHTTP GET /admin/jsi18n/ 200 [0.03, 127.0.0.1:50839][0m
+INFO 2025-07-21 18:20:39,442 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/nav_sidebar.js 304 [0.00, 127.0.0.1:50839][0m
+INFO 2025-07-21 18:20:39,443 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/filters.js 304 [0.00, 127.0.0.1:50840][0m
+INFO 2025-07-21 18:20:40,409 runserver 32861 6150287360 [mHTTP GET /admin/core/exchange/ 200 [0.12, 127.0.0.1:50840][0m
+INFO 2025-07-21 18:20:40,428 runserver 32861 6150287360 [36mHTTP GET /static/admin/css/base.css 304 [0.00, 127.0.0.1:50840][0m
+INFO 2025-07-21 18:20:40,441 runserver 32861 6150287360 [36mHTTP GET /static/admin/css/dark_mode.css 304 [0.01, 127.0.0.1:50840][0m
+INFO 2025-07-21 18:20:40,441 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/theme.js 304 [0.00, 127.0.0.1:50894][0m
+INFO 2025-07-21 18:20:40,442 runserver 32861 6150287360 [36mHTTP GET /static/admin/css/changelists.css 304 [0.00, 127.0.0.1:50892][0m
+INFO 2025-07-21 18:20:40,442 runserver 32861 6150287360 [36mHTTP GET /static/admin/css/forms.css 304 [0.00, 127.0.0.1:50888][0m
+INFO 2025-07-21 18:20:40,442 runserver 32861 6150287360 [36mHTTP GET /static/admin/css/nav_sidebar.css 304 [0.01, 127.0.0.1:50891][0m
+INFO 2025-07-21 18:20:40,450 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/vendor/jquery/jquery.js 304 [0.00, 127.0.0.1:50894][0m
+INFO 2025-07-21 18:20:40,451 runserver 32861 6150287360 [36mHTTP GET /static/admin/css/responsive.css 304 [0.00, 127.0.0.1:50840][0m
+INFO 2025-07-21 18:20:40,451 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/admin/RelatedObjectLookups.js 304 [0.00, 127.0.0.1:50891][0m
+INFO 2025-07-21 18:20:40,452 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/core.js 304 [0.01, 127.0.0.1:50888][0m
+INFO 2025-07-21 18:20:40,453 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/jquery.init.js 304 [0.01, 127.0.0.1:50892][0m
+INFO 2025-07-21 18:20:40,458 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/actions.js 304 [0.00, 127.0.0.1:50840][0m
+INFO 2025-07-21 18:20:40,459 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/urlify.js 304 [0.00, 127.0.0.1:50891][0m
+INFO 2025-07-21 18:20:40,459 runserver 32861 6150287360 [36mHTTP GET /static/admin/css/widgets.css 304 [0.01, 127.0.0.1:50894][0m
+INFO 2025-07-21 18:20:40,460 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/vendor/xregexp/xregexp.js 304 [0.00, 127.0.0.1:50892][0m
+INFO 2025-07-21 18:20:40,460 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/prepopulate.js 304 [0.01, 127.0.0.1:50888][0m
+INFO 2025-07-21 18:20:40,464 runserver 32861 6150287360 [36mHTTP GET /static/admin/img/search.svg 304 [0.00, 127.0.0.1:50888][0m
+INFO 2025-07-21 18:20:40,466 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/nav_sidebar.js 304 [0.00, 127.0.0.1:50888][0m
+INFO 2025-07-21 18:20:40,469 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/filters.js 304 [0.00, 127.0.0.1:50888][0m
+INFO 2025-07-21 18:20:40,671 runserver 32861 6150287360 [mHTTP GET /admin/jsi18n/ 200 [0.24, 127.0.0.1:50839][0m
+INFO 2025-07-21 18:20:45,934 runserver 32861 6150287360 [mHTTP GET /admin/core/exchange/add/ 200 [0.20, 127.0.0.1:50839][0m
+INFO 2025-07-21 18:20:45,957 runserver 32861 6150287360 [36mHTTP GET /static/admin/css/base.css 304 [0.00, 127.0.0.1:50839][0m
+INFO 2025-07-21 18:20:45,968 runserver 32861 6150287360 [36mHTTP GET /static/admin/css/nav_sidebar.css 304 [0.00, 127.0.0.1:50894][0m
+INFO 2025-07-21 18:20:45,968 runserver 32861 6150287360 [36mHTTP GET /static/admin/css/forms.css 304 [0.00, 127.0.0.1:50891][0m
+INFO 2025-07-21 18:20:45,969 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/theme.js 304 [0.01, 127.0.0.1:50892][0m
+INFO 2025-07-21 18:20:45,969 runserver 32861 6150287360 [36mHTTP GET /static/admin/css/dark_mode.css 304 [0.01, 127.0.0.1:50888][0m
+INFO 2025-07-21 18:20:45,971 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/vendor/jquery/jquery.js 304 [0.01, 127.0.0.1:50840][0m
+INFO 2025-07-21 18:20:45,978 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/jquery.init.js 304 [0.00, 127.0.0.1:50891][0m
+INFO 2025-07-21 18:20:45,978 runserver 32861 6150287360 [36mHTTP GET /static/admin/css/responsive.css 304 [0.01, 127.0.0.1:50894][0m
+INFO 2025-07-21 18:20:45,978 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/core.js 304 [0.00, 127.0.0.1:50892][0m
+INFO 2025-07-21 18:20:45,979 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/admin/RelatedObjectLookups.js 304 [0.00, 127.0.0.1:50888][0m
+INFO 2025-07-21 18:20:45,979 runserver 32861 6150287360 [36mHTTP GET /static/admin/css/widgets.css 304 [0.00, 127.0.0.1:50840][0m
+INFO 2025-07-21 18:20:45,986 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/prepopulate.js 304 [0.00, 127.0.0.1:50892][0m
+INFO 2025-07-21 18:20:45,986 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/actions.js 304 [0.00, 127.0.0.1:50891][0m
+INFO 2025-07-21 18:20:45,986 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/urlify.js 304 [0.00, 127.0.0.1:50894][0m
+INFO 2025-07-21 18:20:45,987 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/prepopulate_init.js 304 [0.00, 127.0.0.1:50840][0m
+INFO 2025-07-21 18:20:45,987 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/vendor/xregexp/xregexp.js 304 [0.00, 127.0.0.1:50888][0m
+INFO 2025-07-21 18:20:45,991 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/nav_sidebar.js 304 [0.00, 127.0.0.1:50888][0m
+INFO 2025-07-21 18:20:45,994 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/change_form.js 304 [0.00, 127.0.0.1:50888][0m
+INFO 2025-07-21 18:20:46,071 runserver 32861 6150287360 [mHTTP GET /admin/jsi18n/ 200 [0.11, 127.0.0.1:50839][0m
