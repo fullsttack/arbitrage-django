@@ -20,8 +20,7 @@ def dashboard(request):
     for pair in trading_pairs:
         symbol = pair.api_symbol  # Use the symbol that appears in Redis
         currency_mapping[symbol] = {
-            'name': pair.base_currency.name,
-            'name': pair.base_currency.name or pair.base_currency.name
+            'name': pair.base_currency.name
         }
     
     context = {

@@ -576,7 +576,7 @@ function formatTimestampTehran(timestamp) {
 
 function getCurrencyName(symbol) {
     // Use dynamic currency mapping from database
-    const currencyMapping = {{ currency_mapping_json|safe }};
+    const currencyMapping = JSON.parse('{{ currency_mapping_json|escapejs }}');
     return currencyMapping[symbol] ? currencyMapping[symbol].name : symbol;
 }
 

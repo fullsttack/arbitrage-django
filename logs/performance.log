@@ -551,3 +551,19 @@
 [2025-07-22 02:16:35,595] PERF workers._start_ramzinex_worker - Ramzinex worker started with 3 pairs
 [2025-07-22 02:16:46,165] PERF workers._start_lbank_worker - LBank worker started with 3 pairs
 [2025-07-22 02:17:33,614] PERF workers._start_monitoring_worker - System stats - Opportunities: 0, Prices: 8, Redis memory: 2.16M
+[2025-07-22 02:18:33,620] PERF workers._start_monitoring_worker - System stats - Opportunities: 0, Prices: 9, Redis memory: 2.16M
+[2025-07-22 02:19:33,627] PERF workers._start_monitoring_worker - System stats - Opportunities: 0, Prices: 9, Redis memory: 2.16M
+[2025-07-22 02:20:33,632] PERF workers._start_monitoring_worker - System stats - Opportunities: 0, Prices: 9, Redis memory: 2.15M
+[2025-07-22 02:21:33,636] PERF workers._start_monitoring_worker - System stats - Opportunities: 0, Prices: 9, Redis memory: 2.17M
+[2025-07-22 02:22:17,259] PERF workers.stop_all_workers - Stopping all workers...
+[2025-07-22 02:22:28,915] PERF workers.__init__ - Initialized with 8 workers
+[2025-07-22 02:22:28,939] PERF workers.start_all_workers - Starting 16 high-performance workers...
+[2025-07-22 02:22:28,971] PERF workers._get_trading_pairs_sync - Loaded 9 trading pairs across 3 exchanges
+[2025-07-22 02:22:28,972] PERF workers.start_all_workers - Started 9 worker tasks
+[2025-07-22 02:22:29,009] PERF workers._start_cleanup_worker - Cleanup worker started
+[2025-07-22 02:22:29,009] PERF workers._start_monitoring_worker - Monitoring worker started
+[2025-07-22 02:22:29,015] PERF workers._start_monitoring_worker - System stats - Opportunities: 0, Prices: 9, Redis memory: 2.16M
+[2025-07-22 02:22:29,794] PERF workers._start_wallex_worker - Wallex worker started with 3 pairs
+[2025-07-22 02:22:30,425] PERF workers._start_lbank_worker - LBank worker started with 3 pairs
+[2025-07-22 02:22:31,255] PERF workers._start_ramzinex_worker - Ramzinex worker started with 3 pairs
+[2025-07-22 02:23:29,020] PERF workers._start_monitoring_worker - System stats - Opportunities: 0, Prices: 9, Redis memory: 2.16M
