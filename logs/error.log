@@ -1,4 +1,0 @@
-[2025-07-22 01:14:11,929] ERROR core.services.ramzinex ramzinex._ping_handler:208 - Ramzinex ping error: received 3501 (registered) bad request; then sent 3501 (registered) bad request
-[2025-07-22 01:14:51,505] ERROR core.services.ramzinex ramzinex._ping_handler:208 - Ramzinex ping error: received 3501 (registered) bad request; then sent 3501 (registered) bad request
-[2025-07-22 01:28:33,850] ERROR core.services.lbank lbank.connect:42 - LBank connection attempt 1 failed: timed out during opening handshake
-[2025-07-22 02:16:43,588] ERROR core.services.lbank lbank.connect:42 - LBank connection attempt 1 failed: timed out during opening handshake
