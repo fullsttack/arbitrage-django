@@ -84,13 +84,7 @@
 <!-- Live Prices Tab -->
 <div id="content-prices" class="tab-content">
     <div class="bg-gray-800 rounded-xl border border-gray-700 shadow-2xl">
-        <div class="px-6 py-4 border-b border-gray-700 bg-gradient-to-r from-blue-900/20 to-blue-800/20 rounded-t-xl">
-            <h2 class="text-xl font-bold text-blue-400 flex items-center">
-                <span class="text-2xl mr-3">📈</span>
-                Live Exchange Prices
-            </h2>
-            <p class="text-sm text-gray-400 mt-1">Real-time bid/ask prices from all connected exchanges</p>
-        </div>
+        
         
         <div class="overflow-x-auto">
             <table class="w-full">
@@ -306,60 +300,22 @@
 }
 
 .price-update {
-    position: relative;
-    animation: highlight-pulse 2s ease-out;
+    animation: simple-flash 1.2s ease-out;
     transform: translateZ(0); /* Force GPU acceleration */
 }
 
-.price-update::before {
-    content: '';
-    position: absolute;
-    top: -2px;
-    left: -8px;
-    right: -8px;
-    bottom: -2px;
-    background: linear-gradient(45deg, 
-        rgba(16, 185, 129, 0.2), 
-        rgba(59, 130, 246, 0.2), 
-        rgba(16, 185, 129, 0.2)
-    );
-    border-radius: 6px;
-    animation: glow-border 2s ease-out;
-    pointer-events: none;
-    z-index: -1;
-}
-
-@keyframes highlight-pulse {
+@keyframes simple-flash {
     0% { 
-        background-color: rgba(16, 185, 129, 0.3);
+        border-left: 4px solid #10b981;
+        background-color: rgba(16, 185, 129, 0.1);
         color: #10b981;
-        font-weight: 600;
-        transform: scale(1.02);
-    }
-    50% {
-        background-color: rgba(16, 185, 129, 0.15);
-        transform: scale(1.01);
+        font-weight: 500;
     }
     100% { 
+        border-left: 4px solid transparent;
         background-color: transparent;
         color: inherit; 
         font-weight: inherit;
-        transform: scale(1);
-    }
-}
-
-@keyframes glow-border {
-    0% { 
-        opacity: 1;
-        box-shadow: 0 0 15px rgba(16, 185, 129, 0.4);
-    }
-    50% {
-        opacity: 0.7;
-        box-shadow: 0 0 20px rgba(16, 185, 129, 0.2);
-    }
-    100% { 
-        opacity: 0;
-        box-shadow: none;
     }
 }
 
@@ -765,31 +721,19 @@ function updatePriceRow(price) {
 }
 
 function animateCell(cell) {
-    // Prevent scroll jumping by avoiding any layout changes
-    const currentTransform = cell.style.transform;
-    
     // Remove existing animation class
     cell.classList.remove('price-update');
     
-    // Force GPU layer to prevent reflow
-    cell.style.willChange = 'transform, background-color';
-    
-    // Trigger reflow
+    // Force reflow
     void cell.offsetHeight;
     
     // Add animation class
     cell.classList.add('price-update');
     
-    // Restore original transform if it existed
-    if (currentTransform) {
-        cell.style.transform = currentTransform;
-    }
-    
-    // Remove animation class and clean up after animation completes
+    // Remove animation class after animation completes
     setTimeout(() => {
         cell.classList.remove('price-update');
-        cell.style.willChange = 'auto';
-    }, 2000);
+    }, 1200);
 }
 
 function updateRedisStats() {
