@@ -72,34 +72,28 @@ async def api_current_prices(request):
         await redis_manager.connect()
         prices = await redis_manager.get_all_current_prices()
         
-        # Get symbol format mapping
-        symbol_mapping = await get_symbol_format_mapping()
+        # Get currency names mapping
+        currency_names = await get_currency_names_mapping()
         
         # Format prices for frontend
         formatted_prices = []
         for key, price_data in prices.items():
             parts = key.split(':', 2)
             if len(parts) >= 3:
-                exchange = parts[1]
-                symbol = parts[2]
+                price_data['exchange'] = parts[1]
+                price_data['symbol'] = parts[2]
                 
-                price_data['exchange'] = exchange
-                price_data['symbol'] = symbol
-                
-                # Get symbol_format for display
-                symbol_key = f"{exchange}:{symbol}"
-                if symbol_key in symbol_mapping:
-                    price_data['display_symbol'] = symbol_mapping[symbol_key]
-                else:
-                    # Fallback to original symbol
-                    price_data['display_symbol'] = symbol
+                # Extract base currency from symbol and add name
+                base_symbol = extract_base_symbol(parts[2])
+                price_data['currency_name'] = currency_names.get(base_symbol, base_symbol)
                 
                 formatted_prices.append(price_data)
         
         return JsonResponse({
             'success': True,
             'data': formatted_prices,
-            'count': len(formatted_prices)
+            'count': len(formatted_prices),
+            'currency_names': currency_names
         })
         
     except Exception as e:
@@ -115,19 +109,19 @@ async def api_current_opportunities(request):
         await redis_manager.connect()
         opportunities = await redis_manager.get_latest_opportunities(100)
         
-        # Get symbol format mapping  
-        symbol_mapping = await get_symbol_format_mapping()
+        # Get currency names mapping
+        currency_names = await get_currency_names_mapping()
         
-        # Add display symbols to opportunities
+        # Add currency names to opportunities
         for opp in opportunities:
-            # Use symbol from opportunity data - format should be "XRP/USDT" or similar
-            display_symbol = opp.get('symbol', f"{opp.get('base_currency', '')}/{opp.get('quote_currency', '')}")
-            opp['display_symbol'] = display_symbol
+            base_symbol = opp.get('base_currency', '').upper()
+            opp['currency_name'] = currency_names.get(base_symbol, base_symbol)
         
         return JsonResponse({
             'success': True,
             'data': opportunities,
-            'count': len(opportunities)
+            'count': len(opportunities),
+            'currency_names': currency_names
         })
         
     except Exception as e:
@@ -179,37 +173,19 @@ def calculate_hit_rate(stats):
         return "N/A"
 
 @sync_to_async
-def get_symbol_format_mapping():
-    """Get mapping of exchange:symbol to symbol_format"""
+def get_currency_names_mapping():
+    """Get mapping of currency symbols to display names"""
     try:
-        # Get trading pairs for symbol mapping
-        trading_pairs = TradingPair.objects.filter(
-            is_active=True,
-            exchange__is_active=True
-        ).select_related('exchange').values(
-            'exchange__name',
-            'symbol_format', 
-            'pair_id'
-        )
-        
-        # Create symbol to symbol_format mapping
-        symbol_mapping = {}
-        for pair in trading_pairs:
-            exchange = pair['exchange__name']
-            
-            # For ramzinex, use pair_id as both key and display value
-            if exchange == 'ramzinex' and pair['pair_id']:
-                symbol_key = f"{exchange}:{pair['pair_id']}"
-                symbol_mapping[symbol_key] = pair['pair_id']  # Display pair_id
-            
-            # For other exchanges, use symbol_format
-            if pair['symbol_format']:
-                symbol_key = f"{exchange}:{pair['symbol_format']}"
-                symbol_mapping[symbol_key] = pair['symbol_format']  # Display symbol_format
-        
-        return symbol_mapping
+        currencies = Currency.objects.filter(is_active=True).values('symbol', 'name', 'display_name')
+        mapping = {}
+        for currency in currencies:
+            symbol = currency['symbol'].upper()
+            # Prefer display_name (Persian) over name (English)
+            name = currency.get('display_name') or currency.get('name') or symbol
+            mapping[symbol] = name
+        return mapping
     except Exception as e:
-        logger.error(f"Error getting symbol format mapping: {e}")
+        logger.error(f"Error getting currency names: {e}")
         return {}
 
 def extract_base_symbol(symbol_format):
@@ -217,10 +193,6 @@ def extract_base_symbol(symbol_format):
     try:
         # Handle different formats: XRPUSDT, xrp_usdt, XRP/USDT
         symbol_upper = symbol_format.upper()
-        
-        # Skip numeric IDs (Ramzinex pair IDs)
-        if symbol_upper.isdigit():
-            return symbol_upper  # Return as-is for pair IDs
         
         # Format: XRP/USDT
         if '/' in symbol_upper:

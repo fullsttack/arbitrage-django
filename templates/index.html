@@ -97,6 +97,9 @@
                         <div id="status-indicator" class="w-3 h-3 rounded-full bg-red-500 mr-2"></div>
                         <span id="status-text" class="text-sm">Connecting...</span>
                     </div>
+                    <button id="refresh-data" class="bg-primary-600 hover:bg-primary-700 px-4 py-2 rounded-lg text-sm transition-colors">
+                        <i class="fas fa-sync-alt mr-2"></i>Refresh
+                    </button>
                 </div>
             </div>
         </div>
@@ -194,18 +197,19 @@
                             <thead>
                                 <tr class="border-b border-gray-800">
                                     <th class="text-left py-3 px-4 text-gray-400">Exchange</th>
+                                    <th class="text-left py-3 px-4 text-gray-400">Symbol</th>
                                     <th class="text-left py-3 px-4 text-gray-400">Currency</th>
                                     <th class="text-right py-3 px-4 text-gray-400">Bid Price</th>
-                                    <th class="text-right py-3 px-4 text-gray-400">Bid Volume</th>
                                     <th class="text-right py-3 px-4 text-gray-400">Ask Price</th>
-                                    <th class="text-right py-3 px-4 text-gray-400">Ask Volume</th>
                                     <th class="text-right py-3 px-4 text-gray-400">Spread</th>
+                                    <th class="text-right py-3 px-4 text-gray-400">Bid Volume</th>
+                                    <th class="text-right py-3 px-4 text-gray-400">Ask Volume</th>
                                     <th class="text-right py-3 px-4 text-gray-400">Last Update</th>
                                 </tr>
                             </thead>
                             <tbody id="prices-table-body" class="divide-y divide-gray-800">
                                 <tr>
-                                    <td colspan="7" class="text-center py-8 text-gray-500">
+                                    <td colspan="9" class="text-center py-8 text-gray-500">
                                         <i class="fas fa-spinner fa-spin text-2xl mb-2"></i>
                                         <div>Loading price data...</div>
                                     </td>
@@ -230,6 +234,7 @@
                             <thead>
                                 <tr class="border-b border-gray-800">
                                     <th class="text-left py-3 px-4 text-gray-400">Symbol</th>
+                                    <th class="text-left py-3 px-4 text-gray-400">Currency</th>
                                     <th class="text-left py-3 px-4 text-gray-400">Buy Exchange</th>
                                     <th class="text-left py-3 px-4 text-gray-400">Sell Exchange</th>
                                     <th class="text-right py-3 px-4 text-gray-400">Buy Price</th>
@@ -244,7 +249,7 @@
                             </thead>
                             <tbody id="opportunities-table-body" class="divide-y divide-gray-800">
                                 <tr>
-                                    <td colspan="11" class="text-center py-8 text-gray-500">
+                                    <td colspan="12" class="text-center py-8 text-gray-500">
                                         <i class="fas fa-search text-2xl mb-2"></i>
                                         <div>Scanning for opportunities...</div>
                                     </td>
@@ -334,8 +339,8 @@
                 this.pricesData = new Map();
                 this.opportunitiesData = [];
                 this.lastNotificationTime = 0;
+                this.currencyNames = {}; // Store currency names mapping
                 this.lastUpdateTimes = new Map(); // Track last update times for animation
-                this.currencyNames = {}; // Initialize currency names mapping
                 
                 this.init();
             }
@@ -343,6 +348,7 @@
             init() {
                 this.setupTabs();
                 this.setupWebSocket();
+                this.setupRefreshButton();
                 this.loadInitialData();
                 
                 // Auto-refresh every 30 seconds
@@ -426,50 +432,22 @@
             }
 
             handleWebSocketMessage(data) {
-                try {
-                    console.log('WebSocket message received:', data.type, data);
-                    
-                    switch (data.type) {
-                        case 'initial_prices':
-                            if (data.data && Array.isArray(data.data)) {
-                                this.updatePricesTable(data.data);
-                            } else {
-                                console.warn('Invalid initial_prices data:', data);
-                            }
-                            break;
-                        case 'price_update':
-                            if (data.data && typeof data.data === 'object') {
-                                this.updateSinglePrice(data.data);
-                            } else {
-                                console.warn('Invalid price_update data:', data);
-                            }
-                            break;
-                        case 'initial_opportunities':
-                            if (data.data && Array.isArray(data.data)) {
-                                this.updateOpportunitiesTable(data.data);
-                            } else {
-                                console.warn('Invalid initial_opportunities data:', data);
-                            }
-                            break;
-                        case 'opportunities_update':
-                            if (data.data && Array.isArray(data.data)) {
-                                this.updateOpportunities(data.data);
-                            } else {
-                                console.warn('Invalid opportunities_update data:', data);
-                            }
-                            break;
-                        case 'redis_stats':
-                            if (data.data && typeof data.data === 'object') {
-                                this.updateSystemStats(data.data);
-                            } else {
-                                console.warn('Invalid redis_stats data:', data);
-                            }
-                            break;
-                        default:
-                            console.log('Unknown WebSocket message type:', data.type);
-                    }
-                } catch (error) {
-                    console.error('Error handling WebSocket message:', error, 'Data:', data);
+                switch (data.type) {
+                    case 'initial_prices':
+                        this.updatePricesTable(data.data);
+                        break;
+                    case 'price_update':
+                        this.updateSinglePrice(data.data);
+                        break;
+                    case 'initial_opportunities':
+                        this.updateOpportunitiesTable(data.data);
+                        break;
+                    case 'opportunities_update':
+                        this.updateOpportunities(data.data);
+                        break;
+                    case 'redis_stats':
+                        this.updateSystemStats(data.data);
+                        break;
                 }
             }
 
@@ -492,7 +470,7 @@
                 if (!prices || prices.length === 0) {
                     tbody.innerHTML = `
                         <tr>
-                            <td colspan="8" class="text-center py-8 text-gray-500">
+                            <td colspan="9" class="text-center py-8 text-gray-500">
                                 <i class="fas fa-exclamation-triangle text-2xl mb-2"></i>
                                 <div>No price data available</div>
                             </td>
@@ -538,11 +516,13 @@
                                     ${price.exchange}
                                 </span>
                             </td>
-                            <td class="py-3 px-4 font-medium">${currencyName}</td>
+                            <td class="py-3 px-4 font-medium">${price.symbol}</td>
+                            <td class="py-3 px-4 text-gray-300">${currencyName}</td>
                             <td class="py-3 px-4 text-right text-green-400">${price.bid_price.toFixed(4)}</td>
                             <td class="py-3 px-4 text-right text-red-400">${price.ask_price.toFixed(4)}</td>
                             <td class="py-3 px-4 text-right">${spread}%</td>
-                            <td class="py-3 px-4 text-right">${price.bid_volume.toFixed(2)}</td>
+                            <td class="py-3 px-4 text-right text-blue-400">${price.bid_volume.toFixed(2)}</td>
+                            <td class="py-3 px-4 text-right text-orange-400">${price.ask_volume.toFixed(2)}</td>
                             <td class="py-3 px-4 text-right text-gray-400">${timeAgo}</td>
                         </tr>
                     `;
@@ -562,12 +542,6 @@
             updateSinglePrice(priceData) {
                 const key = `${priceData.exchange}_${priceData.symbol}`;
                 const previousPrice = this.pricesData.get(key);
-                
-                // Ensure display_symbol is available
-                if (!priceData.display_symbol) {
-                    priceData.display_symbol = priceData.symbol;
-                }
-                
                 this.pricesData.set(key, priceData);
                 
                 // Mark as updated if price changed
@@ -608,6 +582,7 @@
                     return `
                         <tr class="hover:bg-gray-800 transition-colors">
                             <td class="py-3 px-4 font-medium">${opp.symbol || opp.base_currency + '/' + opp.quote_currency}</td>
+                            <td class="py-3 px-4 text-gray-300">${opp.currency_name || opp.base_currency || 'N/A'}</td>
                             <td class="py-3 px-4">
                                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                                     ${opp.buy_exchange}
@@ -621,7 +596,7 @@
                             <td class="py-3 px-4 text-right text-green-400">${opp.buy_price.toFixed(4)}</td>
                             <td class="py-3 px-4 text-right text-blue-400">${(opp.buy_volume || 0).toFixed(2)}</td>
                             <td class="py-3 px-4 text-right text-red-400">${opp.sell_price.toFixed(4)}</td>
-                            <td class="py-3 px-4 text-right text-blue-400">${(opp.sell_volume || 0).toFixed(2)}</td>
+                            <td class="py-3 px-4 text-right text-orange-400">${(opp.sell_volume || 0).toFixed(2)}</td>
                             <td class="py-3 px-4 text-right text-purple-400 font-semibold">${(opp.trade_volume || opp.volume || 0).toFixed(2)}</td>
                             <td class="py-3 px-4 text-right font-bold ${profitClass}">
                                 ${opp.profit_percentage.toFixed(2)}%
@@ -649,11 +624,12 @@
                             current.profit_percentage > best.profit_percentage ? current : best
                         );
                         
-                        // Get display symbol directly from API response
-                        const displaySymbol = bestOpp.display_symbol || bestOpp.symbol || `${bestOpp.base_currency}/${bestOpp.quote_currency}`;
+                        // Get currency name for notification
+                        const baseSymbol = bestOpp.base_currency || this.extractBaseSymbol(bestOpp.symbol);
+                        const currencyName = bestOpp.currency_name || this.currencyNames[baseSymbol] || baseSymbol;
                         
                         this.showNotification(
-                            `🚀 New ${displaySymbol} opportunity: ${bestOpp.profit_percentage.toFixed(2)}% profit (${bestOpp.buy_exchange} → ${bestOpp.sell_exchange})!`,
+                            `🚀 New ${currencyName} opportunity: ${bestOpp.profit_percentage.toFixed(2)}% profit (${bestOpp.buy_exchange} → ${bestOpp.sell_exchange})!`,
                             'success'
                         );
                         
@@ -733,6 +709,14 @@
                 }, 300);
             }
 
+            setupRefreshButton() {
+                document.getElementById('refresh-data').addEventListener('click', () => {
+                    this.loadInitialData();
+                    this.loadSystemStats();
+                    this.showNotification('Data refreshed successfully', 'success');
+                });
+            }
+
             async loadInitialData() {
                 try {
                     // Load prices
@@ -740,6 +724,10 @@
                     if (pricesResponse.ok) {
                         const pricesData = await pricesResponse.json();
                         if (pricesData.success) {
+                            // Store currency names mapping
+                            if (pricesData.currency_names) {
+                                this.currencyNames = pricesData.currency_names;
+                            }
                             this.updatePricesTable(pricesData.data);
                         }
                     }
@@ -749,6 +737,10 @@
                     if (oppsResponse.ok) {
                         const oppsData = await oppsResponse.json();
                         if (oppsData.success) {
+                            // Update currency names if available
+                            if (oppsData.currency_names) {
+                                this.currencyNames = { ...this.currencyNames, ...oppsData.currency_names };
+                            }
                             this.updateOpportunitiesTable(oppsData.data);
                         }
                     }
@@ -792,10 +784,34 @@
                 return `${mins}m`;
             }
 
-            // Fallback function (not needed anymore but kept for safety)
             extractBaseSymbol(symbolFormat) {
-                // This function is deprecated - use display_symbol from API instead
-                return symbolFormat;
+                try {
+                    const symbolUpper = symbolFormat.toUpperCase();
+                    
+                    // Format: XRP/USDT
+                    if (symbolUpper.includes('/')) {
+                        return symbolUpper.split('/')[0];
+                    }
+                    
+                    // Format: xrp_usdt
+                    if (symbolUpper.includes('_')) {
+                        return symbolUpper.split('_')[0];
+                    }
+                    
+                    // Format: XRPUSDT - assume USDT as quote
+                    if (symbolUpper.endsWith('USDT')) {
+                        return symbolUpper.slice(0, -4);
+                    }
+                    
+                    // Format: XRPTMN - assume TMN as quote  
+                    if (symbolUpper.endsWith('TMN')) {
+                        return symbolUpper.slice(0, -3);
+                    }
+                        
+                    return symbolUpper;
+                } catch {
+                    return symbolFormat;
+                }
             }
         }
 
