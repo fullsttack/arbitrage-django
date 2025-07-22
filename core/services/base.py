@@ -14,7 +14,22 @@ class BaseExchangeService(ABC):
     def __init__(self, exchange_name: str):
         self.exchange_name = exchange_name
         self.is_connected = False
+        self.is_receiving_data = False
         self.channel_layer = get_channel_layer()
+        
+        # Connection health tracking
+        self.last_message_time = 0
+        self.last_ping_time = 0
+        self.last_data_time = 0
+        self.connection_start_time = 0
+        
+        # Health check settings
+        self.MESSAGE_TIMEOUT = 60  # No message for 60 seconds = dead connection
+        self.DATA_TIMEOUT = 120    # No price data for 120 seconds = problem
+        self.PING_TIMEOUT = 35     # Ping response timeout
+        
+        # Throttling for broadcasts
+        self._last_broadcast_time = {}
         
     async def init_redis(self):
         """Initialize Redis connection"""
@@ -26,6 +41,10 @@ class BaseExchangeService(ABC):
         """Save price data and broadcast to WebSocket"""
         await self.init_redis()
         
+        # Update data tracking
+        self.last_data_time = time.time()
+        self.is_receiving_data = True
+        
         # Save to Redis
         await redis_manager.save_price_data(
             exchange=self.exchange_name,
@@ -36,12 +55,13 @@ class BaseExchangeService(ABC):
             ask_volume=float(ask_volume)
         )
         
-        # Broadcast individual price update via WebSocket for live updates
-        # Use throttling to prevent channel overflow
-        if self.channel_layer and hasattr(self, '_last_broadcast_time'):
+        # Throttled broadcast to prevent channel overflow
+        if self.channel_layer:
             current_time = time.time()
+            key = f"{self.exchange_name}_{symbol}"
+            
             # Only broadcast if more than 1 second has passed since last broadcast for this symbol
-            if current_time - self._last_broadcast_time.get(f"{self.exchange_name}_{symbol}", 0) > 1:
+            if current_time - self._last_broadcast_time.get(key, 0) > 1:
                 price_data = {
                     'exchange': self.exchange_name,
                     'symbol': symbol,
@@ -60,15 +80,55 @@ class BaseExchangeService(ABC):
                             'price_data': price_data
                         }
                     )
-                    self._last_broadcast_time[f"{self.exchange_name}_{symbol}"] = current_time
+                    self._last_broadcast_time[key] = current_time
                 except Exception as e:
                     # Channel is full, skip this broadcast
-                    logger.debug(f"Skipped broadcast for {self.exchange_name}_{symbol}: {e}")
-        elif self.channel_layer and not hasattr(self, '_last_broadcast_time'):
-            # Initialize throttling dict
-            self._last_broadcast_time = {}
+                    logger.debug(f"Skipped broadcast for {key}: {e}")
         
         logger.debug(f"Saved and broadcast {self.exchange_name} {symbol}: bid={bid_price}, ask={ask_price}")
+
+    def update_message_time(self):
+        """Update last message timestamp"""
+        self.last_message_time = time.time()
+    
+    def update_ping_time(self):
+        """Update last ping timestamp"""
+        self.last_ping_time = time.time()
+
+    def is_connection_healthy(self) -> bool:
+        """Check if connection is healthy"""
+        current_time = time.time()
+        
+        # Check if we're receiving any messages
+        if self.last_message_time > 0:
+            message_age = current_time - self.last_message_time
+            if message_age > self.MESSAGE_TIMEOUT:
+                logger.warning(f"{self.exchange_name}: No messages for {message_age:.1f}s - connection may be dead")
+                return False
+        
+        # Check if we're receiving price data
+        if self.last_data_time > 0:
+            data_age = current_time - self.last_data_time
+            if data_age > self.DATA_TIMEOUT:
+                logger.warning(f"{self.exchange_name}: No price data for {data_age:.1f}s - may have subscription issues")
+                return False
+        
+        return True
+
+    def mark_connection_dead(self, reason: str = "Unknown"):
+        """Mark connection as dead and log reason"""
+        self.is_connected = False
+        self.is_receiving_data = False
+        logger.error(f"{self.exchange_name} connection marked as dead: {reason}")
+
+    def reset_connection_state(self):
+        """Reset all connection tracking"""
+        current_time = time.time()
+        self.connection_start_time = current_time
+        self.last_message_time = current_time
+        self.last_ping_time = current_time
+        self.last_data_time = 0  # Will be set when first data arrives
+        self.is_receiving_data = False
 
     @abstractmethod
     async def connect(self):
@@ -87,4 +147,18 @@ class BaseExchangeService(ABC):
 
     async def disconnect(self):
         """Disconnect from exchange service"""
-        self.is_connected = False
+        self.mark_connection_dead("Manual disconnect")
+        
+    async def health_monitor(self):
+        """Monitor connection health continuously"""
+        while self.is_connected:
+            try:
+                if not self.is_connection_healthy():
+                    self.mark_connection_dead("Health check failed")
+                    break
+                    
+                await asyncio.sleep(10)  # Check every 10 seconds
+                
+            except Exception as e:
+                logger.error(f"{self.exchange_name} health monitor error: {e}")
+                break

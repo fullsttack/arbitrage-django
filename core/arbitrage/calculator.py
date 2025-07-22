@@ -1,6 +1,7 @@
 import asyncio
 import json
 import logging
+import time
 from decimal import Decimal
 from typing import Dict, List, Any, Optional
 from dataclasses import dataclass
@@ -45,18 +46,26 @@ class FastArbitrageCalculator:
         self.channel_layer = get_channel_layer()
         self.trading_pairs_cache = {}
         self.last_cache_update = 0
+        self.calculation_count = 0
+        self.last_opportunities_count = 0
+        
+        # Performance optimization settings
+        self.CACHE_UPDATE_INTERVAL = 30  # Update cache every 30 seconds
+        self.CALCULATION_INTERVAL = 0.15  # Faster calculation interval (150ms)
+        self.MIN_CALCULATION_INTERVAL = 0.05  # Minimum interval (50ms)
+        self.SIGNIFICANT_PROFIT_THRESHOLD = 1.0  # Only broadcast opportunities > 1%
         
     async def start_calculation(self):
-        """Start arbitrage calculation loop"""
+        """Start arbitrage calculation loop with enhanced performance"""
         self.is_running = True
-        logger.info("FastArbitrageCalculator started")
+        logger.info("FastArbitrageCalculator started with enhanced performance")
         
         while self.is_running:
             try:
-                start_time = asyncio.get_event_loop().time()
+                start_time = time.time()
                 
-                # Update trading pairs cache every 30 seconds
-                if start_time - self.last_cache_update > 30:
+                # Update trading pairs cache periodically
+                if start_time - self.last_cache_update > self.CACHE_UPDATE_INTERVAL:
                     await self._update_trading_pairs_cache()
                     self.last_cache_update = start_time
                 
@@ -64,26 +73,49 @@ class FastArbitrageCalculator:
                 opportunities = await self._find_arbitrage_opportunities()
                 
                 if opportunities:
-                    # Save opportunities
+                    # Save all opportunities
                     await self._save_opportunities(opportunities)
                     
-                    # Only broadcast significant opportunities (> 1% profit) to reduce channel load
-                    significant_opportunities = [opp for opp in opportunities if opp.profit_percentage > 1.0]
+                    # Only broadcast significant opportunities to reduce channel load
+                    significant_opportunities = [
+                        opp for opp in opportunities 
+                        if opp.profit_percentage > self.SIGNIFICANT_PROFIT_THRESHOLD
+                    ]
+                    
                     if significant_opportunities:
                         await self._broadcast_opportunities(significant_opportunities)
                     
-                    performance_logger.info(f"Found {len(opportunities)} arbitrage opportunities ({len(significant_opportunities)} significant)")
+                    # Log performance metrics
+                    if len(opportunities) != self.last_opportunities_count:
+                        performance_logger.info(
+                            f"Arbitrage: Found {len(opportunities)} opportunities "
+                            f"({len(significant_opportunities)} significant, "
+                            f"threshold: {self.SIGNIFICANT_PROFIT_THRESHOLD}%)"
+                        )
+                        self.last_opportunities_count = len(opportunities)
                 
-                # Calculate processing time
-                processing_time = asyncio.get_event_loop().time() - start_time
-                performance_logger.debug(f"Arbitrage calculation took {processing_time:.4f}s")
+                # Calculate processing time and adjust interval
+                processing_time = time.time() - start_time
                 
-                # Sleep to maintain 200ms cycle (reduced to prevent channel overflow)
-                await asyncio.sleep(max(0.2 - processing_time, 0.1))
+                # Dynamic interval adjustment based on processing time
+                if processing_time > self.CALCULATION_INTERVAL:
+                    sleep_time = self.MIN_CALCULATION_INTERVAL
+                    if self.calculation_count % 100 == 0:  # Log every 100 calculations
+                        logger.warning(f"Arbitrage calculation taking {processing_time:.3f}s, reducing interval")
+                else:
+                    sleep_time = max(self.MIN_CALCULATION_INTERVAL, self.CALCULATION_INTERVAL - processing_time)
+                
+                self.calculation_count += 1
+                
+                # Performance logging every 1000 calculations
+                if self.calculation_count % 1000 == 0:
+                    performance_logger.debug(f"Arbitrage: {self.calculation_count} calculations, avg time: {processing_time:.3f}s")
+                
+                await asyncio.sleep(sleep_time)
                 
             except Exception as e:
                 logger.error(f"Error in arbitrage calculation: {e}")
-                await asyncio.sleep(1)
+                await asyncio.sleep(1)  # Wait longer on error
 
     @database_sync_to_async
     def _update_trading_pairs_cache_sync(self):
@@ -122,7 +154,7 @@ class FastArbitrageCalculator:
         self.trading_pairs_cache = await self._update_trading_pairs_cache_sync()
 
     async def _find_arbitrage_opportunities(self) -> List[ArbitrageOpportunity]:
-        """Find arbitrage opportunities between exchanges"""
+        """Find arbitrage opportunities between exchanges with optimized performance"""
         opportunities = []
         
         try:
@@ -132,8 +164,8 @@ class FastArbitrageCalculator:
             if not all_prices:
                 return opportunities
             
-            # Group prices by currency pair
-            price_groups = self._group_prices_by_pair(all_prices)
+            # Group prices by currency pair with optimized processing
+            price_groups = self._group_prices_by_pair_optimized(all_prices)
             
             # Check each currency pair for arbitrage opportunities
             for currency_pair, prices in price_groups.items():
@@ -141,7 +173,7 @@ class FastArbitrageCalculator:
                     continue
                 
                 # Find opportunities within this currency pair
-                pair_opportunities = await self._check_pair_arbitrage(currency_pair, prices)
+                pair_opportunities = await self._check_pair_arbitrage_optimized(currency_pair, prices)
                 opportunities.extend(pair_opportunities)
             
         except Exception as e:
@@ -149,37 +181,35 @@ class FastArbitrageCalculator:
         
         return opportunities
 
-    def _group_prices_by_pair(self, all_prices: Dict[str, Any]) -> Dict[str, List[PricePoint]]:
-        """Group prices by currency pair"""
+    def _group_prices_by_pair_optimized(self, all_prices: Dict[str, Any]) -> Dict[str, List[PricePoint]]:
+        """Optimized version of price grouping"""
         price_groups = {}
         
-        for key, price_data in all_prices.items():
+        # Pre-build lookup for trading pairs to avoid repeated dictionary lookups
+        exchange_symbol_to_pair = {}
+        for currency_pair, pairs in self.trading_pairs_cache.items():
+            for pair in pairs:
+                key = f"{pair['exchange']}:{pair['symbol']}"
+                exchange_symbol_to_pair[key] = (currency_pair, pair)
+        
+        for redis_key, price_data in all_prices.items():
             try:
                 # Extract exchange and symbol from key: "prices:exchange:symbol"
-                parts = key.split(':')
+                parts = redis_key.split(':', 2)  # Limit splits for performance
                 if len(parts) < 3:
                     continue
                     
                 exchange = parts[1]
                 symbol = parts[2]
+                lookup_key = f"{exchange}:{symbol}"
                 
-                # Find corresponding trading pair in cache
-                trading_pair_info = None
-                currency_pair = None
-                
-                for cp, pairs in self.trading_pairs_cache.items():
-                    for pair in pairs:
-                        if pair['exchange'] == exchange and pair['symbol'] == symbol:
-                            trading_pair_info = pair
-                            currency_pair = cp
-                            break
-                    if trading_pair_info:
-                        break
-                
-                if not trading_pair_info or not currency_pair:
+                # Fast lookup using pre-built dictionary
+                if lookup_key not in exchange_symbol_to_pair:
                     continue
                 
-                # Create PricePoint
+                currency_pair, trading_pair_info = exchange_symbol_to_pair[lookup_key]
+                
+                # Create PricePoint with optimized data access
                 price_point = PricePoint(
                     exchange=exchange,
                     symbol=symbol,
@@ -199,64 +229,60 @@ class FastArbitrageCalculator:
                 price_groups[currency_pair].append(price_point)
                 
             except Exception as e:
-                logger.error(f"Error processing price data for {key}: {e}")
+                logger.debug(f"Error processing price data for {redis_key}: {e}")
                 continue
         
         return price_groups
 
-    async def _check_pair_arbitrage(self, currency_pair: str, prices: List[PricePoint]) -> List[ArbitrageOpportunity]:
-        """Check arbitrage opportunities for a specific currency pair"""
+    async def _check_pair_arbitrage_optimized(self, currency_pair: str, prices: List[PricePoint]) -> List[ArbitrageOpportunity]:
+        """Optimized arbitrage checking for a specific currency pair"""
         opportunities = []
         
         try:
-            base_currency, quote_currency = currency_pair.split('_')
+            base_currency, quote_currency = currency_pair.split('_', 1)
             
-            # Compare all combinations of exchanges
-            for i, price1 in enumerate(prices):
-                for j, price2 in enumerate(prices):
-                    if i >= j:  # Avoid duplicate comparisons
-                        continue
+            # Pre-sort prices for optimization if needed
+            num_exchanges = len(prices)
+            
+            # For small number of exchanges, use simple nested loop
+            # For larger numbers, could implement more sophisticated algorithms
+            for i in range(num_exchanges):
+                price1 = prices[i]
+                for j in range(i + 1, num_exchanges):
+                    price2 = prices[j]
                     
-                    # Check if price1.bid > price2.ask (sell at price1, buy at price2)
-                    opportunity1 = self._calculate_opportunity(
-                        base_currency, quote_currency,
-                        buy_exchange=price2.exchange,
-                        sell_exchange=price1.exchange,
-                        buy_price=price2.ask_price,
-                        sell_price=price1.bid_price,
-                        buy_settings=price2,
-                        sell_settings=price1
-                    )
+                    # Check both directions efficiently
+                    # Direction 1: buy at price2, sell at price1
+                    if price1.bid_price > price2.ask_price:
+                        opportunity = self._calculate_opportunity_fast(
+                            base_currency, quote_currency,
+                            price2, price1,  # buy_settings, sell_settings
+                            price2.ask_price, price1.bid_price  # buy_price, sell_price
+                        )
+                        if opportunity:
+                            opportunities.append(opportunity)
                     
-                    if opportunity1:
-                        opportunities.append(opportunity1)
-                    
-                    # Check if price2.bid > price1.ask (sell at price2, buy at price1)
-                    opportunity2 = self._calculate_opportunity(
-                        base_currency, quote_currency,
-                        buy_exchange=price1.exchange,
-                        sell_exchange=price2.exchange,
-                        buy_price=price1.ask_price,
-                        sell_price=price2.bid_price,
-                        buy_settings=price1,
-                        sell_settings=price2
-                    )
-                    
-                    if opportunity2:
-                        opportunities.append(opportunity2)
+                    # Direction 2: buy at price1, sell at price2
+                    if price2.bid_price > price1.ask_price:
+                        opportunity = self._calculate_opportunity_fast(
+                            base_currency, quote_currency,
+                            price1, price2,  # buy_settings, sell_settings
+                            price1.ask_price, price2.bid_price  # buy_price, sell_price
+                        )
+                        if opportunity:
+                            opportunities.append(opportunity)
             
         except Exception as e:
             logger.error(f"Error checking arbitrage for {currency_pair}: {e}")
         
         return opportunities
 
-    def _calculate_opportunity(self, base_currency: str, quote_currency: str,
-                             buy_exchange: str, sell_exchange: str,
-                             buy_price: float, sell_price: float,
-                             buy_settings: PricePoint, sell_settings: PricePoint) -> Optional[ArbitrageOpportunity]:
-        """Calculate arbitrage opportunity"""
+    def _calculate_opportunity_fast(self, base_currency: str, quote_currency: str,
+                                  buy_settings: PricePoint, sell_settings: PricePoint,
+                                  buy_price: float, sell_price: float) -> Optional[ArbitrageOpportunity]:
+        """Fast opportunity calculation with minimal overhead"""
         try:
-            # Check if profitable: sell_price > buy_price
+            # Quick profit check first (most opportunities will fail this)
             if sell_price <= buy_price:
                 return None
             
@@ -266,22 +292,19 @@ class FastArbitrageCalculator:
             # Use minimum threshold from both exchanges
             min_threshold = min(buy_settings.arbitrage_threshold, sell_settings.arbitrage_threshold)
             
-            # Check if profit meets threshold
+            # Quick threshold check
             if profit_percentage < min_threshold:
                 return None
             
-            # Calculate volume constraints
+            # Calculate volume constraints (only if profitable)
             min_volume = max(buy_settings.min_volume, sell_settings.min_volume)
             max_volume = min(buy_settings.max_volume, sell_settings.max_volume)
             
-            # For buy from exchange A, we need to check ask_volume of that exchange
-            # For sell to exchange B, we need to check bid_volume of that exchange
+            # Available volume check
             available_volume = min(buy_settings.ask_volume, sell_settings.bid_volume)
-            
-            # Tradeable volume
             trade_volume = min(available_volume, max_volume)
             
-            # Check if volume is within constraints
+            # Volume constraint check
             if trade_volume < min_volume:
                 return None
             
@@ -291,42 +314,55 @@ class FastArbitrageCalculator:
             return ArbitrageOpportunity(
                 base_currency=base_currency,
                 quote_currency=quote_currency,
-                buy_exchange=buy_exchange,
-                sell_exchange=sell_exchange,
+                buy_exchange=buy_settings.exchange,
+                sell_exchange=sell_settings.exchange,
                 buy_price=buy_price,
                 sell_price=sell_price,
                 profit_amount=profit_amount,
                 profit_percentage=profit_percentage,
                 volume=trade_volume,
-                timestamp=asyncio.get_event_loop().time()
+                timestamp=time.time()
             )
             
         except Exception as e:
-            logger.error(f"Error calculating opportunity: {e}")
+            logger.debug(f"Error calculating opportunity: {e}")
             return None
 
     async def _save_opportunities(self, opportunities: List[ArbitrageOpportunity]):
-        """Save opportunities to Redis"""
-        for opp in opportunities:
-            opportunity_data = {
-                'base_currency': opp.base_currency,
-                'quote_currency': opp.quote_currency,
-                'symbol': f"{opp.base_currency}/{opp.quote_currency}",
-                'buy_exchange': opp.buy_exchange,
-                'sell_exchange': opp.sell_exchange,
-                'buy_price': opp.buy_price,
-                'sell_price': opp.sell_price,
-                'profit_amount': opp.profit_amount,
-                'profit_percentage': round(opp.profit_percentage, 2),
-                'volume': opp.volume,
-                'timestamp': opp.timestamp
-            }
+        """Save opportunities to Redis with batch processing"""
+        try:
+            # Batch save for better performance
+            save_tasks = []
+            for opp in opportunities:
+                opportunity_data = {
+                    'base_currency': opp.base_currency,
+                    'quote_currency': opp.quote_currency,
+                    'symbol': f"{opp.base_currency}/{opp.quote_currency}",
+                    'buy_exchange': opp.buy_exchange,
+                    'sell_exchange': opp.sell_exchange,
+                    'buy_price': opp.buy_price,
+                    'sell_price': opp.sell_price,
+                    'profit_amount': opp.profit_amount,
+                    'profit_percentage': round(opp.profit_percentage, 2),
+                    'volume': opp.volume,
+                    'timestamp': opp.timestamp
+                }
+                
+                save_tasks.append(redis_manager.save_arbitrage_opportunity(opportunity_data))
             
-            await redis_manager.save_arbitrage_opportunity(opportunity_data)
+            # Execute all saves concurrently
+            if save_tasks:
+                await asyncio.gather(*save_tasks, return_exceptions=True)
+                
+        except Exception as e:
+            logger.error(f"Error saving opportunities: {e}")
 
     async def _broadcast_opportunities(self, opportunities: List[ArbitrageOpportunity]):
-        """Broadcast opportunities to WebSocket"""
-        if self.channel_layer:
+        """Broadcast opportunities to WebSocket with rate limiting"""
+        if not self.channel_layer:
+            return
+            
+        try:
             opportunities_data = []
             for opp in opportunities:
                 opportunities_data.append({
@@ -348,8 +384,12 @@ class FastArbitrageCalculator:
                     'opportunities': opportunities_data
                 }
             )
+            
+        except Exception as e:
+            # Don't let broadcast errors stop the calculation
+            logger.debug(f"Broadcast error (non-critical): {e}")
 
     async def stop_calculation(self):
         """Stop arbitrage calculation"""
         self.is_running = False
-        logger.info("FastArbitrageCalculator stopped")
+        performance_logger.info(f"FastArbitrageCalculator stopped after {self.calculation_count} calculations")
