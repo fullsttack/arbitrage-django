@@ -466,3 +466,4 @@
 [2025-07-22 01:51:31,039] PERF workers._start_lbank_worker - LBank worker started with 3 pairs
 [2025-07-22 01:51:32,119] PERF workers._start_ramzinex_worker - Ramzinex worker started with 3 pairs
 [2025-07-22 01:52:30,045] PERF workers._start_monitoring_worker - System stats - Opportunities: 0, Prices: 8, Redis memory: 2.19M
+[2025-07-22 01:53:30,052] PERF workers._start_monitoring_worker - System stats - Opportunities: 0, Prices: 9, Redis memory: 2.19M
