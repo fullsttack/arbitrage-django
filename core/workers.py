@@ -122,17 +122,21 @@ class HighPerformanceWorkersManager:
             'ramzinex': RamzinexService()
         }
         
-        # Arbitrage calculators
+        # Arbitrage calculators - OPTIMIZED COUNT
         self.arbitrage_calculators = []
         self.is_running = False
         self.worker_tasks = {}  # Dict of WorkerTask objects
         
-        performance_logger.info(f"Initialized with {self.worker_count} workers")
+        # Calculate optimal number of arbitrage calculators
+        cpu_cores = multiprocessing.cpu_count()
+        self.optimal_calculator_count = min(8, max(6, cpu_cores))  # 6-8 calculators
+        
+        performance_logger.info(f"Initialized with {self.worker_count} workers and {self.optimal_calculator_count} arbitrage calculators")
 
     async def start_all_workers(self):
         """Start all workers with enhanced monitoring and auto-restart"""
         self.is_running = True
-        performance_logger.info(f"Starting {self.worker_count} high-performance workers...")
+        performance_logger.info(f"Starting {self.worker_count} high-performance workers with {self.optimal_calculator_count} arbitrage calculators...")
         
         # Initialize Redis
         await redis_manager.connect()
@@ -140,11 +144,11 @@ class HighPerformanceWorkersManager:
         # Get trading pairs by exchange
         pairs_by_exchange = await self._get_trading_pairs()
         
-        # Create arbitrage calculators (2-4 instances for parallel processing)
-        calculator_count = min(4, max(2, self.worker_count // 2))
-        for i in range(calculator_count):
+        # Create optimized arbitrage calculators
+        for i in range(self.optimal_calculator_count):
             calc = FastArbitrageCalculator()
             self.arbitrage_calculators.append(calc)
+            performance_logger.info(f"Created arbitrage calculator {i+1}/{self.optimal_calculator_count}")
         
         # Create and start worker tasks
         await self._create_worker_tasks(pairs_by_exchange)
@@ -167,7 +171,7 @@ class HighPerformanceWorkersManager:
             logger.error(f"Main monitoring loop error: {e}")
 
     async def _create_worker_tasks(self, pairs_by_exchange: Dict[str, List[str]]):
-        """Create all worker tasks"""
+        """Create all worker tasks with optimized arbitrage calculators"""
         
         # Exchange workers
         exchange_workers = [
@@ -176,7 +180,7 @@ class HighPerformanceWorkersManager:
             ("ramzinex_worker", self._enhanced_exchange_worker('ramzinex', pairs_by_exchange.get('ramzinex', []))),
         ]
         
-        # Arbitrage calculator workers
+        # Optimized arbitrage calculator workers
         arbitrage_workers = [
             (f"arbitrage_calc_{i}", calc.start_calculation()) 
             for i, calc in enumerate(self.arbitrage_calculators)
@@ -185,6 +189,7 @@ class HighPerformanceWorkersManager:
         # System workers
         system_workers = [
             ("cleanup_worker", self._start_cleanup_worker()),
+            ("performance_monitor", self._start_performance_monitor()),  # New performance monitor
         ]
         
         # Start all workers
@@ -194,6 +199,8 @@ class HighPerformanceWorkersManager:
             worker_task = WorkerTask(name, coro, restart_on_failure=True)
             await worker_task.start()
             self.worker_tasks[name] = worker_task
+            
+        performance_logger.info(f"Created {len(exchange_workers)} exchange workers, {len(arbitrage_workers)} arbitrage workers, {len(system_workers)} system workers")
 
     async def _enhanced_exchange_worker(self, exchange_name: str, pairs: List[str]):
         """Enhanced exchange worker with robust reconnection"""
@@ -321,6 +328,47 @@ class HighPerformanceWorkersManager:
                 logger.error(f"Cleanup worker error: {e}")
                 await asyncio.sleep(60)  # Wait longer on error
 
+    async def _start_performance_monitor(self):
+        """Worker: Monitor system performance metrics"""
+        performance_logger.info("Performance monitor started")
+        
+        while self.is_running:
+            try:
+                # Monitor arbitrage calculator performance
+                active_calculators = len([calc for calc in self.arbitrage_calculators if calc.is_running])
+                total_calculations = sum(calc.calculation_count for calc in self.arbitrage_calculators if hasattr(calc, 'calculation_count'))
+                
+                # Monitor Redis performance
+                stats = await redis_manager.get_redis_stats()
+                
+                # Log performance metrics every 2 minutes
+                performance_logger.info(
+                    f"Performance Metrics - "
+                    f"Active Calculators: {active_calculators}/{len(self.arbitrage_calculators)}, "
+                    f"Total Calculations: {total_calculations}, "
+                    f"Redis Ops/sec: {stats.get('operations_per_sec', 0)}, "
+                    f"Redis Hit Rate: {self._calculate_hit_rate(stats)}"
+                )
+                
+                await asyncio.sleep(120)  # Monitor every 2 minutes
+                
+            except Exception as e:
+                logger.error(f"Performance monitor error: {e}")
+                await asyncio.sleep(60)
+
+    def _calculate_hit_rate(self, stats: Dict) -> str:
+        """Calculate Redis cache hit rate"""
+        try:
+            hits = stats.get('keyspace_hits', 0)
+            misses = stats.get('keyspace_misses', 0)
+            total = hits + misses
+            if total > 0:
+                hit_rate = (hits / total) * 100
+                return f"{hit_rate:.1f}%"
+            return "N/A"
+        except:
+            return "N/A"
+
     async def _system_monitor(self):
         """Enhanced system monitoring with detailed metrics"""
         performance_logger.info("System monitor started")
@@ -345,10 +393,14 @@ class HighPerformanceWorkersManager:
                 running_tasks = sum(1 for task in self.worker_tasks.values() if task.is_running())
                 total_tasks = len(self.worker_tasks)
                 
+                # Count active arbitrage calculators
+                active_calculators = len([calc for calc in self.arbitrage_calculators if calc.is_running])
+                
                 performance_logger.info(
                     f"System Status - "
                     f"Connections: {healthy_connections}/{total_connections}, "
                     f"Tasks: {running_tasks}/{total_tasks}, "
+                    f"Calculators: {active_calculators}/{len(self.arbitrage_calculators)}, "
                     f"Opportunities: {opportunities_count}, "
                     f"Prices: {prices_count}, "
                     f"Redis Memory: {stats.get('memory_used', 'N/A')}"
@@ -383,6 +435,23 @@ class HighPerformanceWorkersManager:
                 for name in dead_tasks:
                     logger.error(f"Removing permanently failed worker task: {name}")
                     del self.worker_tasks[name]
+                
+                # Check arbitrage calculator health
+                dead_calculators = []
+                for i, calc in enumerate(self.arbitrage_calculators):
+                    if hasattr(calc, 'is_running') and not calc.is_running:
+                        dead_calculators.append(i)
+                
+                # Restart dead calculators
+                for i in dead_calculators:
+                    logger.warning(f"Restarting dead arbitrage calculator {i}")
+                    calc = FastArbitrageCalculator()
+                    self.arbitrage_calculators[i] = calc
+                    
+                    # Create new worker task for the calculator
+                    worker_task = WorkerTask(f"arbitrage_calc_{i}", calc.start_calculation(), restart_on_failure=True)
+                    await worker_task.start()
+                    self.worker_tasks[f"arbitrage_calc_{i}"] = worker_task
                 
                 # Sleep and continue monitoring
                 await asyncio.sleep(30)

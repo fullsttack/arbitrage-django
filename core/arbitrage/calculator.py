@@ -35,9 +35,11 @@ class ArbitrageOpportunity:
     sell_exchange: str  # exchange where we sell
     buy_price: float  # buy price (ask price)
     sell_price: float  # sell price (bid price)
+    buy_volume: float  # available buy volume (ask volume on buy exchange)
+    sell_volume: float  # available sell volume (bid volume on sell exchange)
+    trade_volume: float  # actual tradeable volume (minimum of buy/sell)
     profit_amount: float
     profit_percentage: float
-    volume: float
     timestamp: float
 
 class FastArbitrageCalculator:
@@ -280,7 +282,7 @@ class FastArbitrageCalculator:
     def _calculate_opportunity_fast(self, base_currency: str, quote_currency: str,
                                   buy_settings: PricePoint, sell_settings: PricePoint,
                                   buy_price: float, sell_price: float) -> Optional[ArbitrageOpportunity]:
-        """Fast opportunity calculation with minimal overhead"""
+        """Fast opportunity calculation with separate buy/sell volumes"""
         try:
             # Quick profit check first (most opportunities will fail this)
             if sell_price <= buy_price:
@@ -300,9 +302,12 @@ class FastArbitrageCalculator:
             min_volume = max(buy_settings.min_volume, sell_settings.min_volume)
             max_volume = min(buy_settings.max_volume, sell_settings.max_volume)
             
-            # Available volume check
-            available_volume = min(buy_settings.ask_volume, sell_settings.bid_volume)
-            trade_volume = min(available_volume, max_volume)
+            # Available volumes for buy and sell
+            buy_available_volume = buy_settings.ask_volume  # volume available for buying
+            sell_available_volume = sell_settings.bid_volume  # volume available for selling
+            
+            # Actual tradeable volume is the minimum
+            trade_volume = min(buy_available_volume, sell_available_volume, max_volume)
             
             # Volume constraint check
             if trade_volume < min_volume:
@@ -318,9 +323,11 @@ class FastArbitrageCalculator:
                 sell_exchange=sell_settings.exchange,
                 buy_price=buy_price,
                 sell_price=sell_price,
+                buy_volume=buy_available_volume,
+                sell_volume=sell_available_volume,
+                trade_volume=trade_volume,
                 profit_amount=profit_amount,
                 profit_percentage=profit_percentage,
-                volume=trade_volume,
                 timestamp=time.time()
             )
             
@@ -342,9 +349,11 @@ class FastArbitrageCalculator:
                     'sell_exchange': opp.sell_exchange,
                     'buy_price': opp.buy_price,
                     'sell_price': opp.sell_price,
+                    'buy_volume': opp.buy_volume,
+                    'sell_volume': opp.sell_volume,
+                    'trade_volume': opp.trade_volume,
                     'profit_amount': opp.profit_amount,
                     'profit_percentage': round(opp.profit_percentage, 2),
-                    'volume': opp.volume,
                     'timestamp': opp.timestamp
                 }
                 
@@ -371,9 +380,11 @@ class FastArbitrageCalculator:
                     'sell_exchange': opp.sell_exchange,
                     'profit_percentage': round(opp.profit_percentage, 2),
                     'profit_amount': round(opp.profit_amount, 4),
-                    'volume': opp.volume,
                     'buy_price': opp.buy_price,
                     'sell_price': opp.sell_price,
+                    'buy_volume': opp.buy_volume,
+                    'sell_volume': opp.sell_volume,
+                    'trade_volume': opp.trade_volume,
                     'timestamp': opp.timestamp
                 })
             

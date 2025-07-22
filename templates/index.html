@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ page_title }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#f0f9ff',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            700: '#0369a1'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .notification-enter {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+        .notification-enter-active {
+            transform: translateX(0);
+            opacity: 1;
+            transition: all 0.3s ease-out;
+        }
+        .notification-exit {
+            transform: translateX(0);
+            opacity: 1;
+        }
+        .notification-exit-active {
+            transform: translateX(100%);
+            opacity: 0;
+            transition: all 0.3s ease-in;
+        }
+        .pulse-green {
+            animation: pulse-green 2s infinite;
+        }
+        @keyframes pulse-green {
+            0%, 100% { background-color: rgb(34, 197, 94); }
+            50% { background-color: rgb(22, 163, 74); }
+        }
+        .pulse-red {
+            animation: pulse-red 2s infinite;
+        }
+        @keyframes pulse-red {
+            0%, 100% { background-color: rgb(239, 68, 68); }
+            50% { background-color: rgb(220, 38, 38); }
+        }
+        /* Update Flash Effects */
+        .flash-update {
+            animation: flash-update 1s ease-out;
+        }
+        @keyframes flash-update {
+            0% { background-color: rgb(34, 197, 94, 0.3); }
+            50% { background-color: rgb(34, 197, 94, 0.6); }
+            100% { background-color: transparent; }
+        }
+        .flash-new {
+            animation: flash-new 1.5s ease-out;
+        }
+        @keyframes flash-new {
+            0% { background-color: rgb(59, 130, 246, 0.4); transform: scale(1.02); }
+            50% { background-color: rgb(59, 130, 246, 0.7); transform: scale(1.01); }
+            100% { background-color: transparent; transform: scale(1); }
+        }
+        .flash-profit {
+            animation: flash-profit 2s ease-out;
+        }
+        @keyframes flash-profit {
+            0% { background-color: rgb(245, 158, 11, 0.3); border-left: 3px solid rgb(245, 158, 11); }
+            50% { background-color: rgb(245, 158, 11, 0.6); border-left: 3px solid rgb(245, 158, 11); }
+            100% { background-color: transparent; border-left: 3px solid transparent; }
+        }
+    </style>
+</head>
+<body class="bg-black text-white min-h-screen font-sans">
+    <!-- Header -->
+    <header class="bg-gray-900 border-b border-gray-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center py-6">
+                <div class="flex items-center">
+                    <i class="fas fa-chart-line text-primary-500 text-2xl mr-3"></i>
+                    <h1 class="text-2xl font-bold">Crypto Arbitrage Dashboard</h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div id="connection-status" class="flex items-center">
+                        <div id="status-indicator" class="w-3 h-3 rounded-full bg-red-500 mr-2"></div>
+                        <span id="status-text" class="text-sm">Connecting...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Notifications Container -->
+    <div id="notifications-container" class="fixed top-4 right-4 z-50 space-y-2"></div>
+
+    <!-- Stats Overview -->
+    <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <!-- Total Opportunities -->
+            <div class="bg-gray-900 rounded-xl p-6 border border-gray-800">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-400 text-sm">Total Opportunities</p>
+                        <p id="stat-opportunities" class="text-2xl font-bold text-green-500">-</p>
+                    </div>
+                    <div class="bg-green-500 bg-opacity-20 p-3 rounded-lg">
+                        <i class="fas fa-coins text-green-500 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Active Prices -->
+            <div class="bg-gray-900 rounded-xl p-6 border border-gray-800">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-400 text-sm">Active Prices</p>
+                        <p id="stat-prices" class="text-2xl font-bold text-blue-500">-</p>
+                    </div>
+                    <div class="bg-blue-500 bg-opacity-20 p-3 rounded-lg">
+                        <i class="fas fa-chart-bar text-blue-500 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Redis Memory -->
+            <div class="bg-gray-900 rounded-xl p-6 border border-gray-800">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-400 text-sm">Redis Memory</p>
+                        <p id="stat-memory" class="text-2xl font-bold text-yellow-500">-</p>
+                    </div>
+                    <div class="bg-yellow-500 bg-opacity-20 p-3 rounded-lg">
+                        <i class="fas fa-memory text-yellow-500 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- System Health -->
+            <div class="bg-gray-900 rounded-xl p-6 border border-gray-800">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-400 text-sm">System Health</p>
+                        <p id="stat-health" class="text-2xl font-bold text-purple-500">-</p>
+                    </div>
+                    <div class="bg-purple-500 bg-opacity-20 p-3 rounded-lg">
+                        <i class="fas fa-heartbeat text-purple-500 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab Navigation -->
+        <div class="bg-gray-900 rounded-xl border border-gray-800">
+            <div class="border-b border-gray-800">
+                <nav class="flex space-x-8 px-6" role="tablist">
+                    <button id="tab-prices" class="tab-button active py-4 px-2 border-b-2 border-primary-500 text-primary-500 font-medium" role="tab">
+                        <i class="fas fa-dollar-sign mr-2"></i>Live Prices
+                    </button>
+                    <button id="tab-opportunities" class="tab-button py-4 px-2 border-b-2 border-transparent text-gray-400 hover:text-white font-medium" role="tab">
+                        <i class="fas fa-bullseye mr-2"></i>Opportunities
+                    </button>
+                    <button id="tab-monitoring" class="tab-button py-4 px-2 border-b-2 border-transparent text-gray-400 hover:text-white font-medium" role="tab">
+                        <i class="fas fa-monitor-waveform mr-2"></i>Monitoring
+                    </button>
+                </nav>
+            </div>
+
+            <!-- Tab Content -->
+            <div class="p-6">
+                <!-- Prices Tab -->
+                <div id="content-prices" class="tab-content">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-semibold">Live Price Feed</h2>
+                        <div class="flex items-center space-x-4">
+                            <span id="prices-count" class="text-sm text-gray-400">0 active prices</span>
+                            <span id="prices-last-update" class="text-sm text-gray-400">Last update: -</span>
+                        </div>
+                    </div>
+                    
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm">
+                            <thead>
+                                <tr class="border-b border-gray-800">
+                                    <th class="text-left py-3 px-4 text-gray-400">Exchange</th>
+                                    <th class="text-left py-3 px-4 text-gray-400">Currency</th>
+                                    <th class="text-right py-3 px-4 text-gray-400">Bid Price</th>
+                                    <th class="text-right py-3 px-4 text-gray-400">Bid Volume</th>
+                                    <th class="text-right py-3 px-4 text-gray-400">Ask Price</th>
+                                    <th class="text-right py-3 px-4 text-gray-400">Ask Volume</th>
+                                    <th class="text-right py-3 px-4 text-gray-400">Spread</th>
+                                    <th class="text-right py-3 px-4 text-gray-400">Last Update</th>
+                                </tr>
+                            </thead>
+                            <tbody id="prices-table-body" class="divide-y divide-gray-800">
+                                <tr>
+                                    <td colspan="8" class="text-center py-8 text-gray-500">
+                                        <i class="fas fa-spinner fa-spin text-2xl mb-2"></i>
+                                        <div>Loading price data...</div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Opportunities Tab -->
+                <div id="content-opportunities" class="tab-content hidden">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-semibold">Arbitrage Opportunities</h2>
+                        <div class="flex items-center space-x-4">
+                            <span id="opportunities-count" class="text-sm text-gray-400">0 opportunities</span>
+                            <span id="opportunities-last-update" class="text-sm text-gray-400">Last update: -</span>
+                        </div>
+                    </div>
+                    
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm">
+                            <thead>
+                                <tr class="border-b border-gray-800">
+                                    <th class="text-left py-3 px-4 text-gray-400">Currency</th>
+                                    <th class="text-left py-3 px-4 text-gray-400">Buy Exchange</th>
+                                    <th class="text-left py-3 px-4 text-gray-400">Sell Exchange</th>
+                                    <th class="text-right py-3 px-4 text-gray-400">Buy Price</th>
+                                    <th class="text-right py-3 px-4 text-gray-400">Buy Volume</th>
+                                    <th class="text-right py-3 px-4 text-gray-400">Sell Price</th>
+                                    <th class="text-right py-3 px-4 text-gray-400">Sell Volume</th>
+                                    <th class="text-right py-3 px-4 text-gray-400">Trade Volume</th>
+                                    <th class="text-right py-3 px-4 text-gray-400">Profit %</th>
+                                    <th class="text-right py-3 px-4 text-gray-400">Profit Amount</th>
+                                    <th class="text-right py-3 px-4 text-gray-400">Time</th>
+                                </tr>
+                            </thead>
+                            <tbody id="opportunities-table-body" class="divide-y divide-gray-800">
+                                <tr>
+                                    <td colspan="11" class="text-center py-8 text-gray-500">
+                                        <i class="fas fa-search text-2xl mb-2"></i>
+                                        <div>Scanning for opportunities...</div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Monitoring Tab -->
+                <div id="content-monitoring" class="tab-content hidden">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-semibold">System Monitoring</h2>
+                        <div class="flex items-center space-x-4">
+                            <span id="monitoring-last-update" class="text-sm text-gray-400">Last update: -</span>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <!-- Exchange Status -->
+                        <div class="bg-gray-800 rounded-lg p-6">
+                            <h3 class="text-lg font-semibold mb-4">Exchange Connections</h3>
+                            <div id="exchange-status" class="space-y-3">
+                                <div class="flex items-center justify-between p-3 bg-gray-700 rounded-lg">
+                                    <div class="flex items-center">
+                                        <div class="w-3 h-3 bg-yellow-500 rounded-full mr-3"></div>
+                                        <span>Wallex</span>
+                                    </div>
+                                    <span class="text-sm text-gray-400">Connecting...</span>
+                                </div>
+                                <div class="flex items-center justify-between p-3 bg-gray-700 rounded-lg">
+                                    <div class="flex items-center">
+                                        <div class="w-3 h-3 bg-yellow-500 rounded-full mr-3"></div>
+                                        <span>LBank</span>
+                                    </div>
+                                    <span class="text-sm text-gray-400">Connecting...</span>
+                                </div>
+                                <div class="flex items-center justify-between p-3 bg-gray-700 rounded-lg">
+                                    <div class="flex items-center">
+                                        <div class="w-3 h-3 bg-yellow-500 rounded-full mr-3"></div>
+                                        <span>Ramzinex</span>
+                                    </div>
+                                    <span class="text-sm text-gray-400">Connecting...</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Redis Statistics -->
+                        <div class="bg-gray-800 rounded-lg p-6">
+                            <h3 class="text-lg font-semibold mb-4">Redis Statistics</h3>
+                            <div class="space-y-3">
+                                <div class="flex justify-between">
+                                    <span class="text-gray-400">Memory Used:</span>
+                                    <span id="redis-memory">-</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-400">Connected Clients:</span>
+                                    <span id="redis-clients">-</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-400">Operations/sec:</span>
+                                    <span id="redis-ops">-</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-400">Hit Rate:</span>
+                                    <span id="redis-hit-rate">-</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-400">Uptime:</span>
+                                    <span id="redis-uptime">-</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        class ArbitrageDashboard {
+            constructor() {
+                this.websocket = null;
+                this.reconnectInterval = 5000;
+                this.reconnectAttempts = 0;
+                this.maxReconnectAttempts = 10;
+                this.pricesData = new Map();
+                this.opportunitiesData = [];
+                this.lastNotificationTime = 0;
+                this.currencyNames = {}; // Store currency names mapping
+                this.lastUpdateTimes = new Map(); // Track last update times for animation
+                
+                this.init();
+            }
+
+            init() {
+                this.setupTabs();
+                this.setupWebSocket();
+                this.loadInitialData();
+                
+                // Auto-refresh every 30 seconds
+                setInterval(() => this.loadSystemStats(), 30000);
+            }
+
+            setupTabs() {
+                const tabButtons = document.querySelectorAll('.tab-button');
+                const tabContents = document.querySelectorAll('.tab-content');
+
+                tabButtons.forEach(button => {
+                    button.addEventListener('click', () => {
+                        const tabId = button.id.replace('tab-', '');
+                        
+                        // Update button states
+                        tabButtons.forEach(btn => {
+                            btn.classList.remove('active', 'border-primary-500', 'text-primary-500');
+                            btn.classList.add('border-transparent', 'text-gray-400');
+                        });
+                        
+                        button.classList.add('active', 'border-primary-500', 'text-primary-500');
+                        button.classList.remove('border-transparent', 'text-gray-400');
+                        
+                        // Update content visibility
+                        tabContents.forEach(content => {
+                            content.classList.add('hidden');
+                        });
+                        
+                        document.getElementById(`content-${tabId}`).classList.remove('hidden');
+                    });
+                });
+            }
+
+            setupWebSocket() {
+                const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+                const wsUrl = `${protocol}//${window.location.host}/ws/arbitrage/`;
+                
+                try {
+                    this.websocket = new WebSocket(wsUrl);
+                    
+                    this.websocket.onopen = () => {
+                        console.log('WebSocket connected');
+                        this.updateConnectionStatus(true);
+                        this.reconnectAttempts = 0;
+                    };
+                    
+                    this.websocket.onmessage = (event) => {
+                        const data = JSON.parse(event.data);
+                        this.handleWebSocketMessage(data);
+                    };
+                    
+                    this.websocket.onclose = () => {
+                        console.log('WebSocket disconnected');
+                        this.updateConnectionStatus(false);
+                        this.attemptReconnect();
+                    };
+                    
+                    this.websocket.onerror = (error) => {
+                        console.error('WebSocket error:', error);
+                        this.updateConnectionStatus(false);
+                    };
+                    
+                } catch (error) {
+                    console.error('Failed to create WebSocket:', error);
+                    this.updateConnectionStatus(false);
+                }
+            }
+
+            attemptReconnect() {
+                if (this.reconnectAttempts < this.maxReconnectAttempts) {
+                    this.reconnectAttempts++;
+                    console.log(`Attempting to reconnect (${this.reconnectAttempts}/${this.maxReconnectAttempts})...`);
+                    
+                    setTimeout(() => {
+                        this.setupWebSocket();
+                    }, this.reconnectInterval);
+                } else {
+                    console.error('Max reconnection attempts reached');
+                    this.showNotification('Connection lost. Please refresh the page.', 'error');
+                }
+            }
+
+            handleWebSocketMessage(data) {
+                switch (data.type) {
+                    case 'initial_prices':
+                        this.updatePricesTable(data.data);
+                        break;
+                    case 'price_update':
+                        this.updateSinglePrice(data.data);
+                        break;
+                    case 'initial_opportunities':
+                        this.updateOpportunitiesTable(data.data);
+                        break;
+                    case 'opportunities_update':
+                        this.updateOpportunities(data.data);
+                        break;
+                    case 'redis_stats':
+                        this.updateSystemStats(data.data);
+                        break;
+                }
+            }
+
+            updateConnectionStatus(connected) {
+                const indicator = document.getElementById('status-indicator');
+                const text = document.getElementById('status-text');
+                
+                if (connected) {
+                    indicator.className = 'w-3 h-3 rounded-full bg-green-500 mr-2';
+                    text.textContent = 'Connected';
+                } else {
+                    indicator.className = 'w-3 h-3 rounded-full bg-red-500 mr-2';
+                    text.textContent = 'Disconnected';
+                }
+            }
+
+            updatePricesTable(prices) {
+                const tbody = document.getElementById('prices-table-body');
+                
+                if (!prices || prices.length === 0) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="8" class="text-center py-8 text-gray-500">
+                                <i class="fas fa-exclamation-triangle text-2xl mb-2"></i>
+                                <div>No price data available</div>
+                            </td>
+                        </tr>
+                    `;
+                    return;
+                }
+
+                // Store prices data and detect updates
+                const currentTime = Date.now();
+                prices.forEach(price => {
+                    const key = `${price.exchange}_${price.symbol}`;
+                    const previousPrice = this.pricesData.get(key);
+                    this.pricesData.set(key, price);
+                    
+                    // Mark as updated if price changed
+                    if (previousPrice && 
+                        (previousPrice.bid_price !== price.bid_price || 
+                         previousPrice.ask_price !== price.ask_price)) {
+                        this.lastUpdateTimes.set(key, currentTime);
+                    }
+                });
+
+                // Render table with animations
+                tbody.innerHTML = prices.map(price => {
+                    const spread = ((price.ask_price - price.bid_price) / price.bid_price * 100).toFixed(2);
+                    const timeAgo = this.getTimeAgo(price.timestamp);
+                    const key = `${price.exchange}_${price.symbol}`;
+                    
+                    // Get currency name
+                    const baseSymbol = this.extractBaseSymbol(price.symbol);
+                    const currencyName = price.currency_name || this.currencyNames[baseSymbol] || baseSymbol;
+                    
+                    // Check if recently updated for animation
+                    const lastUpdate = this.lastUpdateTimes.get(key) || 0;
+                    const isRecentlyUpdated = (currentTime - lastUpdate) < 2000; // 2 seconds
+                    const animationClass = isRecentlyUpdated ? 'flash-update' : '';
+                    
+                    return `
+                        <tr class="hover:bg-gray-800 transition-colors ${animationClass}" data-key="${key}">
+                            <td class="py-3 px-4">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                    ${price.exchange}
+                                </span>
+                            </td>
+                            <td class="py-3 px-4 font-medium">${price.symbol}</td>
+                            <td class="py-3 px-4 text-gray-300">${currencyName}</td>
+                            <td class="py-3 px-4 text-right text-green-400">${price.bid_price.toFixed(4)}</td>
+                            <td class="py-3 px-4 text-right text-red-400">${price.ask_price.toFixed(4)}</td>
+                            <td class="py-3 px-4 text-right">${spread}%</td>
+                            <td class="py-3 px-4 text-right">${price.bid_volume.toFixed(2)}</td>
+                            <td class="py-3 px-4 text-right text-gray-400">${timeAgo}</td>
+                        </tr>
+                    `;
+                }).join('');
+
+                // Remove animation classes after animation completes
+                setTimeout(() => {
+                    const animatedRows = tbody.querySelectorAll('.flash-update');
+                    animatedRows.forEach(row => row.classList.remove('flash-update'));
+                }, 1000);
+
+                // Update counts
+                document.getElementById('prices-count').textContent = `${prices.length} active prices`;
+                document.getElementById('prices-last-update').textContent = `Last update: ${new Date().toLocaleTimeString()}`;
+            }
+
+            updateSinglePrice(priceData) {
+                const key = `${priceData.exchange}_${priceData.symbol}`;
+                const previousPrice = this.pricesData.get(key);
+                this.pricesData.set(key, priceData);
+                
+                // Mark as updated if price changed
+                if (previousPrice && 
+                    (previousPrice.bid_price !== priceData.bid_price || 
+                     previousPrice.ask_price !== priceData.ask_price)) {
+                    this.lastUpdateTimes.set(key, Date.now());
+                }
+                
+                // If we're on the prices tab, update the table
+                if (!document.getElementById('content-prices').classList.contains('hidden')) {
+                    this.updatePricesTable(Array.from(this.pricesData.values()));
+                }
+            }
+
+            updateOpportunitiesTable(opportunities) {
+                const tbody = document.getElementById('opportunities-table-body');
+                
+                if (!opportunities || opportunities.length === 0) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="11" class="text-center py-8 text-gray-500">
+                                <i class="fas fa-search text-2xl mb-2"></i>
+                                <div>No opportunities found</div>
+                            </td>
+                        </tr>
+                    `;
+                    return;
+                }
+
+                this.opportunitiesData = opportunities;
+
+                tbody.innerHTML = opportunities.map(opp => {
+                    const profitClass = opp.profit_percentage > 2 ? 'text-green-400 pulse-green' : 
+                                      opp.profit_percentage > 1 ? 'text-green-400' : 'text-yellow-400';
+                    const timeAgo = this.getTimeAgo(opp.timestamp);
+                    
+                    return `
+                        <tr class="hover:bg-gray-800 transition-colors">
+                            <td class="py-3 px-4 font-medium">${opp.symbol || opp.base_currency + '/' + opp.quote_currency}</td>
+                            <td class="py-3 px-4">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                    ${opp.buy_exchange}
+                                </span>
+                            </td>
+                            <td class="py-3 px-4">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                    ${opp.sell_exchange}
+                                </span>
+                            </td>
+                            <td class="py-3 px-4 text-right text-green-400">${opp.buy_price.toFixed(4)}</td>
+                            <td class="py-3 px-4 text-right text-blue-400">${(opp.buy_volume || 0).toFixed(2)}</td>
+                            <td class="py-3 px-4 text-right text-red-400">${opp.sell_price.toFixed(4)}</td>
+                            <td class="py-3 px-4 text-right text-blue-400">${(opp.sell_volume || 0).toFixed(2)}</td>
+                            <td class="py-3 px-4 text-right text-purple-400 font-semibold">${(opp.trade_volume || opp.volume || 0).toFixed(2)}</td>
+                            <td class="py-3 px-4 text-right font-bold ${profitClass}">
+                                ${opp.profit_percentage.toFixed(2)}%
+                            </td>
+                            <td class="py-3 px-4 text-right font-bold text-green-400">
+                                ${opp.profit_amount.toFixed(2)}
+                            </td>
+                            <td class="py-3 px-4 text-right text-gray-400">${timeAgo}</td>
+                        </tr>
+                    `;
+                }).join('');
+
+                // Update counts
+                document.getElementById('opportunities-count').textContent = `${opportunities.length} opportunities`;
+                document.getElementById('opportunities-last-update').textContent = `Last update: ${new Date().toLocaleTimeString()}`;
+            }
+
+            updateOpportunities(newOpportunities) {
+                // Show notifications for new profitable opportunities
+                const now = Date.now();
+                if (now - this.lastNotificationTime > 3000) { // Throttle notifications
+                    const profitableOpps = newOpportunities.filter(opp => opp.profit_percentage > 1);
+                    if (profitableOpps.length > 0) {
+                        const bestOpp = profitableOpps.reduce((best, current) => 
+                            current.profit_percentage > best.profit_percentage ? current : best
+                        );
+                        
+                        // Get currency name for notification
+                        const baseSymbol = bestOpp.base_currency || this.extractBaseSymbol(bestOpp.symbol);
+                        const currencyName = bestOpp.currency_name || this.currencyNames[baseSymbol] || baseSymbol;
+                        
+                        this.showNotification(
+                            `🚀 New ${currencyName} opportunity: ${bestOpp.profit_percentage.toFixed(2)}% profit (${bestOpp.buy_exchange} → ${bestOpp.sell_exchange})!`,
+                            'success'
+                        );
+                        
+                        this.lastNotificationTime = now;
+                    }
+                }
+
+                // Update opportunities data
+                this.opportunitiesData = [...newOpportunities, ...this.opportunitiesData]
+                    .slice(0, 100); // Keep only latest 100
+
+                // If we're on the opportunities tab, update the table
+                if (!document.getElementById('content-opportunities').classList.contains('hidden')) {
+                    this.updateOpportunitiesTable(this.opportunitiesData);
+                }
+            }
+
+            updateSystemStats(stats) {
+                document.getElementById('stat-opportunities').textContent = stats.opportunities_count || 0;
+                document.getElementById('stat-prices').textContent = stats.prices_count || 0;
+                document.getElementById('stat-memory').textContent = stats.redis_memory || 'N/A';
+                document.getElementById('stat-health').textContent = `${stats.redis_clients || 0} clients`;
+                
+                // Update monitoring tab
+                document.getElementById('redis-memory').textContent = stats.redis_memory || 'N/A';
+                document.getElementById('redis-clients').textContent = stats.redis_clients || 0;
+                document.getElementById('redis-ops').textContent = stats.redis_ops_per_sec || 0;
+                document.getElementById('redis-hit-rate').textContent = stats.redis_hit_rate || 'N/A';
+                document.getElementById('redis-uptime').textContent = this.formatUptime(stats.uptime || 0);
+                
+                document.getElementById('monitoring-last-update').textContent = `Last update: ${new Date().toLocaleTimeString()}`;
+            }
+
+            showNotification(message, type = 'info') {
+                const container = document.getElementById('notifications-container');
+                const notification = document.createElement('div');
+                
+                const bgColor = type === 'success' ? 'bg-green-600' : 
+                               type === 'error' ? 'bg-red-600' : 'bg-blue-600';
+                
+                notification.className = `${bgColor} text-white px-6 py-4 rounded-lg shadow-lg flex items-center space-x-3 notification-enter`;
+                notification.innerHTML = `
+                    <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
+                    <span>${message}</span>
+                    <button class="ml-4 text-white hover:text-gray-200">
+                        <i class="fas fa-times"></i>
+                    </button>
+                `;
+                
+                container.appendChild(notification);
+                
+                // Trigger animation
+                setTimeout(() => {
+                    notification.classList.remove('notification-enter');
+                    notification.classList.add('notification-enter-active');
+                }, 10);
+                
+                // Auto remove after 5 seconds
+                setTimeout(() => {
+                    this.removeNotification(notification);
+                }, 5000);
+                
+                // Remove on click
+                notification.querySelector('button').addEventListener('click', () => {
+                    this.removeNotification(notification);
+                });
+            }
+
+            removeNotification(notification) {
+                notification.classList.remove('notification-enter-active');
+                notification.classList.add('notification-exit-active');
+                
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.parentNode.removeChild(notification);
+                    }
+                }, 300);
+            }
+
+            async loadInitialData() {
+                try {
+                    // Load prices
+                    const pricesResponse = await fetch('/api/prices/');
+                    if (pricesResponse.ok) {
+                        const pricesData = await pricesResponse.json();
+                        if (pricesData.success) {
+                            // Store currency names mapping
+                            if (pricesData.currency_names) {
+                                this.currencyNames = pricesData.currency_names;
+                            }
+                            this.updatePricesTable(pricesData.data);
+                        }
+                    }
+                    
+                    // Load opportunities
+                    const oppsResponse = await fetch('/api/opportunities/');
+                    if (oppsResponse.ok) {
+                        const oppsData = await oppsResponse.json();
+                        if (oppsData.success) {
+                            // Update currency names if available
+                            if (oppsData.currency_names) {
+                                this.currencyNames = { ...this.currencyNames, ...oppsData.currency_names };
+                            }
+                            this.updateOpportunitiesTable(oppsData.data);
+                        }
+                    }
+                } catch (error) {
+                    console.error('Failed to load initial data:', error);
+                    this.showNotification('Failed to load initial data', 'error');
+                }
+            }
+
+            async loadSystemStats() {
+                try {
+                    const response = await fetch('/api/stats/');
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (data.success) {
+                            this.updateSystemStats(data.data);
+                        }
+                    }
+                } catch (error) {
+                    console.error('Failed to load system stats:', error);
+                }
+            }
+
+            getTimeAgo(timestamp) {
+                const now = Date.now() / 1000;
+                const diff = now - timestamp;
+                
+                if (diff < 60) return `${Math.floor(diff)}s ago`;
+                if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+                if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+                return `${Math.floor(diff / 86400)}d ago`;
+            }
+
+            formatUptime(seconds) {
+                const days = Math.floor(seconds / 86400);
+                const hours = Math.floor((seconds % 86400) / 3600);
+                const mins = Math.floor((seconds % 3600) / 60);
+                
+                if (days > 0) return `${days}d ${hours}h`;
+                if (hours > 0) return `${hours}h ${mins}m`;
+                return `${mins}m`;
+            }
+
+            extractBaseSymbol(symbolFormat) {
+                try {
+                    const symbolUpper = symbolFormat.toUpperCase();
+                    
+                    // Format: XRP/USDT
+                    if (symbolUpper.includes('/')) {
+                        return symbolUpper.split('/')[0];
+                    }
+                    
+                    // Format: xrp_usdt
+                    if (symbolUpper.includes('_')) {
+                        return symbolUpper.split('_')[0];
+                    }
+                    
+                    // Format: XRPUSDT - assume USDT as quote
+                    if (symbolUpper.endsWith('USDT')) {
+                        return symbolUpper.slice(0, -4);
+                    }
+                    
+                    // Format: XRPTMN - assume TMN as quote  
+                    if (symbolUpper.endsWith('TMN')) {
+                        return symbolUpper.slice(0, -3);
+                    }
+                        
+                    return symbolUpper;
+                } catch {
+                    return symbolFormat;
+                }
+            }
+        }
+
+        // Initialize dashboard when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            new ArbitrageDashboard();
+        });
+    </script>
+</body>
+</html>
