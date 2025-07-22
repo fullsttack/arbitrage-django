@@ -93,7 +93,7 @@
                 <thead class="bg-gray-700/50">
                     <tr>
                         <th class="px-6 py-4 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Exchange</th>
-                        <th class="px-6 py-4 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Symbol</th>
+                        <th class="px-6 py-4 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Currency Name</th>
                         <th class="px-6 py-4 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Bid Price</th>
                         <th class="px-6 py-4 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Ask Price</th>
                         <th class="px-6 py-4 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Bid Volume</th>
@@ -460,7 +460,7 @@ function updateOpportunitiesTable() {
                 ${opp.volume.toFixed(4)}
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
-                ${formatTimestamp(opp.timestamp)}
+                ${formatTimestampTehran(opp.timestamp)}
             </td>
         </tr>
     `).join('');
@@ -499,8 +499,8 @@ function updatePricesTable() {
                     ${price.exchange}
                 </span>
             </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-white">
-                ${price.symbol}
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                <span class="font-medium">${getCurrencyName(price.symbol)}</span>
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-green-400 font-mono">
                 $${parseFloat(price.bid_price).toFixed(6)}
@@ -515,7 +515,7 @@ function updatePricesTable() {
                 ${parseFloat(price.ask_volume || 0).toFixed(4)}
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
-                ${formatTimestamp(price.timestamp)}
+                ${formatTimestampTehran(price.timestamp)}
             </td>
         </tr>
     `).join('');
@@ -552,6 +552,34 @@ function updateRedisStats() {
 function formatTimestamp(timestamp) {
     return new Date(timestamp * 1000).toLocaleTimeString();
 }
+
+function formatTimestampTehran(timestamp) {
+    const now = Date.now() / 1000; // Current time in seconds
+    const diffSeconds = now - timestamp;
+    
+    // Only show seconds with proper formatting
+    if (diffSeconds < 0) {
+        return 'just now';
+    } else if (diffSeconds < 1) {
+        return 'just now';
+    } else if (diffSeconds < 60) {
+        const seconds = Math.floor(diffSeconds);
+        return seconds === 1 ? '1 second ago' : `${seconds} seconds ago`;
+    } else if (diffSeconds < 3600) {
+        const minutes = Math.floor(diffSeconds / 60);
+        return minutes === 1 ? '1 minute ago' : `${minutes} minutes ago`;
+    } else {
+        const hours = Math.floor(diffSeconds / 3600);
+        return hours === 1 ? '1 hour ago' : `${hours} hours ago`;
+    }
+}
+
+function getCurrencyName(symbol) {
+    // Use dynamic currency mapping from database
+    const currencyMapping = {{ currency_mapping_json|safe }};
+    return currencyMapping[symbol] ? currencyMapping[symbol].name : symbol;
+}
+
 
 function formatUptime(seconds) {
     const days = Math.floor(seconds / 86400);

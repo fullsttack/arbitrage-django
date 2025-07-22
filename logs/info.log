@@ -180,3 +180,40 @@ INFO 2025-07-22 01:51:27,434 cli 66074 8444927744 Starting server at tcp:port=80
 INFO 2025-07-22 01:51:27,434 server 66074 8444927744 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
 INFO 2025-07-22 01:51:27,435 server 66074 8444927744 Configuring endpoint tcp:port=8000:interface=0.0.0.0
 INFO 2025-07-22 01:51:27,435 server 66074 8444927744 Listening on TCP address 0.0.0.0:8000
+INFO 2025-07-22 01:58:28,859 server 66074 8444927744 Killed 1 pending application instances
+INFO 2025-07-22 01:58:59,178 cli 67061 8444927744 Starting server at tcp:port=8000:interface=0.0.0.0
+INFO 2025-07-22 01:58:59,178 server 67061 8444927744 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-07-22 01:58:59,178 server 67061 8444927744 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-07-22 01:58:59,179 server 67061 8444927744 Listening on TCP address 0.0.0.0:8000
+INFO 2025-07-22 02:04:28,273 autoreload 67775 8444927744 Watching for file changes with StatReloader
+INFO 2025-07-22 02:04:28,273 autoreload 67775 8444927744 Watching for file changes with StatReloader
+INFO 2025-07-22 02:04:28,411 server 67775 6184415232 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-07-22 02:04:28,411 server 67775 6184415232 Configuring endpoint tcp:port=8000:interface=127.0.0.1
+INFO 2025-07-22 02:04:28,411 server 67775 6184415232 Listening on TCP address 127.0.0.1:8000
+INFO 2025-07-22 02:04:54,069 server 67061 8444927744 Killed 1 pending application instances
+INFO 2025-07-22 02:06:34,870 cli 68213 8444927744 Starting server at tcp:port=8000:interface=0.0.0.0
+INFO 2025-07-22 02:06:34,870 server 68213 8444927744 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-07-22 02:06:34,870 server 68213 8444927744 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-07-22 02:06:34,871 server 68213 8444927744 Listening on TCP address 0.0.0.0:8000
+INFO 2025-07-22 02:08:52,941 server 68213 8444927744 Killed 1 pending application instances
+INFO 2025-07-22 02:09:08,916 cli 68729 8444927744 Starting server at tcp:port=8000:interface=0.0.0.0
+INFO 2025-07-22 02:09:08,917 server 68729 8444927744 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-07-22 02:09:08,917 server 68729 8444927744 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-07-22 02:09:08,917 server 68729 8444927744 Listening on TCP address 0.0.0.0:8000
+INFO 2025-07-22 02:12:40,344 server 68729 8444927744 Killed 1 pending application instances
+INFO 2025-07-22 02:13:03,601 cli 69439 8444927744 Starting server at tcp:port=8000:interface=0.0.0.0
+INFO 2025-07-22 02:13:03,602 server 69439 8444927744 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-07-22 02:13:03,602 server 69439 8444927744 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-07-22 02:13:03,602 server 69439 8444927744 Listening on TCP address 0.0.0.0:8000
+INFO 2025-07-22 02:14:21,958 server 69439 8444927744 Killed 1 pending application instances
+INFO 2025-07-22 02:14:37,861 cli 69903 8444927744 Starting server at tcp:port=8000:interface=0.0.0.0
+INFO 2025-07-22 02:14:37,861 server 69903 8444927744 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-07-22 02:14:37,861 server 69903 8444927744 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-07-22 02:14:37,862 server 69903 8444927744 Listening on TCP address 0.0.0.0:8000
+WARNING 2025-07-22 02:14:52,143 log 69903 6162460672 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-07-22 02:14:52,143 log 69903 6162460672 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+INFO 2025-07-22 02:16:17,672 server 69903 8444927744 Killed 1 pending application instances
+INFO 2025-07-22 02:16:29,694 cli 70323 8444927744 Starting server at tcp:port=8000:interface=0.0.0.0
+INFO 2025-07-22 02:16:29,694 server 70323 8444927744 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-07-22 02:16:29,694 server 70323 8444927744 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-07-22 02:16:29,695 server 70323 8444927744 Listening on TCP address 0.0.0.0:8000

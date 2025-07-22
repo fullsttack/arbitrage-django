@@ -1,6 +1,7 @@
 import json
 import asyncio
 import logging
+import time
 from typing import Dict, List, Optional, Any
 from decimal import Decimal
 import redis.asyncio as redis
@@ -31,7 +32,7 @@ class RedisManager:
     async def save_price_data(self, exchange: str, symbol: str, bid_price: float, ask_price: float, 
                              bid_volume: float = 0, ask_volume: float = 0):
         """Save price data to Redis"""
-        timestamp = asyncio.get_event_loop().time()
+        timestamp = time.time()  # Use actual unix timestamp
         
         price_data = {
             'exchange': exchange,
@@ -83,22 +84,44 @@ class RedisManager:
         return prices
     
     async def save_arbitrage_opportunity(self, opportunity: Dict[str, Any]):
-        """Save arbitrage opportunity to Redis"""
-        timestamp = asyncio.get_event_loop().time()
+        """Save or update arbitrage opportunity to Redis (avoid duplicates)"""
+        timestamp = time.time()  # Use actual unix timestamp
+        
+        # Create unique key based on trading pair and direction (not timestamp)
+        symbol = opportunity.get('symbol')
+        buy_exchange = opportunity.get('buy_exchange')
+        sell_exchange = opportunity.get('sell_exchange')
+        unique_id = f"{buy_exchange}_{sell_exchange}_{symbol}"
+        
         opportunity['timestamp'] = timestamp
-        opportunity['id'] = f"{timestamp}_{opportunity.get('buy_exchange')}_{opportunity.get('sell_exchange')}_{opportunity.get('symbol')}"
+        opportunity['id'] = unique_id
+        opportunity['last_updated'] = timestamp
         
-        # Save individual opportunity
-        key = f"opportunity:{opportunity['id']}"
-        await self.redis_client.setex(key, 300, json.dumps(opportunity))  # TTL 5 minutes
+        # Use consistent key for same trading opportunity
+        key = f"opportunity:{unique_id}"
         
-        # Add to sorted set for easy retrieval
+        # Check if opportunity already exists
+        existing_data = await self.redis_client.get(key)
+        if existing_data:
+            try:
+                existing_opportunity = json.loads(existing_data)
+                # Update existing opportunity with new data
+                existing_opportunity.update(opportunity)
+                opportunity = existing_opportunity
+                logger.debug(f"Updated existing arbitrage opportunity: {symbol} - {opportunity.get('profit_percentage', 0):.2f}% profit")
+            except:
+                logger.debug(f"Failed to parse existing opportunity, creating new one")
+        else:
+            logger.info(f"New arbitrage opportunity: {symbol} - {opportunity.get('profit_percentage', 0):.2f}% profit")
+        
+        # Save opportunity (no TTL - keep until 24 hours cleanup)
+        await self.redis_client.set(key, json.dumps(opportunity))
+        
+        # Add/update in sorted set for easy retrieval
         await self.redis_client.zadd("opportunities:latest", {key: timestamp})
         
-        # Keep only latest 500 opportunities
-        await self.redis_client.zremrangebyrank("opportunities:latest", 0, -501)
-        
-        logger.info(f"Arbitrage opportunity saved: {opportunity.get('symbol')} - {opportunity.get('profit_percentage', 0):.2f}% profit")
+        # Keep only latest 1000 opportunities (increased from 500)
+        await self.redis_client.zremrangebyrank("opportunities:latest", 0, -1001)
     
     async def get_latest_opportunities(self, limit: int = 50) -> List[Dict[str, Any]]:
         """Get latest arbitrage opportunities"""
@@ -143,7 +166,7 @@ class RedisManager:
     
     async def cleanup_old_data(self):
         """Clean up old price data and opportunities"""
-        current_time = asyncio.get_event_loop().time()
+        current_time = time.time()  # Use actual unix timestamp
         
         # Clean old prices (older than 1 hour - keep last prices available)
         price_keys = await self.redis_client.keys("prices:*")
@@ -163,9 +186,9 @@ class RedisManager:
                     await self.redis_client.delete(key)
                     cleaned_prices += 1
         
-        # Clean old opportunities (older than 10 minutes)
+        # Clean old opportunities (older than 24 hours)
         old_opportunities = await self.redis_client.zrangebyscore(
-            "opportunities:latest", 0, current_time - 600
+            "opportunities:latest", 0, current_time - 86400
         )
         
         if old_opportunities:

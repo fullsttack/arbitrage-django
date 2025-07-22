@@ -8,3 +8,6 @@ wheels/
 logs/
 # Virtual environments
 .venv
+logs/debug.log
+logs/info.log
+logs/performance.log

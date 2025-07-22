@@ -467,3 +467,87 @@
 [2025-07-22 01:51:32,119] PERF workers._start_ramzinex_worker - Ramzinex worker started with 3 pairs
 [2025-07-22 01:52:30,045] PERF workers._start_monitoring_worker - System stats - Opportunities: 0, Prices: 8, Redis memory: 2.19M
 [2025-07-22 01:53:30,052] PERF workers._start_monitoring_worker - System stats - Opportunities: 0, Prices: 9, Redis memory: 2.19M
+[2025-07-22 01:54:30,055] PERF workers._start_monitoring_worker - System stats - Opportunities: 0, Prices: 9, Redis memory: 2.19M
+[2025-07-22 01:55:30,063] PERF workers._start_monitoring_worker - System stats - Opportunities: 0, Prices: 9, Redis memory: 2.19M
+[2025-07-22 01:56:30,067] PERF workers._start_monitoring_worker - System stats - Opportunities: 0, Prices: 9, Redis memory: 2.19M
+[2025-07-22 01:57:30,071] PERF workers._start_monitoring_worker - System stats - Opportunities: 0, Prices: 9, Redis memory: 2.19M
+[2025-07-22 01:58:30,075] PERF workers._start_monitoring_worker - System stats - Opportunities: 0, Prices: 9, Redis memory: 2.18M
+[2025-07-22 01:58:32,021] PERF workers.stop_all_workers - Stopping all workers...
+[2025-07-22 01:59:02,657] PERF workers.__init__ - Initialized with 8 workers
+[2025-07-22 01:59:02,680] PERF workers.start_all_workers - Starting 16 high-performance workers...
+[2025-07-22 01:59:02,712] PERF workers._get_trading_pairs_sync - Loaded 9 trading pairs across 3 exchanges
+[2025-07-22 01:59:02,713] PERF workers.start_all_workers - Started 9 worker tasks
+[2025-07-22 01:59:02,751] PERF workers._start_cleanup_worker - Cleanup worker started
+[2025-07-22 01:59:02,751] PERF workers._start_monitoring_worker - Monitoring worker started
+[2025-07-22 01:59:02,756] PERF workers._start_monitoring_worker - System stats - Opportunities: 0, Prices: 9, Redis memory: 2.21M
+[2025-07-22 01:59:03,433] PERF workers._start_wallex_worker - Wallex worker started with 3 pairs
+[2025-07-22 01:59:04,384] PERF workers._start_lbank_worker - LBank worker started with 3 pairs
+[2025-07-22 01:59:04,866] PERF workers._start_ramzinex_worker - Ramzinex worker started with 3 pairs
+[2025-07-22 02:00:02,758] PERF workers._start_monitoring_worker - System stats - Opportunities: 0, Prices: 9, Redis memory: 2.18M
+[2025-07-22 02:01:02,762] PERF workers._start_monitoring_worker - System stats - Opportunities: 0, Prices: 9, Redis memory: 2.18M
+[2025-07-22 02:02:02,808] PERF workers._start_monitoring_worker - System stats - Opportunities: 0, Prices: 9, Redis memory: 2.23M
+[2025-07-22 02:03:02,820] PERF workers._start_monitoring_worker - System stats - Opportunities: 0, Prices: 9, Redis memory: 2.18M
+[2025-07-22 02:04:02,823] PERF workers._start_monitoring_worker - System stats - Opportunities: 0, Prices: 9, Redis memory: 2.18M
+[2025-07-22 02:04:55,663] PERF workers.stop_all_workers - Stopping all workers...
+[2025-07-22 02:06:38,807] PERF workers.__init__ - Initialized with 8 workers
+[2025-07-22 02:06:38,825] PERF workers.start_all_workers - Starting 16 high-performance workers...
+[2025-07-22 02:06:38,847] PERF workers._get_trading_pairs_sync - Loaded 9 trading pairs across 3 exchanges
+[2025-07-22 02:06:38,847] PERF workers.start_all_workers - Started 9 worker tasks
+[2025-07-22 02:06:38,886] PERF workers._start_cleanup_worker - Cleanup worker started
+[2025-07-22 02:06:38,886] PERF workers._start_monitoring_worker - Monitoring worker started
+[2025-07-22 02:06:38,892] PERF workers._start_monitoring_worker - System stats - Opportunities: 0, Prices: 9, Redis memory: 2.20M
+[2025-07-22 02:06:39,671] PERF workers._start_wallex_worker - Wallex worker started with 3 pairs
+[2025-07-22 02:06:40,802] PERF workers._start_ramzinex_worker - Ramzinex worker started with 3 pairs
+[2025-07-22 02:06:42,280] PERF workers._start_lbank_worker - LBank worker started with 3 pairs
+[2025-07-22 02:07:38,896] PERF workers._start_monitoring_worker - System stats - Opportunities: 0, Prices: 9, Redis memory: 2.18M
+[2025-07-22 02:08:38,902] PERF workers._start_monitoring_worker - System stats - Opportunities: 0, Prices: 9, Redis memory: 2.18M
+[2025-07-22 02:08:57,338] PERF workers.stop_all_workers - Stopping all workers...
+[2025-07-22 02:09:11,373] PERF workers.__init__ - Initialized with 8 workers
+[2025-07-22 02:09:11,394] PERF workers.start_all_workers - Starting 16 high-performance workers...
+[2025-07-22 02:09:11,424] PERF workers._get_trading_pairs_sync - Loaded 9 trading pairs across 3 exchanges
+[2025-07-22 02:09:11,424] PERF workers.start_all_workers - Started 9 worker tasks
+[2025-07-22 02:09:11,460] PERF workers._start_cleanup_worker - Cleanup worker started
+[2025-07-22 02:09:11,461] PERF workers._start_monitoring_worker - Monitoring worker started
+[2025-07-22 02:09:11,466] PERF workers._start_monitoring_worker - System stats - Opportunities: 0, Prices: 9, Redis memory: 2.19M
+[2025-07-22 02:09:12,151] PERF workers._start_wallex_worker - Wallex worker started with 3 pairs
+[2025-07-22 02:09:13,011] PERF workers._start_lbank_worker - LBank worker started with 3 pairs
+[2025-07-22 02:09:13,519] PERF workers._start_ramzinex_worker - Ramzinex worker started with 3 pairs
+[2025-07-22 02:10:11,468] PERF workers._start_monitoring_worker - System stats - Opportunities: 0, Prices: 9, Redis memory: 2.17M
+[2025-07-22 02:11:11,472] PERF workers._start_monitoring_worker - System stats - Opportunities: 0, Prices: 9, Redis memory: 2.17M
+[2025-07-22 02:12:11,509] PERF workers._start_monitoring_worker - System stats - Opportunities: 0, Prices: 9, Redis memory: 2.17M
+[2025-07-22 02:12:54,726] PERF workers.stop_all_workers - Stopping all workers...
+[2025-07-22 02:13:05,546] PERF workers.__init__ - Initialized with 8 workers
+[2025-07-22 02:13:05,562] PERF workers.start_all_workers - Starting 16 high-performance workers...
+[2025-07-22 02:13:05,581] PERF workers._get_trading_pairs_sync - Loaded 9 trading pairs across 3 exchanges
+[2025-07-22 02:13:05,581] PERF workers.start_all_workers - Started 9 worker tasks
+[2025-07-22 02:13:05,619] PERF workers._start_cleanup_worker - Cleanup worker started
+[2025-07-22 02:13:05,619] PERF workers._start_monitoring_worker - Monitoring worker started
+[2025-07-22 02:13:05,624] PERF workers._start_monitoring_worker - System stats - Opportunities: 0, Prices: 9, Redis memory: 2.19M
+[2025-07-22 02:13:06,374] PERF workers._start_lbank_worker - LBank worker started with 3 pairs
+[2025-07-22 02:13:07,000] PERF workers._start_wallex_worker - Wallex worker started with 3 pairs
+[2025-07-22 02:13:07,760] PERF workers._start_ramzinex_worker - Ramzinex worker started with 3 pairs
+[2025-07-22 02:14:05,629] PERF workers._start_monitoring_worker - System stats - Opportunities: 0, Prices: 9, Redis memory: 2.17M
+[2025-07-22 02:14:29,824] PERF workers.stop_all_workers - Stopping all workers...
+[2025-07-22 02:14:40,328] PERF workers.__init__ - Initialized with 8 workers
+[2025-07-22 02:14:40,348] PERF workers.start_all_workers - Starting 16 high-performance workers...
+[2025-07-22 02:14:40,383] PERF workers._get_trading_pairs_sync - Loaded 9 trading pairs across 3 exchanges
+[2025-07-22 02:14:40,383] PERF workers.start_all_workers - Started 9 worker tasks
+[2025-07-22 02:14:40,420] PERF workers._start_cleanup_worker - Cleanup worker started
+[2025-07-22 02:14:40,420] PERF workers._start_monitoring_worker - Monitoring worker started
+[2025-07-22 02:14:40,428] PERF workers._start_monitoring_worker - System stats - Opportunities: 0, Prices: 9, Redis memory: 2.17M
+[2025-07-22 02:14:41,168] PERF workers._start_wallex_worker - Wallex worker started with 3 pairs
+[2025-07-22 02:14:41,439] PERF workers._start_lbank_worker - LBank worker started with 3 pairs
+[2025-07-22 02:14:42,597] PERF workers._start_ramzinex_worker - Ramzinex worker started with 3 pairs
+[2025-07-22 02:15:40,430] PERF workers._start_monitoring_worker - System stats - Opportunities: 0, Prices: 9, Redis memory: 2.16M
+[2025-07-22 02:16:20,983] PERF workers.stop_all_workers - Stopping all workers...
+[2025-07-22 02:16:33,528] PERF workers.__init__ - Initialized with 8 workers
+[2025-07-22 02:16:33,545] PERF workers.start_all_workers - Starting 16 high-performance workers...
+[2025-07-22 02:16:33,563] PERF workers._get_trading_pairs_sync - Loaded 9 trading pairs across 3 exchanges
+[2025-07-22 02:16:33,563] PERF workers.start_all_workers - Started 9 worker tasks
+[2025-07-22 02:16:33,600] PERF workers._start_cleanup_worker - Cleanup worker started
+[2025-07-22 02:16:33,601] PERF workers._start_monitoring_worker - Monitoring worker started
+[2025-07-22 02:16:33,608] PERF workers._start_monitoring_worker - System stats - Opportunities: 0, Prices: 8, Redis memory: 2.24M
+[2025-07-22 02:16:34,305] PERF workers._start_wallex_worker - Wallex worker started with 3 pairs
+[2025-07-22 02:16:35,595] PERF workers._start_ramzinex_worker - Ramzinex worker started with 3 pairs
+[2025-07-22 02:16:46,165] PERF workers._start_lbank_worker - LBank worker started with 3 pairs
+[2025-07-22 02:17:33,614] PERF workers._start_monitoring_worker - System stats - Opportunities: 0, Prices: 8, Redis memory: 2.16M

@@ -6,13 +6,29 @@ from django.views.decorators.http import require_POST
 from .models import Exchange, TradingPair, Currency
 from .redis_manager import redis_manager
 import asyncio
+import json
 
 def dashboard(request):
     """Main dashboard view"""
+    # Get all trading pairs with their currency data for frontend mapping
+    trading_pairs = TradingPair.objects.select_related(
+        'exchange', 'base_currency', 'quote_currency'
+    ).filter(is_active=True).order_by('exchange__name', 'base_currency__symbol')
+    
+    # Create currency mapping for JavaScript
+    currency_mapping = {}
+    for pair in trading_pairs:
+        symbol = pair.api_symbol  # Use the symbol that appears in Redis
+        currency_mapping[symbol] = {
+            'name': pair.base_currency.name,
+            'name': pair.base_currency.name or pair.base_currency.name
+        }
+    
     context = {
         'active_exchanges': Exchange.objects.filter(is_active=True).count(),
         'active_pairs': TradingPair.objects.filter(is_active=True).count(),
         'total_currencies': Currency.objects.filter(is_active=True).count(),
+        'currency_mapping_json': json.dumps(currency_mapping),
     }
     return render(request, 'core/dashboard.html', context)
 
