@@ -18,10 +18,31 @@ class RamzinexService(BaseExchangeService):
         self.connection_id = None
         self.subscription_id_counter = 2
         self.subscription_map = {}  # Map subscription IDs to pair IDs
+        self.pair_symbol_map = {}  # Map pair IDs to symbol formats
         
         # Centrifugo specific settings
         self.CENTRIFUGO_TIMEOUT = 25  # Server will disconnect after 25 seconds without pong
         self.PONG_SAFETY_MARGIN = 20  # Send pong every 20 seconds to be safe
+        
+    async def _build_pair_symbol_mapping(self):
+        """Build mapping between pair IDs and symbol formats from database"""
+        try:
+            from channels.db import database_sync_to_async
+            from core.models import TradingPair
+            
+            @database_sync_to_async
+            def get_ramzinex_pairs():
+                return list(TradingPair.objects.filter(
+                    exchange__name='ramzinex',
+                    is_active=True
+                ).values('pair_id', 'symbol_format'))
+            
+            pairs = await get_ramzinex_pairs()
+            self.pair_symbol_map = {pair['pair_id']: pair['symbol_format'] for pair in pairs if pair['pair_id']}
+            logger.info(f"Ramzinex built pair-symbol mapping: {self.pair_symbol_map}")
+            
+        except Exception as e:
+            logger.error(f"Error building Ramzinex pair-symbol mapping: {e}")
         
     async def connect(self):
         """Connect to Ramzinex WebSocket with Centrifugo protocol"""
@@ -67,6 +88,9 @@ class RamzinexService(BaseExchangeService):
                         
                         self.is_connected = True
                         self.reset_connection_state()
+                        
+                        # Build pair-symbol mapping after connection
+                        await self._build_pair_symbol_mapping()
                         
                         # Start health monitoring
                         asyncio.create_task(self.health_monitor())
@@ -320,10 +344,13 @@ class RamzinexService(BaseExchangeService):
                     logger.warning(f"Ramzinex invalid sells format for pair {pair_id}: {sells[-1] if sells else 'None'}")
                     return
                 
-                # Save price data
-                await self.save_price_data(pair_id, bid_price, ask_price, bid_volume, ask_volume)
+                # Get symbol format from mapping, fallback to pair_id if not found
+                symbol_format = self.pair_symbol_map.get(pair_id, pair_id)
                 
-                logger.debug(f"Ramzinex pair {pair_id}: bid={bid_price}({bid_volume}), ask={ask_price}({ask_volume})")
+                # Save price data
+                await self.save_price_data(symbol_format, bid_price, ask_price, bid_volume, ask_volume)
+                
+                logger.debug(f"Ramzinex {symbol_format} (pair_id: {pair_id}): bid={bid_price}({bid_volume}), ask={ask_price}({ask_volume})")
             else:
                 logger.warning(f"Ramzinex pair {pair_id}: No buys or sells data")
             
@@ -371,5 +398,6 @@ class RamzinexService(BaseExchangeService):
         self.websocket = None
         self.subscribed_pairs.clear()
         self.subscription_map.clear()
+        self.pair_symbol_map.clear()
         self.connection_id = None
         logger.info("Ramzinex WebSocket disconnected")

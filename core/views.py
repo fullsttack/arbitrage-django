@@ -6,15 +6,39 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from django.views.generic import TemplateView
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.admin.views.decorators import staff_member_required
 from asgiref.sync import sync_to_async
 from .redis_manager import redis_manager
 from .models import Exchange, Currency, TradingPair
 
 logger = logging.getLogger(__name__)
 
-class DashboardView(TemplateView):
-    """Main dashboard view for real-time arbitrage monitoring"""
+@sync_to_async
+def check_superuser_permissions(request):
+    """Check if user is authenticated and is superuser - async safe"""
+    from django.contrib.auth import get_user
+    user = get_user(request)
+    return user.is_authenticated and user.is_superuser
+
+class DashboardView(LoginRequiredMixin, TemplateView):
+    """Main dashboard view for real-time arbitrage monitoring - Superuser only"""
     template_name = 'index.html'
+    login_url = '/admin/login/'
+    
+    def dispatch(self, request, *args, **kwargs):
+        # Check if user is superuser
+        if not request.user.is_authenticated or not request.user.is_superuser:
+            from django.shortcuts import redirect
+            from django.urls import reverse
+            from urllib.parse import urlencode
+            
+            # Redirect to admin login with next parameter
+            login_url = '/admin/login/'
+            next_url = request.get_full_path()
+            redirect_url = f"{login_url}?{urlencode({'next': next_url})}"
+            return redirect(redirect_url)
+        return super().dispatch(request, *args, **kwargs)
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -67,7 +91,10 @@ class DashboardView(TemplateView):
 
 @csrf_exempt
 async def api_current_prices(request):
-    """API endpoint to get current prices"""
+    """API endpoint to get current prices - Superuser only"""
+    if not await check_superuser_permissions(request):
+        return JsonResponse({'success': False, 'error': 'Superuser access required'}, status=403)
+    
     try:
         await redis_manager.connect()
         prices = await redis_manager.get_all_current_prices()
@@ -104,7 +131,10 @@ async def api_current_prices(request):
 
 @csrf_exempt  
 async def api_current_opportunities(request):
-    """API endpoint to get current arbitrage opportunities"""
+    """API endpoint to get current arbitrage opportunities - Superuser only"""
+    if not await check_superuser_permissions(request):
+        return JsonResponse({'success': False, 'error': 'Superuser access required'}, status=403)
+    
     try:
         await redis_manager.connect()
         opportunities = await redis_manager.get_latest_opportunities(100)
@@ -132,7 +162,10 @@ async def api_current_opportunities(request):
 
 @csrf_exempt
 async def api_system_stats(request):
-    """API endpoint to get system statistics"""
+    """API endpoint to get system statistics - Superuser only"""
+    if not await check_superuser_permissions(request):
+        return JsonResponse({'success': False, 'error': 'Superuser access required'}, status=403)
+    
     try:
         await redis_manager.connect()
         
@@ -180,8 +213,8 @@ def get_currency_names_mapping():
         mapping = {}
         for currency in currencies:
             symbol = currency['symbol'].upper()
-            # Prefer display_name (Persian) over name (English)
-            name = currency.get('display_name') or currency.get('name') or symbol
+            # Prefer name (English) over display_name (Persian) 
+            name = currency.get('name') or currency.get('display_name') or symbol
             mapping[symbol] = name
         return mapping
     except Exception as e:

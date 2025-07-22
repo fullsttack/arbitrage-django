@@ -253,6 +253,11 @@ LOGGING = {
 # Default ID
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# Authentication settings
+LOGIN_URL = '/admin/login/'
+LOGIN_REDIRECT_URL = '/'
+LOGOUT_REDIRECT_URL = '/admin/login/'
+
 # Django Unfold Configuration
 UNFOLD = {
     'SITE_TITLE': 'Digital Currency Arbitrage',
