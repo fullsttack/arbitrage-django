@@ -11,3 +11,4 @@ logs/
 logs/debug.log
 logs/info.log
 logs/performance.log
+logs/debug.log
