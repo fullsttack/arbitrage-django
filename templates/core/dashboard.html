@@ -56,17 +56,20 @@
 
 <!-- Tab Navigation -->
 <div class="mb-8">
-    <div class="border-b border-gray-700">
-        <nav class="-mb-px flex space-x-8">
+    <div class="bg-gray-900/30 p-2 rounded-xl border border-gray-700">
+        <nav class="flex space-x-2">
             <button id="tab-prices" class="clean-tab-button active">
+                <i class="fas fa-chart-line mr-2"></i>
                 Live Prices
                 <div class="active-indicator"></div>
             </button>
             <button id="tab-opportunities" class="clean-tab-button">
+                <i class="fas fa-exchange-alt mr-2"></i>
                 Arbitrage Opportunities  
                 <div class="active-indicator"></div>
             </button>
             <button id="tab-redis" class="clean-tab-button">
+                <i class="fas fa-server mr-2"></i>
                 System Monitor
                 <div class="active-indicator"></div>
             </button>
@@ -246,33 +249,36 @@
 
 /* Clean Tab Buttons */
 .clean-tab-button {
-    @apply relative py-4 px-6 text-sm font-medium transition-all duration-200;
-    @apply text-gray-400 hover:text-gray-200;
-    @apply border-b-2 border-transparent rounded-t-lg;
-    @apply focus:outline-none focus:text-white;
+    @apply relative py-3 px-6 text-sm font-medium transition-all duration-300;
+    @apply text-gray-500 hover:text-gray-300;
+    @apply bg-gray-800/50 border border-gray-700 rounded-lg mr-2;
+    @apply focus:outline-none focus:ring-2 focus:ring-blue-500/50;
     @apply whitespace-nowrap;
 }
 
 .clean-tab-button.active {
-    @apply text-white border-blue-500 bg-blue-500/10;
-    @apply font-semibold;
+    @apply text-white bg-blue-600 border-blue-500;
+    @apply font-semibold shadow-lg shadow-blue-500/25;
+    @apply transform scale-105;
 }
 
 .clean-tab-button .active-indicator {
-    @apply absolute bottom-0 left-0 right-0 h-0.5 bg-blue-500;
-    @apply transform scale-x-0 transition-transform duration-200;
+    @apply absolute -bottom-0.5 left-1/2 transform -translate-x-1/2;
+    @apply w-2 h-2 bg-blue-400 rounded-full;
+    @apply opacity-0 transition-all duration-300;
 }
 
 .clean-tab-button.active .active-indicator {
-    @apply transform scale-x-100;
+    @apply opacity-100 bg-white;
 }
 
 .clean-tab-button:hover:not(.active) {
-    @apply border-gray-600;
+    @apply bg-gray-700/70 border-gray-600 text-gray-200;
+    @apply transform scale-102;
 }
 
 .clean-tab-button:hover:not(.active) .active-indicator {
-    @apply bg-gray-500 transform scale-x-100;
+    @apply opacity-60 bg-gray-400;
 }
 
 .profit-positive {
@@ -401,39 +407,6 @@ function switchTab(tab) {
     }
 }
 
-// WebSocket message handler
-function handleWebSocketMessage(data) {
-    switch(data.type) {
-        case 'initial_opportunities':
-            opportunities = data.data;
-            updateOpportunitiesTable();
-            break;
-            
-        case 'opportunities_update':
-            opportunities = data.data;
-            updateOpportunitiesTable();
-            break;
-            
-        case 'initial_prices':
-            data.data.forEach(price => {
-                const key = `${price.exchange}_${price.symbol}`;
-                prices[key] = price;
-            });
-            updatePricesTable();
-            break;
-            
-        case 'price_update':
-            const key = `${data.data.exchange}_${data.data.symbol}`;
-            prices[key] = data.data;
-            updatePricesTable();
-            break;
-            
-        case 'redis_stats':
-            redisStats = data.data;
-            updateRedisStats();
-            break;
-    }
-}
 
 function updateOpportunitiesTable() {
     const tbody = document.getElementById('opportunities-table');
@@ -497,6 +470,20 @@ function updatePricesTable() {
     const tbody = document.getElementById('prices-table');
     const priceArray = Object.values(prices);
     
+    if (priceArray.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="7" class="px-6 py-8 text-center text-gray-500">
+                    <div class="flex flex-col items-center">
+                        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mb-3"></div>
+                        <span>Loading live prices...</span>
+                    </div>
+                </td>
+            </tr>
+        `;
+        return;
+    }
+    
     // Sort by exchange and symbol
     priceArray.sort((a, b) => {
         if (a.exchange !== b.exchange) {
@@ -522,7 +509,10 @@ function updatePricesTable() {
                 $${parseFloat(price.ask_price).toFixed(6)}
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300 font-mono">
-                ${parseFloat(price.volume).toFixed(4)}
+                ${parseFloat(price.bid_volume || 0).toFixed(4)}
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300 font-mono">
+                ${parseFloat(price.ask_volume || 0).toFixed(4)}
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
                 ${formatTimestamp(price.timestamp)}
@@ -590,5 +580,51 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }, 500);
 });
+</script>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Override the base WebSocket message handler
+function handleWebSocketMessage(data) {
+    switch(data.type) {
+        case 'initial_opportunities':
+            opportunities = data.data;
+            updateOpportunitiesTable();
+            break;
+            
+        case 'opportunities_update':
+            opportunities = data.data;
+            updateOpportunitiesTable();
+            break;
+            
+        case 'initial_prices':
+            data.data.forEach(price => {
+                const key = `${price.exchange}_${price.symbol}`;
+                prices[key] = price;
+            });
+            updatePricesTable();
+            break;
+            
+        case 'prices_update':
+            data.data.forEach(price => {
+                const key = `${price.exchange}_${price.symbol}`;
+                prices[key] = price;
+            });
+            updatePricesTable();
+            break;
+            
+        case 'price_update':
+            const key = `${data.data.exchange}_${data.data.symbol}`;
+            prices[key] = data.data;
+            updatePricesTable();
+            break;
+            
+        case 'redis_stats':
+            redisStats = data.data;
+            updateRedisStats();
+            break;
+    }
+}
 </script>
 {% endblock %}

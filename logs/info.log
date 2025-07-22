@@ -1,1127 +1,182 @@
-INFO 2025-07-21 18:19:42,966 autoreload 32861 8444927744 Watching for file changes with StatReloader
-INFO 2025-07-21 18:19:43,200 server 32861 6150287360 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
-INFO 2025-07-21 18:19:43,200 server 32861 6150287360 Configuring endpoint tcp:port=8000:interface=127.0.0.1
-INFO 2025-07-21 18:19:43,201 server 32861 6150287360 Listening on TCP address 127.0.0.1:8000
-INFO 2025-07-21 18:19:44,168 runserver 32861 6150287360 WebSocket HANDSHAKING /ws/arbitrage/ [127.0.0.1:50772]
-INFO 2025-07-21 18:19:45,088 runserver 32861 6150287360 WebSocket CONNECT /ws/arbitrage/ [127.0.0.1:50772]
-INFO 2025-07-21 18:19:49,596 runserver 32861 6150287360 WebSocket HANDSHAKING /ws/system/ [127.0.0.1:50819]
-ERROR 2025-07-21 18:19:50,204 server 32861 6150287360 Exception inside application: No route found for path 'ws/system/'.
-Traceback (most recent call last):
-  File "/Users/mohsen/Desktop/fastapi/arbitrage/.venv/lib/python3.13/site-packages/django/contrib/staticfiles/handlers.py", line 101, in __call__
-    return await self.application(scope, receive, send)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/mohsen/Desktop/fastapi/arbitrage/.venv/lib/python3.13/site-packages/channels/routing.py", line 48, in __call__
-    return await application(scope, receive, send)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/mohsen/Desktop/fastapi/arbitrage/.venv/lib/python3.13/site-packages/channels/sessions.py", line 44, in __call__
-    return await self.inner(dict(scope, cookies=cookies), receive, send)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/mohsen/Desktop/fastapi/arbitrage/.venv/lib/python3.13/site-packages/channels/sessions.py", line 261, in __call__
-    return await self.inner(wrapper.scope, receive, wrapper.send)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/mohsen/Desktop/fastapi/arbitrage/.venv/lib/python3.13/site-packages/channels/auth.py", line 185, in __call__
-    return await super().__call__(scope, receive, send)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/mohsen/Desktop/fastapi/arbitrage/.venv/lib/python3.13/site-packages/channels/middleware.py", line 24, in __call__
-    return await self.inner(scope, receive, send)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/mohsen/Desktop/fastapi/arbitrage/.venv/lib/python3.13/site-packages/channels/routing.py", line 136, in __call__
-    raise ValueError("No route found for path %r." % path)
-ValueError: No route found for path 'ws/system/'.
-INFO 2025-07-21 18:19:50,209 runserver 32861 6150287360 WebSocket DISCONNECT /ws/system/ [127.0.0.1:50819]
-INFO 2025-07-21 18:19:51,229 runserver 32861 6150287360 WebSocket HANDSHAKING /ws/prices/ [127.0.0.1:50829]
-ERROR 2025-07-21 18:19:52,211 server 32861 6150287360 Exception inside application: No route found for path 'ws/prices/'.
-Traceback (most recent call last):
-  File "/Users/mohsen/Desktop/fastapi/arbitrage/.venv/lib/python3.13/site-packages/django/contrib/staticfiles/handlers.py", line 101, in __call__
-    return await self.application(scope, receive, send)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/mohsen/Desktop/fastapi/arbitrage/.venv/lib/python3.13/site-packages/channels/routing.py", line 48, in __call__
-    return await application(scope, receive, send)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/mohsen/Desktop/fastapi/arbitrage/.venv/lib/python3.13/site-packages/channels/sessions.py", line 44, in __call__
-    return await self.inner(dict(scope, cookies=cookies), receive, send)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/mohsen/Desktop/fastapi/arbitrage/.venv/lib/python3.13/site-packages/channels/sessions.py", line 261, in __call__
-    return await self.inner(wrapper.scope, receive, wrapper.send)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/mohsen/Desktop/fastapi/arbitrage/.venv/lib/python3.13/site-packages/channels/auth.py", line 185, in __call__
-    return await super().__call__(scope, receive, send)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/mohsen/Desktop/fastapi/arbitrage/.venv/lib/python3.13/site-packages/channels/middleware.py", line 24, in __call__
-    return await self.inner(scope, receive, send)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/mohsen/Desktop/fastapi/arbitrage/.venv/lib/python3.13/site-packages/channels/routing.py", line 136, in __call__
-    raise ValueError("No route found for path %r." % path)
-ValueError: No route found for path 'ws/prices/'.
-INFO 2025-07-21 18:19:52,214 runserver 32861 6150287360 WebSocket DISCONNECT /ws/prices/ [127.0.0.1:50829]
-INFO 2025-07-21 18:19:52,227 runserver 32861 6150287360 WebSocket HANDSHAKING /ws/arbitrage/ [127.0.0.1:50832]
-INFO 2025-07-21 18:19:52,287 runserver 32861 6150287360 WebSocket CONNECT /ws/arbitrage/ [127.0.0.1:50832]
-WARNING 2025-07-21 18:19:55,896 log 32861 6185086976 Not Found: /api/market-prices/redis/
-WARNING 2025-07-21 18:19:55,896 log 32861 6235566080 Not Found: /api/system/health
-WARNING 2025-07-21 18:19:55,897 runserver 32861 6150287360 [33mHTTP GET /api/market-prices/redis/ 404 [0.03, 127.0.0.1:50839][0m
-WARNING 2025-07-21 18:19:55,897 runserver 32861 6150287360 [33mHTTP GET /api/system/health 404 [0.03, 127.0.0.1:50840][0m
-INFO 2025-07-21 18:19:56,731 runserver 32861 6150287360 WebSocket DISCONNECT /ws/arbitrage/ [127.0.0.1:50832]
-INFO 2025-07-21 18:19:56,831 runserver 32861 6150287360 [mHTTP GET / 200 [0.10, 127.0.0.1:50840][0m
-INFO 2025-07-21 18:19:56,839 runserver 32861 6150287360 WebSocket DISCONNECT /ws/arbitrage/ [127.0.0.1:50772]
-INFO 2025-07-21 18:19:58,845 runserver 32861 6150287360 WebSocket HANDSHAKING /ws/arbitrage/ [127.0.0.1:50853]
-INFO 2025-07-21 18:19:58,876 runserver 32861 6150287360 WebSocket CONNECT /ws/arbitrage/ [127.0.0.1:50853]
-INFO 2025-07-21 18:20:05,178 runserver 32861 6150287360 [32mHTTP GET /admin/ 302 [0.02, 127.0.0.1:50840][0m
-INFO 2025-07-21 18:20:05,211 runserver 32861 6150287360 [mHTTP GET /admin/login/?next=/admin/ 200 [0.03, 127.0.0.1:50840][0m
-INFO 2025-07-21 18:20:05,233 runserver 32861 6150287360 WebSocket DISCONNECT /ws/arbitrage/ [127.0.0.1:50853]
-INFO 2025-07-21 18:20:05,241 runserver 32861 6150287360 [36mHTTP GET /static/admin/css/base.css 304 [0.01, 127.0.0.1:50840][0m
-INFO 2025-07-21 18:20:05,243 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/theme.js 304 [0.01, 127.0.0.1:50839][0m
-INFO 2025-07-21 18:20:05,243 runserver 32861 6150287360 [36mHTTP GET /static/admin/css/dark_mode.css 304 [0.01, 127.0.0.1:50888][0m
-INFO 2025-07-21 18:20:05,244 runserver 32861 6150287360 [36mHTTP GET /static/admin/css/responsive.css 304 [0.01, 127.0.0.1:50894][0m
-INFO 2025-07-21 18:20:05,244 runserver 32861 6150287360 [36mHTTP GET /static/admin/css/login.css 304 [0.01, 127.0.0.1:50891][0m
-INFO 2025-07-21 18:20:05,244 runserver 32861 6150287360 [36mHTTP GET /static/admin/css/nav_sidebar.css 304 [0.01, 127.0.0.1:50892][0m
-INFO 2025-07-21 18:20:05,250 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/nav_sidebar.js 304 [0.00, 127.0.0.1:50892][0m
-INFO 2025-07-21 18:20:09,690 runserver 32861 6150287360 [32mHTTP POST /admin/login/?next=/admin/ 302 [0.52, 127.0.0.1:50892][0m
-INFO 2025-07-21 18:20:09,915 runserver 32861 6150287360 [mHTTP GET /admin/ 200 [0.22, 127.0.0.1:50892][0m
-INFO 2025-07-21 18:20:09,957 runserver 32861 6150287360 [36mHTTP GET /static/admin/css/base.css 304 [0.00, 127.0.0.1:50892][0m
-INFO 2025-07-21 18:20:09,966 runserver 32861 6150287360 [36mHTTP GET /static/admin/css/dark_mode.css 304 [0.01, 127.0.0.1:50891][0m
-INFO 2025-07-21 18:20:09,966 runserver 32861 6150287360 [36mHTTP GET /static/admin/css/nav_sidebar.css 304 [0.01, 127.0.0.1:50894][0m
-INFO 2025-07-21 18:20:09,966 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/theme.js 304 [0.01, 127.0.0.1:50888][0m
-INFO 2025-07-21 18:20:09,967 runserver 32861 6150287360 [36mHTTP GET /static/admin/css/dashboard.css 304 [0.00, 127.0.0.1:50892][0m
-INFO 2025-07-21 18:20:09,967 runserver 32861 6150287360 [36mHTTP GET /static/admin/css/responsive.css 304 [0.00, 127.0.0.1:50839][0m
-INFO 2025-07-21 18:20:09,972 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/nav_sidebar.js 304 [0.00, 127.0.0.1:50839][0m
-INFO 2025-07-21 18:20:09,979 runserver 32861 6150287360 [36mHTTP GET /static/admin/img/icon-changelink.svg 304 [0.00, 127.0.0.1:50892][0m
-INFO 2025-07-21 18:20:09,979 runserver 32861 6150287360 [36mHTTP GET /static/admin/img/icon-addlink.svg 304 [0.00, 127.0.0.1:50839][0m
-INFO 2025-07-21 18:20:13,758 runserver 32861 6150287360 [mHTTP GET /admin/core/exchange/add/ 200 [0.28, 127.0.0.1:50839][0m
-INFO 2025-07-21 18:20:13,780 runserver 32861 6150287360 [36mHTTP GET /static/admin/css/base.css 304 [0.00, 127.0.0.1:50839][0m
-INFO 2025-07-21 18:20:13,797 runserver 32861 6150287360 [36mHTTP GET /static/admin/css/dark_mode.css 304 [0.01, 127.0.0.1:50892][0m
-INFO 2025-07-21 18:20:13,798 runserver 32861 6150287360 [36mHTTP GET /static/admin/css/nav_sidebar.css 304 [0.01, 127.0.0.1:50894][0m
-INFO 2025-07-21 18:20:13,798 runserver 32861 6150287360 [36mHTTP GET /static/admin/css/forms.css 304 [0.01, 127.0.0.1:50891][0m
-INFO 2025-07-21 18:20:13,799 runserver 32861 6150287360 [36mHTTP GET /static/admin/css/responsive.css 304 [0.00, 127.0.0.1:50840][0m
-INFO 2025-07-21 18:20:13,799 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/theme.js 304 [0.01, 127.0.0.1:50888][0m
-INFO 2025-07-21 18:20:13,807 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/core.js 304 [0.00, 127.0.0.1:50891][0m
-INFO 2025-07-21 18:20:13,809 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/jquery.init.js 304 [0.01, 127.0.0.1:50894][0m
-INFO 2025-07-21 18:20:13,809 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/vendor/jquery/jquery.js 304 [0.01, 127.0.0.1:50892][0m
-INFO 2025-07-21 18:20:13,810 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/actions.js 304 [0.01, 127.0.0.1:50888][0m
-INFO 2025-07-21 18:20:13,810 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/admin/RelatedObjectLookups.js 304 [0.01, 127.0.0.1:50840][0m
-INFO 2025-07-21 18:20:13,816 runserver 32861 6150287360 [36mHTTP GET /static/admin/css/widgets.css 304 [0.01, 127.0.0.1:50891][0m
-INFO 2025-07-21 18:20:13,818 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/prepopulate_init.js 304 [0.00, 127.0.0.1:50840][0m
-INFO 2025-07-21 18:20:13,819 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/prepopulate.js 304 [0.00, 127.0.0.1:50892][0m
-INFO 2025-07-21 18:20:13,819 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/vendor/xregexp/xregexp.js 304 [0.00, 127.0.0.1:50888][0m
-INFO 2025-07-21 18:20:13,819 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/urlify.js 304 [0.01, 127.0.0.1:50894][0m
-INFO 2025-07-21 18:20:13,829 runserver 32861 6150287360 [mHTTP GET /admin/jsi18n/ 200 [0.04, 127.0.0.1:50839][0m
-INFO 2025-07-21 18:20:13,833 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/nav_sidebar.js 304 [0.00, 127.0.0.1:50839][0m
-INFO 2025-07-21 18:20:13,834 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/change_form.js 304 [0.00, 127.0.0.1:50894][0m
-INFO 2025-07-21 18:20:33,459 runserver 32861 6150287360 [mHTTP GET /admin/core/tradingpair/ 200 [0.20, 127.0.0.1:50894][0m
-INFO 2025-07-21 18:20:33,477 runserver 32861 6150287360 [36mHTTP GET /static/admin/css/base.css 304 [0.00, 127.0.0.1:50894][0m
-INFO 2025-07-21 18:20:33,488 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/vendor/jquery/jquery.js 304 [0.00, 127.0.0.1:50891][0m
-INFO 2025-07-21 18:20:33,489 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/theme.js 304 [0.01, 127.0.0.1:50839][0m
-INFO 2025-07-21 18:20:33,489 runserver 32861 6150287360 [36mHTTP GET /static/admin/css/forms.css 304 [0.00, 127.0.0.1:50840][0m
-INFO 2025-07-21 18:20:33,490 runserver 32861 6150287360 [36mHTTP GET /static/admin/css/nav_sidebar.css 304 [0.01, 127.0.0.1:50892][0m
-INFO 2025-07-21 18:20:33,490 runserver 32861 6150287360 [36mHTTP GET /static/admin/css/dark_mode.css 304 [0.01, 127.0.0.1:50888][0m
-INFO 2025-07-21 18:20:33,496 runserver 32861 6150287360 [36mHTTP GET /static/admin/css/changelists.css 304 [0.01, 127.0.0.1:50891][0m
-INFO 2025-07-21 18:20:33,496 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/jquery.init.js 304 [0.00, 127.0.0.1:50840][0m
-INFO 2025-07-21 18:20:33,496 runserver 32861 6150287360 [36mHTTP GET /static/admin/css/responsive.css 304 [0.00, 127.0.0.1:50839][0m
-INFO 2025-07-21 18:20:33,497 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/core.js 304 [0.00, 127.0.0.1:50892][0m
-INFO 2025-07-21 18:20:33,497 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/admin/RelatedObjectLookups.js 304 [0.00, 127.0.0.1:50888][0m
-INFO 2025-07-21 18:20:33,504 runserver 32861 6150287360 [36mHTTP GET /static/admin/css/widgets.css 304 [0.00, 127.0.0.1:50891][0m
-INFO 2025-07-21 18:20:33,504 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/actions.js 304 [0.00, 127.0.0.1:50840][0m
-INFO 2025-07-21 18:20:33,504 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/vendor/xregexp/xregexp.js 304 [0.00, 127.0.0.1:50888][0m
-INFO 2025-07-21 18:20:33,505 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/prepopulate.js 304 [0.00, 127.0.0.1:50892][0m
-INFO 2025-07-21 18:20:33,505 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/urlify.js 304 [0.00, 127.0.0.1:50839][0m
-INFO 2025-07-21 18:20:33,510 runserver 32861 6150287360 [36mHTTP GET /static/admin/img/search.svg 304 [0.00, 127.0.0.1:50839][0m
-INFO 2025-07-21 18:20:33,512 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/nav_sidebar.js 304 [0.00, 127.0.0.1:50839][0m
-INFO 2025-07-21 18:20:33,515 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/filters.js 304 [0.00, 127.0.0.1:50839][0m
-INFO 2025-07-21 18:20:33,527 runserver 32861 6150287360 [mHTTP GET /admin/jsi18n/ 200 [0.05, 127.0.0.1:50894][0m
-INFO 2025-07-21 18:20:33,541 runserver 32861 6150287360 [36mHTTP GET /static/admin/img/tooltag-add.svg 304 [0.00, 127.0.0.1:50894][0m
-INFO 2025-07-21 18:20:33,541 runserver 32861 6150287360 [36mHTTP GET /static/admin/img/icon-viewlink.svg 304 [0.00, 127.0.0.1:50839][0m
-INFO 2025-07-21 18:20:34,892 runserver 32861 6150287360 [mHTTP GET /admin/core/exchange/ 200 [0.09, 127.0.0.1:50839][0m
-INFO 2025-07-21 18:20:34,911 runserver 32861 6150287360 [36mHTTP GET /static/admin/css/base.css 304 [0.00, 127.0.0.1:50839][0m
-INFO 2025-07-21 18:20:34,924 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/theme.js 304 [0.00, 127.0.0.1:50891][0m
-INFO 2025-07-21 18:20:34,925 runserver 32861 6150287360 [36mHTTP GET /static/admin/css/forms.css 304 [0.01, 127.0.0.1:50840][0m
-INFO 2025-07-21 18:20:34,925 runserver 32861 6150287360 [36mHTTP GET /static/admin/css/dark_mode.css 304 [0.01, 127.0.0.1:50839][0m
-INFO 2025-07-21 18:20:34,925 runserver 32861 6150287360 [36mHTTP GET /static/admin/css/changelists.css 304 [0.01, 127.0.0.1:50888][0m
-INFO 2025-07-21 18:20:34,925 runserver 32861 6150287360 [36mHTTP GET /static/admin/css/nav_sidebar.css 304 [0.01, 127.0.0.1:50892][0m
-INFO 2025-07-21 18:20:34,934 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/admin/RelatedObjectLookups.js 304 [0.00, 127.0.0.1:50892][0m
-INFO 2025-07-21 18:20:34,935 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/core.js 304 [0.01, 127.0.0.1:50888][0m
-INFO 2025-07-21 18:20:34,935 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/vendor/jquery/jquery.js 304 [0.01, 127.0.0.1:50840][0m
-INFO 2025-07-21 18:20:34,936 runserver 32861 6150287360 [36mHTTP GET /static/admin/css/responsive.css 304 [0.01, 127.0.0.1:50891][0m
-INFO 2025-07-21 18:20:34,937 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/jquery.init.js 304 [0.01, 127.0.0.1:50839][0m
-INFO 2025-07-21 18:20:34,941 runserver 32861 6150287360 [36mHTTP GET /static/admin/css/widgets.css 304 [0.01, 127.0.0.1:50892][0m
-INFO 2025-07-21 18:20:34,942 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/prepopulate.js 304 [0.00, 127.0.0.1:50891][0m
-INFO 2025-07-21 18:20:34,942 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/actions.js 304 [0.00, 127.0.0.1:50888][0m
-INFO 2025-07-21 18:20:34,942 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/urlify.js 304 [0.00, 127.0.0.1:50840][0m
-INFO 2025-07-21 18:20:34,942 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/vendor/xregexp/xregexp.js 304 [0.00, 127.0.0.1:50839][0m
-INFO 2025-07-21 18:20:34,946 runserver 32861 6150287360 [36mHTTP GET /static/admin/img/search.svg 304 [0.00, 127.0.0.1:50839][0m
-INFO 2025-07-21 18:20:34,948 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/nav_sidebar.js 304 [0.00, 127.0.0.1:50839][0m
-INFO 2025-07-21 18:20:34,951 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/filters.js 304 [0.00, 127.0.0.1:50839][0m
-INFO 2025-07-21 18:20:35,025 runserver 32861 6150287360 [mHTTP GET /admin/jsi18n/ 200 [0.11, 127.0.0.1:50894][0m
-INFO 2025-07-21 18:20:39,357 runserver 32861 6150287360 [mHTTP GET /admin/core/currency/ 200 [0.07, 127.0.0.1:50894][0m
-INFO 2025-07-21 18:20:39,418 runserver 32861 6150287360 [36mHTTP GET /static/admin/css/base.css 304 [0.01, 127.0.0.1:50894][0m
-INFO 2025-07-21 18:20:39,419 runserver 32861 6150287360 [36mHTTP GET /static/admin/css/nav_sidebar.css 304 [0.01, 127.0.0.1:50891][0m
-INFO 2025-07-21 18:20:39,419 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/theme.js 304 [0.01, 127.0.0.1:50888][0m
-INFO 2025-07-21 18:20:39,420 runserver 32861 6150287360 [36mHTTP GET /static/admin/css/changelists.css 304 [0.01, 127.0.0.1:50892][0m
-INFO 2025-07-21 18:20:39,420 runserver 32861 6150287360 [36mHTTP GET /static/admin/css/dark_mode.css 304 [0.01, 127.0.0.1:50840][0m
-INFO 2025-07-21 18:20:39,426 runserver 32861 6150287360 [36mHTTP GET /static/admin/css/responsive.css 304 [0.01, 127.0.0.1:50891][0m
-INFO 2025-07-21 18:20:39,426 runserver 32861 6150287360 [36mHTTP GET /static/admin/css/forms.css 304 [0.01, 127.0.0.1:50894][0m
-INFO 2025-07-21 18:20:39,426 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/core.js 304 [0.00, 127.0.0.1:50840][0m
-INFO 2025-07-21 18:20:39,427 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/vendor/jquery/jquery.js 304 [0.00, 127.0.0.1:50888][0m
-INFO 2025-07-21 18:20:39,427 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/jquery.init.js 304 [0.00, 127.0.0.1:50892][0m
-INFO 2025-07-21 18:20:39,432 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/admin/RelatedObjectLookups.js 304 [0.00, 127.0.0.1:50891][0m
-INFO 2025-07-21 18:20:39,432 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/actions.js 304 [0.00, 127.0.0.1:50894][0m
-INFO 2025-07-21 18:20:39,434 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/urlify.js 304 [0.00, 127.0.0.1:50888][0m
-INFO 2025-07-21 18:20:39,434 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/vendor/xregexp/xregexp.js 304 [0.00, 127.0.0.1:50892][0m
-INFO 2025-07-21 18:20:39,435 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/prepopulate.js 304 [0.01, 127.0.0.1:50840][0m
-INFO 2025-07-21 18:20:39,438 runserver 32861 6150287360 [36mHTTP GET /static/admin/css/widgets.css 304 [0.00, 127.0.0.1:50891][0m
-INFO 2025-07-21 18:20:39,439 runserver 32861 6150287360 [36mHTTP GET /static/admin/img/search.svg 304 [0.00, 127.0.0.1:50840][0m
-INFO 2025-07-21 18:20:39,440 runserver 32861 6150287360 [mHTTP GET /admin/jsi18n/ 200 [0.03, 127.0.0.1:50839][0m
-INFO 2025-07-21 18:20:39,442 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/nav_sidebar.js 304 [0.00, 127.0.0.1:50839][0m
-INFO 2025-07-21 18:20:39,443 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/filters.js 304 [0.00, 127.0.0.1:50840][0m
-INFO 2025-07-21 18:20:40,409 runserver 32861 6150287360 [mHTTP GET /admin/core/exchange/ 200 [0.12, 127.0.0.1:50840][0m
-INFO 2025-07-21 18:20:40,428 runserver 32861 6150287360 [36mHTTP GET /static/admin/css/base.css 304 [0.00, 127.0.0.1:50840][0m
-INFO 2025-07-21 18:20:40,441 runserver 32861 6150287360 [36mHTTP GET /static/admin/css/dark_mode.css 304 [0.01, 127.0.0.1:50840][0m
-INFO 2025-07-21 18:20:40,441 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/theme.js 304 [0.00, 127.0.0.1:50894][0m
-INFO 2025-07-21 18:20:40,442 runserver 32861 6150287360 [36mHTTP GET /static/admin/css/changelists.css 304 [0.00, 127.0.0.1:50892][0m
-INFO 2025-07-21 18:20:40,442 runserver 32861 6150287360 [36mHTTP GET /static/admin/css/forms.css 304 [0.00, 127.0.0.1:50888][0m
-INFO 2025-07-21 18:20:40,442 runserver 32861 6150287360 [36mHTTP GET /static/admin/css/nav_sidebar.css 304 [0.01, 127.0.0.1:50891][0m
-INFO 2025-07-21 18:20:40,450 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/vendor/jquery/jquery.js 304 [0.00, 127.0.0.1:50894][0m
-INFO 2025-07-21 18:20:40,451 runserver 32861 6150287360 [36mHTTP GET /static/admin/css/responsive.css 304 [0.00, 127.0.0.1:50840][0m
-INFO 2025-07-21 18:20:40,451 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/admin/RelatedObjectLookups.js 304 [0.00, 127.0.0.1:50891][0m
-INFO 2025-07-21 18:20:40,452 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/core.js 304 [0.01, 127.0.0.1:50888][0m
-INFO 2025-07-21 18:20:40,453 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/jquery.init.js 304 [0.01, 127.0.0.1:50892][0m
-INFO 2025-07-21 18:20:40,458 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/actions.js 304 [0.00, 127.0.0.1:50840][0m
-INFO 2025-07-21 18:20:40,459 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/urlify.js 304 [0.00, 127.0.0.1:50891][0m
-INFO 2025-07-21 18:20:40,459 runserver 32861 6150287360 [36mHTTP GET /static/admin/css/widgets.css 304 [0.01, 127.0.0.1:50894][0m
-INFO 2025-07-21 18:20:40,460 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/vendor/xregexp/xregexp.js 304 [0.00, 127.0.0.1:50892][0m
-INFO 2025-07-21 18:20:40,460 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/prepopulate.js 304 [0.01, 127.0.0.1:50888][0m
-INFO 2025-07-21 18:20:40,464 runserver 32861 6150287360 [36mHTTP GET /static/admin/img/search.svg 304 [0.00, 127.0.0.1:50888][0m
-INFO 2025-07-21 18:20:40,466 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/nav_sidebar.js 304 [0.00, 127.0.0.1:50888][0m
-INFO 2025-07-21 18:20:40,469 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/filters.js 304 [0.00, 127.0.0.1:50888][0m
-INFO 2025-07-21 18:20:40,671 runserver 32861 6150287360 [mHTTP GET /admin/jsi18n/ 200 [0.24, 127.0.0.1:50839][0m
-INFO 2025-07-21 18:20:45,934 runserver 32861 6150287360 [mHTTP GET /admin/core/exchange/add/ 200 [0.20, 127.0.0.1:50839][0m
-INFO 2025-07-21 18:20:45,957 runserver 32861 6150287360 [36mHTTP GET /static/admin/css/base.css 304 [0.00, 127.0.0.1:50839][0m
-INFO 2025-07-21 18:20:45,968 runserver 32861 6150287360 [36mHTTP GET /static/admin/css/nav_sidebar.css 304 [0.00, 127.0.0.1:50894][0m
-INFO 2025-07-21 18:20:45,968 runserver 32861 6150287360 [36mHTTP GET /static/admin/css/forms.css 304 [0.00, 127.0.0.1:50891][0m
-INFO 2025-07-21 18:20:45,969 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/theme.js 304 [0.01, 127.0.0.1:50892][0m
-INFO 2025-07-21 18:20:45,969 runserver 32861 6150287360 [36mHTTP GET /static/admin/css/dark_mode.css 304 [0.01, 127.0.0.1:50888][0m
-INFO 2025-07-21 18:20:45,971 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/vendor/jquery/jquery.js 304 [0.01, 127.0.0.1:50840][0m
-INFO 2025-07-21 18:20:45,978 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/jquery.init.js 304 [0.00, 127.0.0.1:50891][0m
-INFO 2025-07-21 18:20:45,978 runserver 32861 6150287360 [36mHTTP GET /static/admin/css/responsive.css 304 [0.01, 127.0.0.1:50894][0m
-INFO 2025-07-21 18:20:45,978 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/core.js 304 [0.00, 127.0.0.1:50892][0m
-INFO 2025-07-21 18:20:45,979 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/admin/RelatedObjectLookups.js 304 [0.00, 127.0.0.1:50888][0m
-INFO 2025-07-21 18:20:45,979 runserver 32861 6150287360 [36mHTTP GET /static/admin/css/widgets.css 304 [0.00, 127.0.0.1:50840][0m
-INFO 2025-07-21 18:20:45,986 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/prepopulate.js 304 [0.00, 127.0.0.1:50892][0m
-INFO 2025-07-21 18:20:45,986 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/actions.js 304 [0.00, 127.0.0.1:50891][0m
-INFO 2025-07-21 18:20:45,986 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/urlify.js 304 [0.00, 127.0.0.1:50894][0m
-INFO 2025-07-21 18:20:45,987 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/prepopulate_init.js 304 [0.00, 127.0.0.1:50840][0m
-INFO 2025-07-21 18:20:45,987 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/vendor/xregexp/xregexp.js 304 [0.00, 127.0.0.1:50888][0m
-INFO 2025-07-21 18:20:45,991 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/nav_sidebar.js 304 [0.00, 127.0.0.1:50888][0m
-INFO 2025-07-21 18:20:45,994 runserver 32861 6150287360 [36mHTTP GET /static/admin/js/change_form.js 304 [0.00, 127.0.0.1:50888][0m
-INFO 2025-07-21 18:20:46,071 runserver 32861 6150287360 [mHTTP GET /admin/jsi18n/ 200 [0.11, 127.0.0.1:50839][0m
-INFO 2025-07-21 19:27:41,364 autoreload 32861 8444927744 /Users/mohsen/Desktop/fastapi/arbitrage/config/settings.py changed, reloading.
-INFO 2025-07-21 19:27:42,173 autoreload 34079 8444927744 Watching for file changes with StatReloader
-INFO 2025-07-21 19:27:42,173 autoreload 34079 8444927744 Watching for file changes with StatReloader
-INFO 2025-07-21 20:08:58,819 autoreload 38459 8444927744 Watching for file changes with StatReloader
-INFO 2025-07-21 20:08:58,819 autoreload 38459 8444927744 Watching for file changes with StatReloader
-INFO 2025-07-21 20:08:58,959 server 38459 6138851328 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
-INFO 2025-07-21 20:08:58,959 server 38459 6138851328 Configuring endpoint tcp:port=8000:interface=127.0.0.1
-INFO 2025-07-21 20:08:58,960 server 38459 6138851328 Listening on TCP address 127.0.0.1:8000
-INFO 2025-07-21 20:09:07,711 runserver 38459 6138851328 [32mHTTP GET /admin/ 302 [0.04, 127.0.0.1:62038][0m
-INFO 2025-07-21 20:09:07,711 runserver 38459 6138851328 [32mHTTP GET /admin/ 302 [0.04, 127.0.0.1:62038][0m
-INFO 2025-07-21 20:09:07,741 runserver 38459 6138851328 [mHTTP GET /admin/login/?next=/admin/ 200 [0.02, 127.0.0.1:62038][0m
-INFO 2025-07-21 20:09:07,741 runserver 38459 6138851328 [mHTTP GET /admin/login/?next=/admin/ 200 [0.02, 127.0.0.1:62038][0m
-INFO 2025-07-21 20:09:07,757 runserver 38459 6138851328 [36mHTTP GET /static/admin/css/base.css 304 [0.00, 127.0.0.1:62038][0m
-INFO 2025-07-21 20:09:07,757 runserver 38459 6138851328 [36mHTTP GET /static/admin/css/base.css 304 [0.00, 127.0.0.1:62038][0m
-INFO 2025-07-21 20:09:07,758 runserver 38459 6138851328 [36mHTTP GET /static/admin/css/dark_mode.css 304 [0.00, 127.0.0.1:62042][0m
-INFO 2025-07-21 20:09:07,758 runserver 38459 6138851328 [36mHTTP GET /static/admin/css/dark_mode.css 304 [0.00, 127.0.0.1:62042][0m
-INFO 2025-07-21 20:09:07,758 runserver 38459 6138851328 [36mHTTP GET /static/admin/js/theme.js 304 [0.00, 127.0.0.1:62044][0m
-INFO 2025-07-21 20:09:07,758 runserver 38459 6138851328 [36mHTTP GET /static/admin/js/theme.js 304 [0.00, 127.0.0.1:62044][0m
-INFO 2025-07-21 20:09:07,774 runserver 38459 6138851328 [36mHTTP GET /static/admin/css/nav_sidebar.css 304 [0.00, 127.0.0.1:62044][0m
-INFO 2025-07-21 20:09:07,774 runserver 38459 6138851328 [36mHTTP GET /static/admin/css/nav_sidebar.css 304 [0.00, 127.0.0.1:62044][0m
-INFO 2025-07-21 20:09:07,774 runserver 38459 6138851328 [36mHTTP GET /static/admin/css/login.css 304 [0.00, 127.0.0.1:62042][0m
-INFO 2025-07-21 20:09:07,774 runserver 38459 6138851328 [36mHTTP GET /static/admin/css/login.css 304 [0.00, 127.0.0.1:62042][0m
-INFO 2025-07-21 20:09:07,774 runserver 38459 6138851328 [36mHTTP GET /static/admin/css/responsive.css 304 [0.00, 127.0.0.1:62038][0m
-INFO 2025-07-21 20:09:07,774 runserver 38459 6138851328 [36mHTTP GET /static/admin/css/responsive.css 304 [0.00, 127.0.0.1:62038][0m
-INFO 2025-07-21 20:09:07,777 runserver 38459 6138851328 [36mHTTP GET /static/admin/js/nav_sidebar.js 304 [0.00, 127.0.0.1:62038][0m
-INFO 2025-07-21 20:09:07,777 runserver 38459 6138851328 [36mHTTP GET /static/admin/js/nav_sidebar.js 304 [0.00, 127.0.0.1:62038][0m
-INFO 2025-07-21 20:09:08,285 runserver 38459 6138851328 [mHTTP GET / 200 [0.03, 127.0.0.1:62038][0m
-INFO 2025-07-21 20:09:08,285 runserver 38459 6138851328 [mHTTP GET / 200 [0.03, 127.0.0.1:62038][0m
-INFO 2025-07-21 20:09:08,892 runserver 38459 6138851328 WebSocket HANDSHAKING /ws/arbitrage/ [127.0.0.1:62049]
-INFO 2025-07-21 20:09:08,892 runserver 38459 6138851328 WebSocket HANDSHAKING /ws/arbitrage/ [127.0.0.1:62049]
-INFO 2025-07-21 20:09:08,918 runserver 38459 6138851328 WebSocket CONNECT /ws/arbitrage/ [127.0.0.1:62049]
-INFO 2025-07-21 20:09:08,918 runserver 38459 6138851328 WebSocket CONNECT /ws/arbitrage/ [127.0.0.1:62049]
-INFO 2025-07-21 20:09:15,662 runserver 38459 6138851328 [mHTTP GET / 200 [0.02, 127.0.0.1:62063][0m
-INFO 2025-07-21 20:09:15,662 runserver 38459 6138851328 [mHTTP GET / 200 [0.02, 127.0.0.1:62063][0m
-INFO 2025-07-21 20:09:15,670 runserver 38459 6138851328 WebSocket DISCONNECT /ws/arbitrage/ [127.0.0.1:62049]
-INFO 2025-07-21 20:09:15,670 runserver 38459 6138851328 WebSocket DISCONNECT /ws/arbitrage/ [127.0.0.1:62049]
-INFO 2025-07-21 20:09:15,765 runserver 38459 6138851328 WebSocket HANDSHAKING /ws/arbitrage/ [127.0.0.1:62066]
-INFO 2025-07-21 20:09:15,765 runserver 38459 6138851328 WebSocket HANDSHAKING /ws/arbitrage/ [127.0.0.1:62066]
-INFO 2025-07-21 20:09:15,769 runserver 38459 6138851328 WebSocket CONNECT /ws/arbitrage/ [127.0.0.1:62066]
-INFO 2025-07-21 20:09:15,769 runserver 38459 6138851328 WebSocket CONNECT /ws/arbitrage/ [127.0.0.1:62066]
-INFO 2025-07-21 20:09:20,712 runserver 38459 6138851328 [mHTTP GET / 200 [0.03, 127.0.0.1:62088][0m
-INFO 2025-07-21 20:09:20,712 runserver 38459 6138851328 [mHTTP GET / 200 [0.03, 127.0.0.1:62088][0m
-INFO 2025-07-21 20:09:20,719 runserver 38459 6138851328 WebSocket DISCONNECT /ws/arbitrage/ [127.0.0.1:62066]
-INFO 2025-07-21 20:09:20,719 runserver 38459 6138851328 WebSocket DISCONNECT /ws/arbitrage/ [127.0.0.1:62066]
-INFO 2025-07-21 20:09:20,810 runserver 38459 6138851328 WebSocket HANDSHAKING /ws/arbitrage/ [127.0.0.1:62096]
-INFO 2025-07-21 20:09:20,810 runserver 38459 6138851328 WebSocket HANDSHAKING /ws/arbitrage/ [127.0.0.1:62096]
-INFO 2025-07-21 20:09:20,814 runserver 38459 6138851328 WebSocket CONNECT /ws/arbitrage/ [127.0.0.1:62096]
-INFO 2025-07-21 20:09:20,814 runserver 38459 6138851328 WebSocket CONNECT /ws/arbitrage/ [127.0.0.1:62096]
-INFO 2025-07-21 20:09:22,909 runserver 38459 6138851328 [32mHTTP GET /admin/ 302 [0.01, 127.0.0.1:62088][0m
-INFO 2025-07-21 20:09:22,909 runserver 38459 6138851328 [32mHTTP GET /admin/ 302 [0.01, 127.0.0.1:62088][0m
-INFO 2025-07-21 20:09:22,925 runserver 38459 6138851328 [mHTTP GET /admin/login/?next=/admin/ 200 [0.01, 127.0.0.1:62088][0m
-INFO 2025-07-21 20:09:22,925 runserver 38459 6138851328 [mHTTP GET /admin/login/?next=/admin/ 200 [0.01, 127.0.0.1:62088][0m
-INFO 2025-07-21 20:09:22,945 runserver 38459 6138851328 [36mHTTP GET /static/admin/css/base.css 304 [0.00, 127.0.0.1:62088][0m
-INFO 2025-07-21 20:09:22,945 runserver 38459 6138851328 [36mHTTP GET /static/admin/css/base.css 304 [0.00, 127.0.0.1:62088][0m
-INFO 2025-07-21 20:09:22,947 runserver 38459 6138851328 WebSocket DISCONNECT /ws/arbitrage/ [127.0.0.1:62096]
-INFO 2025-07-21 20:09:22,947 runserver 38459 6138851328 WebSocket DISCONNECT /ws/arbitrage/ [127.0.0.1:62096]
-INFO 2025-07-21 20:09:22,960 runserver 38459 6138851328 [36mHTTP GET /static/admin/css/responsive.css 304 [0.01, 127.0.0.1:62105][0m
-INFO 2025-07-21 20:09:22,960 runserver 38459 6138851328 [36mHTTP GET /static/admin/css/responsive.css 304 [0.01, 127.0.0.1:62105][0m
-INFO 2025-07-21 20:09:22,960 runserver 38459 6138851328 [36mHTTP GET /static/admin/css/dark_mode.css 304 [0.01, 127.0.0.1:62088][0m
-INFO 2025-07-21 20:09:22,960 runserver 38459 6138851328 [36mHTTP GET /static/admin/css/dark_mode.css 304 [0.01, 127.0.0.1:62088][0m
-INFO 2025-07-21 20:09:22,960 runserver 38459 6138851328 [36mHTTP GET /static/admin/css/login.css 304 [0.01, 127.0.0.1:62104][0m
-INFO 2025-07-21 20:09:22,960 runserver 38459 6138851328 [36mHTTP GET /static/admin/css/login.css 304 [0.01, 127.0.0.1:62104][0m
-INFO 2025-07-21 20:09:22,960 runserver 38459 6138851328 [36mHTTP GET /static/admin/js/theme.js 304 [0.01, 127.0.0.1:62107][0m
-INFO 2025-07-21 20:09:22,960 runserver 38459 6138851328 [36mHTTP GET /static/admin/js/theme.js 304 [0.01, 127.0.0.1:62107][0m
-INFO 2025-07-21 20:09:22,961 runserver 38459 6138851328 [36mHTTP GET /static/admin/css/nav_sidebar.css 304 [0.01, 127.0.0.1:62101][0m
-INFO 2025-07-21 20:09:22,961 runserver 38459 6138851328 [36mHTTP GET /static/admin/css/nav_sidebar.css 304 [0.01, 127.0.0.1:62101][0m
-INFO 2025-07-21 20:09:22,966 runserver 38459 6138851328 [36mHTTP GET /static/admin/js/nav_sidebar.js 304 [0.00, 127.0.0.1:62101][0m
-INFO 2025-07-21 20:09:22,966 runserver 38459 6138851328 [36mHTTP GET /static/admin/js/nav_sidebar.js 304 [0.00, 127.0.0.1:62101][0m
-INFO 2025-07-21 20:09:24,606 runserver 38459 6138851328 WebSocket HANDSHAKING /ws/arbitrage/ [127.0.0.1:62116]
-INFO 2025-07-21 20:09:24,606 runserver 38459 6138851328 WebSocket HANDSHAKING /ws/arbitrage/ [127.0.0.1:62116]
-INFO 2025-07-21 20:09:24,610 runserver 38459 6138851328 WebSocket CONNECT /ws/arbitrage/ [127.0.0.1:62116]
-INFO 2025-07-21 20:09:24,610 runserver 38459 6138851328 WebSocket CONNECT /ws/arbitrage/ [127.0.0.1:62116]
-INFO 2025-07-21 20:09:43,315 runserver 38459 6138851328 [32mHTTP GET /admin/ 302 [0.01, 127.0.0.1:62167][0m
-INFO 2025-07-21 20:09:43,315 runserver 38459 6138851328 [32mHTTP GET /admin/ 302 [0.01, 127.0.0.1:62167][0m
-INFO 2025-07-21 20:09:43,325 runserver 38459 6138851328 [mHTTP GET /admin/login/?next=/admin/ 200 [0.01, 127.0.0.1:62167][0m
-INFO 2025-07-21 20:09:43,325 runserver 38459 6138851328 [mHTTP GET /admin/login/?next=/admin/ 200 [0.01, 127.0.0.1:62167][0m
-INFO 2025-07-21 20:09:43,340 runserver 38459 6138851328 [36mHTTP GET /static/admin/css/dark_mode.css 304 [0.00, 127.0.0.1:62170][0m
-INFO 2025-07-21 20:09:43,340 runserver 38459 6138851328 [36mHTTP GET /static/admin/css/dark_mode.css 304 [0.00, 127.0.0.1:62170][0m
-INFO 2025-07-21 20:09:43,341 runserver 38459 6138851328 [36mHTTP GET /static/admin/css/base.css 304 [0.01, 127.0.0.1:62167][0m
-INFO 2025-07-21 20:09:43,341 runserver 38459 6138851328 [36mHTTP GET /static/admin/css/base.css 304 [0.01, 127.0.0.1:62167][0m
-INFO 2025-07-21 20:09:43,342 runserver 38459 6138851328 [36mHTTP GET /static/admin/js/theme.js 304 [0.00, 127.0.0.1:62171][0m
-INFO 2025-07-21 20:09:43,342 runserver 38459 6138851328 [36mHTTP GET /static/admin/js/theme.js 304 [0.00, 127.0.0.1:62171][0m
-INFO 2025-07-21 20:09:43,356 runserver 38459 6138851328 [36mHTTP GET /static/admin/css/nav_sidebar.css 304 [0.00, 127.0.0.1:62171][0m
-INFO 2025-07-21 20:09:43,356 runserver 38459 6138851328 [36mHTTP GET /static/admin/css/nav_sidebar.css 304 [0.00, 127.0.0.1:62171][0m
-INFO 2025-07-21 20:09:43,358 runserver 38459 6138851328 [36mHTTP GET /static/admin/css/login.css 304 [0.01, 127.0.0.1:62167][0m
-INFO 2025-07-21 20:09:43,358 runserver 38459 6138851328 [36mHTTP GET /static/admin/css/login.css 304 [0.01, 127.0.0.1:62167][0m
-INFO 2025-07-21 20:09:43,358 runserver 38459 6138851328 [36mHTTP GET /static/admin/css/responsive.css 304 [0.00, 127.0.0.1:62170][0m
-INFO 2025-07-21 20:09:43,358 runserver 38459 6138851328 [36mHTTP GET /static/admin/css/responsive.css 304 [0.00, 127.0.0.1:62170][0m
-INFO 2025-07-21 20:09:43,362 runserver 38459 6138851328 [36mHTTP GET /static/admin/js/nav_sidebar.js 304 [0.00, 127.0.0.1:62171][0m
-INFO 2025-07-21 20:09:43,362 runserver 38459 6138851328 [36mHTTP GET /static/admin/js/nav_sidebar.js 304 [0.00, 127.0.0.1:62171][0m
-INFO 2025-07-21 20:09:43,707 runserver 38459 6138851328 WebSocket DISCONNECT /ws/arbitrage/ [127.0.0.1:62116]
-INFO 2025-07-21 20:09:43,707 runserver 38459 6138851328 WebSocket DISCONNECT /ws/arbitrage/ [127.0.0.1:62116]
-INFO 2025-07-21 20:09:47,405 runserver 38459 6138851328 [32mHTTP POST /admin/login/?next=/admin/ 302 [0.23, 127.0.0.1:62171][0m
-INFO 2025-07-21 20:09:47,405 runserver 38459 6138851328 [32mHTTP POST /admin/login/?next=/admin/ 302 [0.23, 127.0.0.1:62171][0m
-INFO 2025-07-21 20:09:47,436 runserver 38459 6138851328 [mHTTP GET /admin/ 200 [0.03, 127.0.0.1:62171][0m
-INFO 2025-07-21 20:09:47,436 runserver 38459 6138851328 [mHTTP GET /admin/ 200 [0.03, 127.0.0.1:62171][0m
-INFO 2025-07-21 20:09:47,476 runserver 38459 6138851328 [36mHTTP GET /static/admin/css/base.css 304 [0.00, 127.0.0.1:62171][0m
-INFO 2025-07-21 20:09:47,476 runserver 38459 6138851328 [36mHTTP GET /static/admin/css/base.css 304 [0.00, 127.0.0.1:62171][0m
-INFO 2025-07-21 20:09:47,483 runserver 38459 6138851328 [36mHTTP GET /static/admin/css/dark_mode.css 304 [0.00, 127.0.0.1:62171][0m
-INFO 2025-07-21 20:09:47,483 runserver 38459 6138851328 [36mHTTP GET /static/admin/css/dark_mode.css 304 [0.00, 127.0.0.1:62171][0m
-INFO 2025-07-21 20:09:47,483 runserver 38459 6138851328 [36mHTTP GET /static/admin/css/responsive.css 304 [0.00, 127.0.0.1:62255][0m
-INFO 2025-07-21 20:09:47,483 runserver 38459 6138851328 [36mHTTP GET /static/admin/css/responsive.css 304 [0.00, 127.0.0.1:62255][0m
-INFO 2025-07-21 20:09:47,484 runserver 38459 6138851328 [36mHTTP GET /static/admin/js/theme.js 304 [0.00, 127.0.0.1:62170][0m
-INFO 2025-07-21 20:09:47,484 runserver 38459 6138851328 [36mHTTP GET /static/admin/js/theme.js 304 [0.00, 127.0.0.1:62170][0m
-INFO 2025-07-21 20:09:47,484 runserver 38459 6138851328 [36mHTTP GET /static/admin/css/dashboard.css 304 [0.00, 127.0.0.1:62257][0m
-INFO 2025-07-21 20:09:47,484 runserver 38459 6138851328 [36mHTTP GET /static/admin/css/dashboard.css 304 [0.00, 127.0.0.1:62257][0m
-INFO 2025-07-21 20:09:47,486 runserver 38459 6138851328 [36mHTTP GET /static/admin/css/nav_sidebar.css 304 [0.01, 127.0.0.1:62167][0m
-INFO 2025-07-21 20:09:47,486 runserver 38459 6138851328 [36mHTTP GET /static/admin/css/nav_sidebar.css 304 [0.01, 127.0.0.1:62167][0m
-INFO 2025-07-21 20:09:47,488 runserver 38459 6138851328 [36mHTTP GET /static/admin/js/nav_sidebar.js 304 [0.00, 127.0.0.1:62257][0m
-INFO 2025-07-21 20:09:47,488 runserver 38459 6138851328 [36mHTTP GET /static/admin/js/nav_sidebar.js 304 [0.00, 127.0.0.1:62257][0m
-INFO 2025-07-21 20:09:47,492 runserver 38459 6138851328 [36mHTTP GET /static/admin/img/icon-addlink.svg 304 [0.00, 127.0.0.1:62257][0m
-INFO 2025-07-21 20:09:47,492 runserver 38459 6138851328 [36mHTTP GET /static/admin/img/icon-addlink.svg 304 [0.00, 127.0.0.1:62257][0m
-INFO 2025-07-21 20:09:47,492 runserver 38459 6138851328 [36mHTTP GET /static/admin/img/icon-changelink.svg 304 [0.00, 127.0.0.1:62167][0m
-INFO 2025-07-21 20:09:47,492 runserver 38459 6138851328 [36mHTTP GET /static/admin/img/icon-changelink.svg 304 [0.00, 127.0.0.1:62167][0m
-INFO 2025-07-21 20:09:50,019 runserver 38459 6138851328 [mHTTP GET / 200 [0.03, 127.0.0.1:62264][0m
-INFO 2025-07-21 20:09:50,019 runserver 38459 6138851328 [mHTTP GET / 200 [0.03, 127.0.0.1:62264][0m
-INFO 2025-07-21 20:09:50,396 runserver 38459 6138851328 WebSocket HANDSHAKING /ws/arbitrage/ [127.0.0.1:62267]
-INFO 2025-07-21 20:09:50,396 runserver 38459 6138851328 WebSocket HANDSHAKING /ws/arbitrage/ [127.0.0.1:62267]
-INFO 2025-07-21 20:09:50,467 runserver 38459 6138851328 WebSocket CONNECT /ws/arbitrage/ [127.0.0.1:62267]
-INFO 2025-07-21 20:09:50,467 runserver 38459 6138851328 WebSocket CONNECT /ws/arbitrage/ [127.0.0.1:62267]
-INFO 2025-07-21 20:09:52,004 runserver 38459 6138851328 [mHTTP GET / 200 [0.03, 127.0.0.1:62264][0m
-INFO 2025-07-21 20:09:52,004 runserver 38459 6138851328 [mHTTP GET / 200 [0.03, 127.0.0.1:62264][0m
-INFO 2025-07-21 20:09:52,008 runserver 38459 6138851328 WebSocket DISCONNECT /ws/arbitrage/ [127.0.0.1:62267]
-INFO 2025-07-21 20:09:52,008 runserver 38459 6138851328 WebSocket DISCONNECT /ws/arbitrage/ [127.0.0.1:62267]
-INFO 2025-07-21 20:09:52,459 runserver 38459 6138851328 WebSocket HANDSHAKING /ws/arbitrage/ [127.0.0.1:62276]
-INFO 2025-07-21 20:09:52,459 runserver 38459 6138851328 WebSocket HANDSHAKING /ws/arbitrage/ [127.0.0.1:62276]
-INFO 2025-07-21 20:09:52,480 runserver 38459 6138851328 WebSocket CONNECT /ws/arbitrage/ [127.0.0.1:62276]
-INFO 2025-07-21 20:09:52,480 runserver 38459 6138851328 WebSocket CONNECT /ws/arbitrage/ [127.0.0.1:62276]
-INFO 2025-07-21 20:10:01,434 runserver 38459 6138851328 [mHTTP GET /admin-panel/ 200 [0.05, 127.0.0.1:62292][0m
-INFO 2025-07-21 20:10:01,434 runserver 38459 6138851328 [mHTTP GET /admin-panel/ 200 [0.05, 127.0.0.1:62292][0m
-INFO 2025-07-21 20:10:01,530 runserver 38459 6138851328 WebSocket HANDSHAKING /ws/arbitrage/ [127.0.0.1:62296]
-INFO 2025-07-21 20:10:01,530 runserver 38459 6138851328 WebSocket HANDSHAKING /ws/arbitrage/ [127.0.0.1:62296]
-INFO 2025-07-21 20:10:01,541 runserver 38459 6138851328 WebSocket DISCONNECT /ws/arbitrage/ [127.0.0.1:62276]
-INFO 2025-07-21 20:10:01,541 runserver 38459 6138851328 WebSocket DISCONNECT /ws/arbitrage/ [127.0.0.1:62276]
-INFO 2025-07-21 20:10:01,546 runserver 38459 6138851328 WebSocket CONNECT /ws/arbitrage/ [127.0.0.1:62296]
-INFO 2025-07-21 20:10:01,546 runserver 38459 6138851328 WebSocket CONNECT /ws/arbitrage/ [127.0.0.1:62296]
-INFO 2025-07-21 20:10:10,689 runserver 38459 6138851328 [mHTTP GET / 200 [0.02, 127.0.0.1:62313][0m
-INFO 2025-07-21 20:10:10,689 runserver 38459 6138851328 [mHTTP GET / 200 [0.02, 127.0.0.1:62313][0m
-INFO 2025-07-21 20:10:10,781 runserver 38459 6138851328 WebSocket HANDSHAKING /ws/arbitrage/ [127.0.0.1:62319]
-INFO 2025-07-21 20:10:10,781 runserver 38459 6138851328 WebSocket HANDSHAKING /ws/arbitrage/ [127.0.0.1:62319]
-INFO 2025-07-21 20:10:10,787 runserver 38459 6138851328 WebSocket DISCONNECT /ws/arbitrage/ [127.0.0.1:62296]
-INFO 2025-07-21 20:10:10,787 runserver 38459 6138851328 WebSocket DISCONNECT /ws/arbitrage/ [127.0.0.1:62296]
-INFO 2025-07-21 20:10:10,805 runserver 38459 6138851328 WebSocket CONNECT /ws/arbitrage/ [127.0.0.1:62319]
-INFO 2025-07-21 20:10:10,805 runserver 38459 6138851328 WebSocket CONNECT /ws/arbitrage/ [127.0.0.1:62319]
-INFO 2025-07-21 20:11:31,097 runserver 38459 6138851328 [mHTTP GET /admin-panel/ 200 [0.04, 127.0.0.1:62681][0m
-INFO 2025-07-21 20:11:31,097 runserver 38459 6138851328 [mHTTP GET /admin-panel/ 200 [0.04, 127.0.0.1:62681][0m
-INFO 2025-07-21 20:11:31,244 runserver 38459 6138851328 WebSocket HANDSHAKING /ws/arbitrage/ [127.0.0.1:62686]
-INFO 2025-07-21 20:11:31,244 runserver 38459 6138851328 WebSocket HANDSHAKING /ws/arbitrage/ [127.0.0.1:62686]
-INFO 2025-07-21 20:11:31,258 runserver 38459 6138851328 WebSocket DISCONNECT /ws/arbitrage/ [127.0.0.1:62319]
-INFO 2025-07-21 20:11:31,258 runserver 38459 6138851328 WebSocket DISCONNECT /ws/arbitrage/ [127.0.0.1:62319]
-INFO 2025-07-21 20:11:31,276 runserver 38459 6138851328 WebSocket CONNECT /ws/arbitrage/ [127.0.0.1:62686]
-INFO 2025-07-21 20:11:31,276 runserver 38459 6138851328 WebSocket CONNECT /ws/arbitrage/ [127.0.0.1:62686]
-INFO 2025-07-21 20:11:40,402 runserver 38459 6138851328 [mHTTP GET /admin/ 200 [0.04, 127.0.0.1:62731][0m
-INFO 2025-07-21 20:11:40,402 runserver 38459 6138851328 [mHTTP GET /admin/ 200 [0.04, 127.0.0.1:62731][0m
-INFO 2025-07-21 20:11:40,418 runserver 38459 6138851328 WebSocket DISCONNECT /ws/arbitrage/ [127.0.0.1:62686]
-INFO 2025-07-21 20:11:40,418 runserver 38459 6138851328 WebSocket DISCONNECT /ws/arbitrage/ [127.0.0.1:62686]
-INFO 2025-07-21 20:11:40,428 runserver 38459 6138851328 [36mHTTP GET /static/admin/css/base.css 304 [0.01, 127.0.0.1:62731][0m
-INFO 2025-07-21 20:11:40,428 runserver 38459 6138851328 [36mHTTP GET /static/admin/css/base.css 304 [0.01, 127.0.0.1:62731][0m
-INFO 2025-07-21 20:11:40,429 runserver 38459 6138851328 [36mHTTP GET /static/admin/css/dashboard.css 304 [0.01, 127.0.0.1:62746][0m
-INFO 2025-07-21 20:11:40,429 runserver 38459 6138851328 [36mHTTP GET /static/admin/css/dashboard.css 304 [0.01, 127.0.0.1:62746][0m
-INFO 2025-07-21 20:11:40,429 runserver 38459 6138851328 [36mHTTP GET /static/admin/css/dark_mode.css 304 [0.01, 127.0.0.1:62742][0m
-INFO 2025-07-21 20:11:40,429 runserver 38459 6138851328 [36mHTTP GET /static/admin/css/dark_mode.css 304 [0.01, 127.0.0.1:62742][0m
-INFO 2025-07-21 20:11:40,429 runserver 38459 6138851328 [36mHTTP GET /static/admin/css/nav_sidebar.css 304 [0.01, 127.0.0.1:62739][0m
-INFO 2025-07-21 20:11:40,429 runserver 38459 6138851328 [36mHTTP GET /static/admin/css/nav_sidebar.css 304 [0.01, 127.0.0.1:62739][0m
-INFO 2025-07-21 20:11:40,429 runserver 38459 6138851328 [36mHTTP GET /static/admin/js/theme.js 304 [0.01, 127.0.0.1:62743][0m
-INFO 2025-07-21 20:11:40,429 runserver 38459 6138851328 [36mHTTP GET /static/admin/js/theme.js 304 [0.01, 127.0.0.1:62743][0m
-INFO 2025-07-21 20:11:40,430 runserver 38459 6138851328 [36mHTTP GET /static/admin/css/responsive.css 304 [0.01, 127.0.0.1:62747][0m
-INFO 2025-07-21 20:11:40,430 runserver 38459 6138851328 [36mHTTP GET /static/admin/css/responsive.css 304 [0.01, 127.0.0.1:62747][0m
-INFO 2025-07-21 20:11:40,436 runserver 38459 6138851328 [36mHTTP GET /static/admin/js/nav_sidebar.js 304 [0.00, 127.0.0.1:62747][0m
-INFO 2025-07-21 20:11:40,436 runserver 38459 6138851328 [36mHTTP GET /static/admin/js/nav_sidebar.js 304 [0.00, 127.0.0.1:62747][0m
-INFO 2025-07-21 20:11:40,442 runserver 38459 6138851328 [36mHTTP GET /static/admin/img/icon-addlink.svg 304 [0.00, 127.0.0.1:62747][0m
-INFO 2025-07-21 20:11:40,442 runserver 38459 6138851328 [36mHTTP GET /static/admin/img/icon-addlink.svg 304 [0.00, 127.0.0.1:62747][0m
-INFO 2025-07-21 20:11:40,442 runserver 38459 6138851328 [36mHTTP GET /static/admin/img/icon-changelink.svg 304 [0.00, 127.0.0.1:62743][0m
-INFO 2025-07-21 20:11:40,442 runserver 38459 6138851328 [36mHTTP GET /static/admin/img/icon-changelink.svg 304 [0.00, 127.0.0.1:62743][0m
-INFO 2025-07-21 20:11:41,960 runserver 38459 6138851328 WebSocket HANDSHAKING /ws/arbitrage/ [127.0.0.1:62754]
-INFO 2025-07-21 20:11:41,960 runserver 38459 6138851328 WebSocket HANDSHAKING /ws/arbitrage/ [127.0.0.1:62754]
-INFO 2025-07-21 20:11:41,998 runserver 38459 6138851328 WebSocket CONNECT /ws/arbitrage/ [127.0.0.1:62754]
-INFO 2025-07-21 20:11:41,998 runserver 38459 6138851328 WebSocket CONNECT /ws/arbitrage/ [127.0.0.1:62754]
-INFO 2025-07-21 20:11:43,232 runserver 38459 6138851328 [mHTTP GET /admin-panel/ 200 [0.04, 127.0.0.1:62743][0m
-INFO 2025-07-21 20:11:43,232 runserver 38459 6138851328 [mHTTP GET /admin-panel/ 200 [0.04, 127.0.0.1:62743][0m
-INFO 2025-07-21 20:11:43,237 runserver 38459 6138851328 WebSocket DISCONNECT /ws/arbitrage/ [127.0.0.1:62754]
-INFO 2025-07-21 20:11:43,237 runserver 38459 6138851328 WebSocket DISCONNECT /ws/arbitrage/ [127.0.0.1:62754]
-INFO 2025-07-21 20:11:43,303 runserver 38459 6138851328 WebSocket HANDSHAKING /ws/arbitrage/ [127.0.0.1:62764]
-INFO 2025-07-21 20:11:43,303 runserver 38459 6138851328 WebSocket HANDSHAKING /ws/arbitrage/ [127.0.0.1:62764]
-INFO 2025-07-21 20:11:43,320 runserver 38459 6138851328 WebSocket CONNECT /ws/arbitrage/ [127.0.0.1:62764]
-INFO 2025-07-21 20:11:43,320 runserver 38459 6138851328 WebSocket CONNECT /ws/arbitrage/ [127.0.0.1:62764]
-INFO 2025-07-21 20:11:43,937 runserver 38459 6138851328 [mHTTP GET / 200 [0.02, 127.0.0.1:62772][0m
-INFO 2025-07-21 20:11:43,937 runserver 38459 6138851328 [mHTTP GET / 200 [0.02, 127.0.0.1:62772][0m
-INFO 2025-07-21 20:11:44,008 runserver 38459 6138851328 WebSocket HANDSHAKING /ws/arbitrage/ [127.0.0.1:62775]
-INFO 2025-07-21 20:11:44,008 runserver 38459 6138851328 WebSocket HANDSHAKING /ws/arbitrage/ [127.0.0.1:62775]
-INFO 2025-07-21 20:11:44,011 runserver 38459 6138851328 WebSocket DISCONNECT /ws/arbitrage/ [127.0.0.1:62764]
-INFO 2025-07-21 20:11:44,011 runserver 38459 6138851328 WebSocket DISCONNECT /ws/arbitrage/ [127.0.0.1:62764]
-INFO 2025-07-21 20:11:44,021 runserver 38459 6138851328 WebSocket CONNECT /ws/arbitrage/ [127.0.0.1:62775]
-INFO 2025-07-21 20:11:44,021 runserver 38459 6138851328 WebSocket CONNECT /ws/arbitrage/ [127.0.0.1:62775]
-INFO 2025-07-21 20:12:05,499 runserver 38459 6138851328 [mHTTP GET / 200 [0.04, 127.0.0.1:62909][0m
-INFO 2025-07-21 20:12:05,499 runserver 38459 6138851328 [mHTTP GET / 200 [0.04, 127.0.0.1:62909][0m
-INFO 2025-07-21 20:12:05,508 runserver 38459 6138851328 WebSocket DISCONNECT /ws/arbitrage/ [127.0.0.1:62775]
-INFO 2025-07-21 20:12:05,508 runserver 38459 6138851328 WebSocket DISCONNECT /ws/arbitrage/ [127.0.0.1:62775]
-INFO 2025-07-21 20:12:05,596 runserver 38459 6138851328 WebSocket HANDSHAKING /ws/arbitrage/ [127.0.0.1:62916]
-INFO 2025-07-21 20:12:05,596 runserver 38459 6138851328 WebSocket HANDSHAKING /ws/arbitrage/ [127.0.0.1:62916]
-INFO 2025-07-21 20:12:05,612 runserver 38459 6138851328 WebSocket CONNECT /ws/arbitrage/ [127.0.0.1:62916]
-INFO 2025-07-21 20:12:05,612 runserver 38459 6138851328 WebSocket CONNECT /ws/arbitrage/ [127.0.0.1:62916]
-INFO 2025-07-21 20:12:25,500 runserver 38459 6138851328 [mHTTP GET / 200 [0.04, 127.0.0.1:63004][0m
-INFO 2025-07-21 20:12:25,500 runserver 38459 6138851328 [mHTTP GET / 200 [0.04, 127.0.0.1:63004][0m
-INFO 2025-07-21 20:12:25,509 runserver 38459 6138851328 WebSocket DISCONNECT /ws/arbitrage/ [127.0.0.1:62916]
-INFO 2025-07-21 20:12:25,509 runserver 38459 6138851328 WebSocket DISCONNECT /ws/arbitrage/ [127.0.0.1:62916]
-INFO 2025-07-21 20:12:25,601 runserver 38459 6138851328 WebSocket HANDSHAKING /ws/arbitrage/ [127.0.0.1:63012]
-INFO 2025-07-21 20:12:25,601 runserver 38459 6138851328 WebSocket HANDSHAKING /ws/arbitrage/ [127.0.0.1:63012]
-INFO 2025-07-21 20:12:25,617 runserver 38459 6138851328 WebSocket CONNECT /ws/arbitrage/ [127.0.0.1:63012]
-INFO 2025-07-21 20:12:25,617 runserver 38459 6138851328 WebSocket CONNECT /ws/arbitrage/ [127.0.0.1:63012]
-INFO 2025-07-21 20:13:00,734 runserver 38459 6138851328 [mHTTP GET / 200 [0.08, 127.0.0.1:63240][0m
-INFO 2025-07-21 20:13:00,734 runserver 38459 6138851328 [mHTTP GET / 200 [0.08, 127.0.0.1:63240][0m
-INFO 2025-07-21 20:13:00,744 runserver 38459 6138851328 WebSocket DISCONNECT /ws/arbitrage/ [127.0.0.1:63012]
-INFO 2025-07-21 20:13:00,744 runserver 38459 6138851328 WebSocket DISCONNECT /ws/arbitrage/ [127.0.0.1:63012]
-INFO 2025-07-21 20:13:00,843 runserver 38459 6138851328 WebSocket HANDSHAKING /ws/arbitrage/ [127.0.0.1:63249]
-INFO 2025-07-21 20:13:00,843 runserver 38459 6138851328 WebSocket HANDSHAKING /ws/arbitrage/ [127.0.0.1:63249]
-INFO 2025-07-21 20:13:00,855 runserver 38459 6138851328 WebSocket CONNECT /ws/arbitrage/ [127.0.0.1:63249]
-INFO 2025-07-21 20:13:00,855 runserver 38459 6138851328 WebSocket CONNECT /ws/arbitrage/ [127.0.0.1:63249]
-INFO 2025-07-21 20:13:02,453 runserver 38459 6138851328 [mHTTP GET / 200 [0.02, 127.0.0.1:63240][0m
-INFO 2025-07-21 20:13:02,453 runserver 38459 6138851328 [mHTTP GET / 200 [0.02, 127.0.0.1:63240][0m
-INFO 2025-07-21 20:13:02,458 runserver 38459 6138851328 WebSocket DISCONNECT /ws/arbitrage/ [127.0.0.1:63249]
-INFO 2025-07-21 20:13:02,458 runserver 38459 6138851328 WebSocket DISCONNECT /ws/arbitrage/ [127.0.0.1:63249]
-INFO 2025-07-21 20:13:02,656 runserver 38459 6138851328 [mHTTP GET / 200 [0.02, 127.0.0.1:63240][0m
-INFO 2025-07-21 20:13:02,656 runserver 38459 6138851328 [mHTTP GET / 200 [0.02, 127.0.0.1:63240][0m
-INFO 2025-07-21 20:13:03,305 runserver 38459 6138851328 WebSocket HANDSHAKING /ws/arbitrage/ [127.0.0.1:63257]
-INFO 2025-07-21 20:13:03,305 runserver 38459 6138851328 WebSocket HANDSHAKING /ws/arbitrage/ [127.0.0.1:63257]
-INFO 2025-07-21 20:13:03,316 runserver 38459 6138851328 WebSocket CONNECT /ws/arbitrage/ [127.0.0.1:63257]
-INFO 2025-07-21 20:13:03,316 runserver 38459 6138851328 WebSocket CONNECT /ws/arbitrage/ [127.0.0.1:63257]
-WARNING 2025-07-21 20:13:03,607 log 38459 6358167552 Not Found: /favicon.ico
-WARNING 2025-07-21 20:13:03,607 log 38459 6358167552 Not Found: /favicon.ico
-WARNING 2025-07-21 20:13:03,607 runserver 38459 6138851328 [33mHTTP GET /favicon.ico 404 [0.01, 127.0.0.1:63261][0m
-WARNING 2025-07-21 20:13:03,607 runserver 38459 6138851328 [33mHTTP GET /favicon.ico 404 [0.01, 127.0.0.1:63261][0m
-INFO 2025-07-21 20:14:00,069 runserver 38459 6138851328 [mHTTP GET / 200 [0.03, 127.0.0.1:63552][0m
-INFO 2025-07-21 20:14:00,069 runserver 38459 6138851328 [mHTTP GET / 200 [0.03, 127.0.0.1:63552][0m
-INFO 2025-07-21 20:14:00,083 runserver 38459 6138851328 WebSocket DISCONNECT /ws/arbitrage/ [127.0.0.1:63257]
-INFO 2025-07-21 20:14:00,083 runserver 38459 6138851328 WebSocket DISCONNECT /ws/arbitrage/ [127.0.0.1:63257]
-INFO 2025-07-21 20:14:00,201 runserver 38459 6138851328 WebSocket HANDSHAKING /ws/arbitrage/ [127.0.0.1:63561]
-INFO 2025-07-21 20:14:00,201 runserver 38459 6138851328 WebSocket HANDSHAKING /ws/arbitrage/ [127.0.0.1:63561]
-INFO 2025-07-21 20:14:00,215 runserver 38459 6138851328 WebSocket CONNECT /ws/arbitrage/ [127.0.0.1:63561]
-INFO 2025-07-21 20:14:00,215 runserver 38459 6138851328 WebSocket CONNECT /ws/arbitrage/ [127.0.0.1:63561]
-WARNING 2025-07-21 20:14:14,488 log 38459 6240382976 Not Found: /.well-known/appspecific/com.chrome.devtools.json
-WARNING 2025-07-21 20:14:14,488 log 38459 6240382976 Not Found: /.well-known/appspecific/com.chrome.devtools.json
-WARNING 2025-07-21 20:14:14,489 runserver 38459 6138851328 [33mHTTP GET /.well-known/appspecific/com.chrome.devtools.json 404 [0.02, 127.0.0.1:63602][0m
-WARNING 2025-07-21 20:14:14,489 runserver 38459 6138851328 [33mHTTP GET /.well-known/appspecific/com.chrome.devtools.json 404 [0.02, 127.0.0.1:63602][0m
-INFO 2025-07-21 20:14:52,862 runserver 38459 6138851328 [mHTTP GET / 200 [0.06, 127.0.0.1:63894][0m
-INFO 2025-07-21 20:14:52,862 runserver 38459 6138851328 [mHTTP GET / 200 [0.06, 127.0.0.1:63894][0m
-INFO 2025-07-21 20:14:52,876 runserver 38459 6138851328 WebSocket DISCONNECT /ws/arbitrage/ [127.0.0.1:63561]
-INFO 2025-07-21 20:14:52,876 runserver 38459 6138851328 WebSocket DISCONNECT /ws/arbitrage/ [127.0.0.1:63561]
-INFO 2025-07-21 20:14:53,054 runserver 38459 6138851328 WebSocket HANDSHAKING /ws/arbitrage/ [127.0.0.1:63903]
-INFO 2025-07-21 20:14:53,054 runserver 38459 6138851328 WebSocket HANDSHAKING /ws/arbitrage/ [127.0.0.1:63903]
-INFO 2025-07-21 20:14:53,068 runserver 38459 6138851328 WebSocket CONNECT /ws/arbitrage/ [127.0.0.1:63903]
-INFO 2025-07-21 20:14:53,068 runserver 38459 6138851328 WebSocket CONNECT /ws/arbitrage/ [127.0.0.1:63903]
-INFO 2025-07-21 20:15:30,389 autoreload 39080 8444927744 Watching for file changes with StatReloader
-INFO 2025-07-21 20:15:30,389 autoreload 39080 8444927744 Watching for file changes with StatReloader
-INFO 2025-07-21 20:15:30,536 server 39080 6115454976 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
-INFO 2025-07-21 20:15:30,536 server 39080 6115454976 Configuring endpoint tcp:port=8000:interface=127.0.0.1
-INFO 2025-07-21 20:15:30,536 server 39080 6115454976 Listening on TCP address 127.0.0.1:8000
-INFO 2025-07-21 20:15:33,339 runserver 39080 6115454976 WebSocket HANDSHAKING /ws/arbitrage/ [127.0.0.1:63999]
-INFO 2025-07-21 20:15:33,339 runserver 39080 6115454976 WebSocket HANDSHAKING /ws/arbitrage/ [127.0.0.1:63999]
-INFO 2025-07-21 20:15:33,368 runserver 39080 6115454976 WebSocket CONNECT /ws/arbitrage/ [127.0.0.1:63999]
-INFO 2025-07-21 20:15:33,368 runserver 39080 6115454976 WebSocket CONNECT /ws/arbitrage/ [127.0.0.1:63999]
-INFO 2025-07-21 20:15:46,515 runserver 39080 6115454976 [mHTTP GET / 200 [0.07, 127.0.0.1:64092][0m
-INFO 2025-07-21 20:15:46,515 runserver 39080 6115454976 [mHTTP GET / 200 [0.07, 127.0.0.1:64092][0m
-INFO 2025-07-21 20:15:46,524 runserver 39080 6115454976 WebSocket DISCONNECT /ws/arbitrage/ [127.0.0.1:63999]
-INFO 2025-07-21 20:15:46,524 runserver 39080 6115454976 WebSocket DISCONNECT /ws/arbitrage/ [127.0.0.1:63999]
-INFO 2025-07-21 20:15:46,626 runserver 39080 6115454976 WebSocket HANDSHAKING /ws/arbitrage/ [127.0.0.1:64111]
-INFO 2025-07-21 20:15:46,626 runserver 39080 6115454976 WebSocket HANDSHAKING /ws/arbitrage/ [127.0.0.1:64111]
-INFO 2025-07-21 20:15:46,637 runserver 39080 6115454976 WebSocket CONNECT /ws/arbitrage/ [127.0.0.1:64111]
-INFO 2025-07-21 20:15:46,637 runserver 39080 6115454976 WebSocket CONNECT /ws/arbitrage/ [127.0.0.1:64111]
-INFO 2025-07-21 20:16:24,758 runserver 39080 6115454976 [mHTTP GET / 200 [0.04, 127.0.0.1:64302][0m
-INFO 2025-07-21 20:16:24,758 runserver 39080 6115454976 [mHTTP GET / 200 [0.04, 127.0.0.1:64302][0m
-INFO 2025-07-21 20:16:24,767 runserver 39080 6115454976 WebSocket DISCONNECT /ws/arbitrage/ [127.0.0.1:64111]
-INFO 2025-07-21 20:16:24,767 runserver 39080 6115454976 WebSocket DISCONNECT /ws/arbitrage/ [127.0.0.1:64111]
-INFO 2025-07-21 20:16:24,898 runserver 39080 6115454976 WebSocket HANDSHAKING /ws/arbitrage/ [127.0.0.1:64311]
-INFO 2025-07-21 20:16:24,898 runserver 39080 6115454976 WebSocket HANDSHAKING /ws/arbitrage/ [127.0.0.1:64311]
-INFO 2025-07-21 20:16:24,915 runserver 39080 6115454976 WebSocket CONNECT /ws/arbitrage/ [127.0.0.1:64311]
-INFO 2025-07-21 20:16:24,915 runserver 39080 6115454976 WebSocket CONNECT /ws/arbitrage/ [127.0.0.1:64311]
-INFO 2025-07-21 20:17:14,537 runserver 39080 6115454976 [mHTTP GET / 200 [0.04, 127.0.0.1:64604][0m
-INFO 2025-07-21 20:17:14,537 runserver 39080 6115454976 [mHTTP GET / 200 [0.04, 127.0.0.1:64604][0m
-INFO 2025-07-21 20:17:14,548 runserver 39080 6115454976 WebSocket DISCONNECT /ws/arbitrage/ [127.0.0.1:64311]
-INFO 2025-07-21 20:17:14,548 runserver 39080 6115454976 WebSocket DISCONNECT /ws/arbitrage/ [127.0.0.1:64311]
-INFO 2025-07-21 20:17:14,665 runserver 39080 6115454976 WebSocket HANDSHAKING /ws/arbitrage/ [127.0.0.1:64613]
-INFO 2025-07-21 20:17:14,665 runserver 39080 6115454976 WebSocket HANDSHAKING /ws/arbitrage/ [127.0.0.1:64613]
-INFO 2025-07-21 20:17:14,677 runserver 39080 6115454976 WebSocket CONNECT /ws/arbitrage/ [127.0.0.1:64613]
-INFO 2025-07-21 20:17:14,677 runserver 39080 6115454976 WebSocket CONNECT /ws/arbitrage/ [127.0.0.1:64613]
-INFO 2025-07-21 20:17:16,353 runserver 39080 6115454976 [mHTTP GET / 200 [0.02, 127.0.0.1:64604][0m
-INFO 2025-07-21 20:17:16,353 runserver 39080 6115454976 [mHTTP GET / 200 [0.02, 127.0.0.1:64604][0m
-INFO 2025-07-21 20:17:16,360 runserver 39080 6115454976 WebSocket DISCONNECT /ws/arbitrage/ [127.0.0.1:64613]
-INFO 2025-07-21 20:17:16,360 runserver 39080 6115454976 WebSocket DISCONNECT /ws/arbitrage/ [127.0.0.1:64613]
-INFO 2025-07-21 20:17:16,509 runserver 39080 6115454976 [mHTTP GET / 200 [0.02, 127.0.0.1:64604][0m
-INFO 2025-07-21 20:17:16,509 runserver 39080 6115454976 [mHTTP GET / 200 [0.02, 127.0.0.1:64604][0m
-INFO 2025-07-21 20:17:16,677 runserver 39080 6115454976 [mHTTP GET / 200 [0.02, 127.0.0.1:64604][0m
-INFO 2025-07-21 20:17:16,677 runserver 39080 6115454976 [mHTTP GET / 200 [0.02, 127.0.0.1:64604][0m
-INFO 2025-07-21 20:17:17,348 runserver 39080 6115454976 WebSocket HANDSHAKING /ws/arbitrage/ [127.0.0.1:64643]
-INFO 2025-07-21 20:17:17,348 runserver 39080 6115454976 WebSocket HANDSHAKING /ws/arbitrage/ [127.0.0.1:64643]
-INFO 2025-07-21 20:17:17,362 runserver 39080 6115454976 WebSocket CONNECT /ws/arbitrage/ [127.0.0.1:64643]
-INFO 2025-07-21 20:17:17,362 runserver 39080 6115454976 WebSocket CONNECT /ws/arbitrage/ [127.0.0.1:64643]
-WARNING 2025-07-21 20:17:19,174 log 39080 6150254592 Not Found: /favicon.ico
-WARNING 2025-07-21 20:17:19,174 log 39080 6150254592 Not Found: /favicon.ico
-WARNING 2025-07-21 20:17:19,174 runserver 39080 6115454976 [33mHTTP GET /favicon.ico 404 [0.01, 127.0.0.1:64653][0m
-WARNING 2025-07-21 20:17:19,174 runserver 39080 6115454976 [33mHTTP GET /favicon.ico 404 [0.01, 127.0.0.1:64653][0m
-INFO 2025-07-21 20:17:33,177 runserver 39080 6115454976 [mHTTP GET / 200 [0.03, 127.0.0.1:64683][0m
-INFO 2025-07-21 20:17:33,177 runserver 39080 6115454976 [mHTTP GET / 200 [0.03, 127.0.0.1:64683][0m
-INFO 2025-07-21 20:17:33,184 runserver 39080 6115454976 WebSocket DISCONNECT /ws/arbitrage/ [127.0.0.1:64643]
-INFO 2025-07-21 20:17:33,184 runserver 39080 6115454976 WebSocket DISCONNECT /ws/arbitrage/ [127.0.0.1:64643]
-INFO 2025-07-21 20:17:33,299 runserver 39080 6115454976 WebSocket HANDSHAKING /ws/arbitrage/ [127.0.0.1:64689]
-INFO 2025-07-21 20:17:33,299 runserver 39080 6115454976 WebSocket HANDSHAKING /ws/arbitrage/ [127.0.0.1:64689]
-INFO 2025-07-21 20:17:33,311 runserver 39080 6115454976 WebSocket CONNECT /ws/arbitrage/ [127.0.0.1:64689]
-INFO 2025-07-21 20:17:33,311 runserver 39080 6115454976 WebSocket CONNECT /ws/arbitrage/ [127.0.0.1:64689]
-WARNING 2025-07-21 20:17:38,405 log 39080 6150254592 Not Found: /.well-known/appspecific/com.chrome.devtools.json
-WARNING 2025-07-21 20:17:38,405 log 39080 6150254592 Not Found: /.well-known/appspecific/com.chrome.devtools.json
-WARNING 2025-07-21 20:17:38,406 runserver 39080 6115454976 [33mHTTP GET /.well-known/appspecific/com.chrome.devtools.json 404 [0.01, 127.0.0.1:64711][0m
-WARNING 2025-07-21 20:17:38,406 runserver 39080 6115454976 [33mHTTP GET /.well-known/appspecific/com.chrome.devtools.json 404 [0.01, 127.0.0.1:64711][0m
-INFO 2025-07-21 20:17:48,853 runserver 39080 6115454976 [mHTTP GET / 200 [0.03, 127.0.0.1:64815][0m
-INFO 2025-07-21 20:17:48,853 runserver 39080 6115454976 [mHTTP GET / 200 [0.03, 127.0.0.1:64815][0m
-INFO 2025-07-21 20:17:48,860 runserver 39080 6115454976 WebSocket DISCONNECT /ws/arbitrage/ [127.0.0.1:64689]
-INFO 2025-07-21 20:17:48,860 runserver 39080 6115454976 WebSocket DISCONNECT /ws/arbitrage/ [127.0.0.1:64689]
-INFO 2025-07-21 20:17:49,131 runserver 39080 6115454976 [mHTTP GET / 200 [0.02, 127.0.0.1:64815][0m
-INFO 2025-07-21 20:17:49,131 runserver 39080 6115454976 [mHTTP GET / 200 [0.02, 127.0.0.1:64815][0m
-INFO 2025-07-21 20:17:49,885 runserver 39080 6115454976 WebSocket HANDSHAKING /ws/arbitrage/ [127.0.0.1:64829]
-INFO 2025-07-21 20:17:49,885 runserver 39080 6115454976 WebSocket HANDSHAKING /ws/arbitrage/ [127.0.0.1:64829]
-INFO 2025-07-21 20:17:49,895 runserver 39080 6115454976 WebSocket CONNECT /ws/arbitrage/ [127.0.0.1:64829]
-INFO 2025-07-21 20:17:49,895 runserver 39080 6115454976 WebSocket CONNECT /ws/arbitrage/ [127.0.0.1:64829]
-WARNING 2025-07-21 20:17:53,939 log 39080 6150254592 Not Found: /favicon.ico
-WARNING 2025-07-21 20:17:53,939 log 39080 6150254592 Not Found: /favicon.ico
-WARNING 2025-07-21 20:17:53,941 runserver 39080 6115454976 [33mHTTP GET /favicon.ico 404 [0.01, 127.0.0.1:64844][0m
-WARNING 2025-07-21 20:17:53,941 runserver 39080 6115454976 [33mHTTP GET /favicon.ico 404 [0.01, 127.0.0.1:64844][0m
-INFO 2025-07-21 20:19:12,269 runserver 39080 6115454976 [mHTTP GET /admin-panel/ 200 [0.06, 127.0.0.1:65062][0m
-INFO 2025-07-21 20:19:12,269 runserver 39080 6115454976 [mHTTP GET /admin-panel/ 200 [0.06, 127.0.0.1:65062][0m
-INFO 2025-07-21 20:19:12,425 runserver 39080 6115454976 WebSocket HANDSHAKING /ws/arbitrage/ [127.0.0.1:65071]
-INFO 2025-07-21 20:19:12,425 runserver 39080 6115454976 WebSocket HANDSHAKING /ws/arbitrage/ [127.0.0.1:65071]
-INFO 2025-07-21 20:19:12,438 runserver 39080 6115454976 WebSocket CONNECT /ws/arbitrage/ [127.0.0.1:65071]
-INFO 2025-07-21 20:19:12,438 runserver 39080 6115454976 WebSocket CONNECT /ws/arbitrage/ [127.0.0.1:65071]
-INFO 2025-07-21 20:19:12,490 runserver 39080 6115454976 WebSocket DISCONNECT /ws/arbitrage/ [127.0.0.1:64829]
-INFO 2025-07-21 20:19:12,490 runserver 39080 6115454976 WebSocket DISCONNECT /ws/arbitrage/ [127.0.0.1:64829]
-INFO 2025-07-21 20:19:41,868 runserver 39080 6115454976 [mHTTP GET /admin/core/tradingpair/add/ 200 [0.08, 127.0.0.1:65133][0m
-INFO 2025-07-21 20:19:41,868 runserver 39080 6115454976 [mHTTP GET /admin/core/tradingpair/add/ 200 [0.08, 127.0.0.1:65133][0m
-INFO 2025-07-21 20:19:41,881 runserver 39080 6115454976 WebSocket DISCONNECT /ws/arbitrage/ [127.0.0.1:65071]
-INFO 2025-07-21 20:19:41,881 runserver 39080 6115454976 WebSocket DISCONNECT /ws/arbitrage/ [127.0.0.1:65071]
-INFO 2025-07-21 20:19:41,884 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/base.css 304 [0.00, 127.0.0.1:65133][0m
-INFO 2025-07-21 20:19:41,884 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/base.css 304 [0.00, 127.0.0.1:65133][0m
-INFO 2025-07-21 20:19:41,896 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/nav_sidebar.css 304 [0.00, 127.0.0.1:65139][0m
-INFO 2025-07-21 20:19:41,896 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/nav_sidebar.css 304 [0.00, 127.0.0.1:65139][0m
-INFO 2025-07-21 20:19:41,896 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/forms.css 304 [0.00, 127.0.0.1:65143][0m
-INFO 2025-07-21 20:19:41,896 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/forms.css 304 [0.00, 127.0.0.1:65143][0m
-INFO 2025-07-21 20:19:41,896 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/dark_mode.css 304 [0.00, 127.0.0.1:65141][0m
-INFO 2025-07-21 20:19:41,896 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/dark_mode.css 304 [0.00, 127.0.0.1:65141][0m
-INFO 2025-07-21 20:19:41,897 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/vendor/jquery/jquery.js 304 [0.01, 127.0.0.1:65147][0m
-INFO 2025-07-21 20:19:41,897 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/vendor/jquery/jquery.js 304 [0.01, 127.0.0.1:65147][0m
-INFO 2025-07-21 20:19:41,899 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/theme.js 304 [0.01, 127.0.0.1:65145][0m
-INFO 2025-07-21 20:19:41,899 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/theme.js 304 [0.01, 127.0.0.1:65145][0m
-INFO 2025-07-21 20:19:41,904 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/responsive.css 304 [0.01, 127.0.0.1:65139][0m
-INFO 2025-07-21 20:19:41,904 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/responsive.css 304 [0.01, 127.0.0.1:65139][0m
-INFO 2025-07-21 20:19:41,905 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/jquery.init.js 304 [0.01, 127.0.0.1:65143][0m
-INFO 2025-07-21 20:19:41,905 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/jquery.init.js 304 [0.01, 127.0.0.1:65143][0m
-INFO 2025-07-21 20:19:41,905 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/core.js 304 [0.01, 127.0.0.1:65141][0m
-INFO 2025-07-21 20:19:41,905 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/core.js 304 [0.01, 127.0.0.1:65141][0m
-INFO 2025-07-21 20:19:41,906 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/admin/RelatedObjectLookups.js 304 [0.00, 127.0.0.1:65147][0m
-INFO 2025-07-21 20:19:41,906 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/admin/RelatedObjectLookups.js 304 [0.00, 127.0.0.1:65147][0m
-INFO 2025-07-21 20:19:41,907 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/actions.js 304 [0.01, 127.0.0.1:65145][0m
-INFO 2025-07-21 20:19:41,907 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/actions.js 304 [0.01, 127.0.0.1:65145][0m
-INFO 2025-07-21 20:19:41,912 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/widgets.css 304 [0.00, 127.0.0.1:65139][0m
-INFO 2025-07-21 20:19:41,912 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/widgets.css 304 [0.00, 127.0.0.1:65139][0m
-INFO 2025-07-21 20:19:41,912 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/vendor/xregexp/xregexp.js 304 [0.00, 127.0.0.1:65147][0m
-INFO 2025-07-21 20:19:41,912 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/vendor/xregexp/xregexp.js 304 [0.00, 127.0.0.1:65147][0m
-INFO 2025-07-21 20:19:41,912 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/urlify.js 304 [0.00, 127.0.0.1:65143][0m
-INFO 2025-07-21 20:19:41,912 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/urlify.js 304 [0.00, 127.0.0.1:65143][0m
-INFO 2025-07-21 20:19:41,913 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/prepopulate.js 304 [0.00, 127.0.0.1:65141][0m
-INFO 2025-07-21 20:19:41,913 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/prepopulate.js 304 [0.00, 127.0.0.1:65141][0m
-INFO 2025-07-21 20:19:41,919 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/prepopulate_init.js 304 [0.00, 127.0.0.1:65141][0m
-INFO 2025-07-21 20:19:41,919 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/prepopulate_init.js 304 [0.00, 127.0.0.1:65141][0m
-INFO 2025-07-21 20:19:41,919 runserver 39080 6115454976 [mHTTP GET /admin/jsi18n/ 200 [0.03, 127.0.0.1:65133][0m
-INFO 2025-07-21 20:19:41,919 runserver 39080 6115454976 [mHTTP GET /admin/jsi18n/ 200 [0.03, 127.0.0.1:65133][0m
-INFO 2025-07-21 20:19:41,923 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/nav_sidebar.js 304 [0.00, 127.0.0.1:65133][0m
-INFO 2025-07-21 20:19:41,923 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/nav_sidebar.js 304 [0.00, 127.0.0.1:65133][0m
-INFO 2025-07-21 20:19:41,941 runserver 39080 6115454976 [36mHTTP GET /static/admin/img/icon-addlink.svg 304 [0.00, 127.0.0.1:65133][0m
-INFO 2025-07-21 20:19:41,941 runserver 39080 6115454976 [36mHTTP GET /static/admin/img/icon-addlink.svg 304 [0.00, 127.0.0.1:65133][0m
-INFO 2025-07-21 20:19:41,942 runserver 39080 6115454976 [36mHTTP GET /static/admin/img/icon-changelink.svg 304 [0.00, 127.0.0.1:65141][0m
-INFO 2025-07-21 20:19:41,942 runserver 39080 6115454976 [36mHTTP GET /static/admin/img/icon-changelink.svg 304 [0.00, 127.0.0.1:65141][0m
-INFO 2025-07-21 20:19:41,942 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/change_form.js 304 [0.00, 127.0.0.1:65147][0m
-INFO 2025-07-21 20:19:41,942 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/change_form.js 304 [0.00, 127.0.0.1:65147][0m
-INFO 2025-07-21 20:19:41,943 runserver 39080 6115454976 [36mHTTP GET /static/admin/img/icon-viewlink.svg 304 [0.00, 127.0.0.1:65143][0m
-INFO 2025-07-21 20:19:41,943 runserver 39080 6115454976 [36mHTTP GET /static/admin/img/icon-viewlink.svg 304 [0.00, 127.0.0.1:65143][0m
-INFO 2025-07-21 20:19:50,136 runserver 39080 6115454976 [mHTTP GET /admin/core/currency/ 200 [0.05, 127.0.0.1:65236][0m
-INFO 2025-07-21 20:19:50,136 runserver 39080 6115454976 [mHTTP GET /admin/core/currency/ 200 [0.05, 127.0.0.1:65236][0m
-INFO 2025-07-21 20:19:50,149 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/base.css 304 [0.00, 127.0.0.1:65236][0m
-INFO 2025-07-21 20:19:50,149 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/base.css 304 [0.00, 127.0.0.1:65236][0m
-INFO 2025-07-21 20:19:50,161 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/forms.css 304 [0.00, 127.0.0.1:65252][0m
-INFO 2025-07-21 20:19:50,161 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/forms.css 304 [0.00, 127.0.0.1:65252][0m
-INFO 2025-07-21 20:19:50,162 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/dark_mode.css 304 [0.01, 127.0.0.1:65245][0m
-INFO 2025-07-21 20:19:50,162 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/dark_mode.css 304 [0.01, 127.0.0.1:65245][0m
-INFO 2025-07-21 20:19:50,162 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/nav_sidebar.css 304 [0.00, 127.0.0.1:65249][0m
-INFO 2025-07-21 20:19:50,162 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/nav_sidebar.css 304 [0.00, 127.0.0.1:65249][0m
-INFO 2025-07-21 20:19:50,162 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/changelists.css 304 [0.00, 127.0.0.1:65250][0m
-INFO 2025-07-21 20:19:50,162 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/changelists.css 304 [0.00, 127.0.0.1:65250][0m
-INFO 2025-07-21 20:19:50,163 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/theme.js 304 [0.01, 127.0.0.1:65246][0m
-INFO 2025-07-21 20:19:50,163 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/theme.js 304 [0.01, 127.0.0.1:65246][0m
-INFO 2025-07-21 20:19:50,169 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/vendor/jquery/jquery.js 304 [0.00, 127.0.0.1:65245][0m
-INFO 2025-07-21 20:19:50,169 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/vendor/jquery/jquery.js 304 [0.00, 127.0.0.1:65245][0m
-INFO 2025-07-21 20:19:50,170 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/admin/RelatedObjectLookups.js 304 [0.00, 127.0.0.1:65246][0m
-INFO 2025-07-21 20:19:50,170 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/admin/RelatedObjectLookups.js 304 [0.00, 127.0.0.1:65246][0m
-INFO 2025-07-21 20:19:50,170 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/responsive.css 304 [0.00, 127.0.0.1:65252][0m
-INFO 2025-07-21 20:19:50,170 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/responsive.css 304 [0.00, 127.0.0.1:65252][0m
-INFO 2025-07-21 20:19:50,172 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/core.js 304 [0.01, 127.0.0.1:65250][0m
-INFO 2025-07-21 20:19:50,172 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/core.js 304 [0.01, 127.0.0.1:65250][0m
-INFO 2025-07-21 20:19:50,172 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/jquery.init.js 304 [0.01, 127.0.0.1:65249][0m
-INFO 2025-07-21 20:19:50,172 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/jquery.init.js 304 [0.01, 127.0.0.1:65249][0m
-INFO 2025-07-21 20:19:50,177 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/widgets.css 304 [0.00, 127.0.0.1:65245][0m
-INFO 2025-07-21 20:19:50,177 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/widgets.css 304 [0.00, 127.0.0.1:65245][0m
-INFO 2025-07-21 20:19:50,177 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/urlify.js 304 [0.00, 127.0.0.1:65252][0m
-INFO 2025-07-21 20:19:50,177 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/urlify.js 304 [0.00, 127.0.0.1:65252][0m
-INFO 2025-07-21 20:19:50,178 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/vendor/xregexp/xregexp.js 304 [0.00, 127.0.0.1:65249][0m
-INFO 2025-07-21 20:19:50,178 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/vendor/xregexp/xregexp.js 304 [0.00, 127.0.0.1:65249][0m
-INFO 2025-07-21 20:19:50,178 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/actions.js 304 [0.01, 127.0.0.1:65246][0m
-INFO 2025-07-21 20:19:50,178 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/actions.js 304 [0.01, 127.0.0.1:65246][0m
-INFO 2025-07-21 20:19:50,179 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/prepopulate.js 304 [0.00, 127.0.0.1:65250][0m
-INFO 2025-07-21 20:19:50,179 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/prepopulate.js 304 [0.00, 127.0.0.1:65250][0m
-INFO 2025-07-21 20:19:50,183 runserver 39080 6115454976 [36mHTTP GET /static/admin/img/search.svg 304 [0.00, 127.0.0.1:65246][0m
-INFO 2025-07-21 20:19:50,183 runserver 39080 6115454976 [36mHTTP GET /static/admin/img/search.svg 304 [0.00, 127.0.0.1:65246][0m
-INFO 2025-07-21 20:19:50,184 runserver 39080 6115454976 [mHTTP GET /admin/jsi18n/ 200 [0.03, 127.0.0.1:65236][0m
-INFO 2025-07-21 20:19:50,184 runserver 39080 6115454976 [mHTTP GET /admin/jsi18n/ 200 [0.03, 127.0.0.1:65236][0m
-INFO 2025-07-21 20:19:50,187 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/nav_sidebar.js 304 [0.00, 127.0.0.1:65246][0m
-INFO 2025-07-21 20:19:50,187 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/nav_sidebar.js 304 [0.00, 127.0.0.1:65246][0m
-INFO 2025-07-21 20:19:50,188 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/filters.js 304 [0.00, 127.0.0.1:65236][0m
-INFO 2025-07-21 20:19:50,188 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/filters.js 304 [0.00, 127.0.0.1:65236][0m
-INFO 2025-07-21 20:19:50,198 runserver 39080 6115454976 [36mHTTP GET /static/admin/img/tooltag-add.svg 304 [0.00, 127.0.0.1:65236][0m
-INFO 2025-07-21 20:19:50,198 runserver 39080 6115454976 [36mHTTP GET /static/admin/img/tooltag-add.svg 304 [0.00, 127.0.0.1:65236][0m
-INFO 2025-07-21 20:19:50,198 runserver 39080 6115454976 [36mHTTP GET /static/admin/img/icon-viewlink.svg 304 [0.00, 127.0.0.1:65250][0m
-INFO 2025-07-21 20:19:50,198 runserver 39080 6115454976 [36mHTTP GET /static/admin/img/icon-viewlink.svg 304 [0.00, 127.0.0.1:65250][0m
-INFO 2025-07-21 20:19:50,199 runserver 39080 6115454976 [36mHTTP GET /static/admin/img/sorting-icons.svg 304 [0.00, 127.0.0.1:65246][0m
-INFO 2025-07-21 20:19:50,199 runserver 39080 6115454976 [36mHTTP GET /static/admin/img/sorting-icons.svg 304 [0.00, 127.0.0.1:65246][0m
-INFO 2025-07-21 20:19:51,912 runserver 39080 6115454976 [mHTTP GET /admin/core/currency/2/change/ 200 [0.03, 127.0.0.1:65246][0m
-INFO 2025-07-21 20:19:51,912 runserver 39080 6115454976 [mHTTP GET /admin/core/currency/2/change/ 200 [0.03, 127.0.0.1:65246][0m
-INFO 2025-07-21 20:19:51,933 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/base.css 304 [0.00, 127.0.0.1:65246][0m
-INFO 2025-07-21 20:19:51,933 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/base.css 304 [0.00, 127.0.0.1:65246][0m
-INFO 2025-07-21 20:19:51,939 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/dark_mode.css 304 [0.01, 127.0.0.1:65236][0m
-INFO 2025-07-21 20:19:51,939 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/dark_mode.css 304 [0.01, 127.0.0.1:65236][0m
-INFO 2025-07-21 20:19:51,940 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/nav_sidebar.css 304 [0.01, 127.0.0.1:65249][0m
-INFO 2025-07-21 20:19:51,940 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/nav_sidebar.css 304 [0.01, 127.0.0.1:65249][0m
-INFO 2025-07-21 20:19:51,941 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/theme.js 304 [0.01, 127.0.0.1:65245][0m
-INFO 2025-07-21 20:19:51,941 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/theme.js 304 [0.01, 127.0.0.1:65245][0m
-INFO 2025-07-21 20:19:51,942 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/forms.css 304 [0.01, 127.0.0.1:65252][0m
-INFO 2025-07-21 20:19:51,942 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/forms.css 304 [0.01, 127.0.0.1:65252][0m
-INFO 2025-07-21 20:19:51,942 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/responsive.css 304 [0.01, 127.0.0.1:65246][0m
-INFO 2025-07-21 20:19:51,942 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/responsive.css 304 [0.01, 127.0.0.1:65246][0m
-INFO 2025-07-21 20:19:51,950 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/jquery.init.js 304 [0.01, 127.0.0.1:65249][0m
-INFO 2025-07-21 20:19:51,950 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/jquery.init.js 304 [0.01, 127.0.0.1:65249][0m
-INFO 2025-07-21 20:19:51,951 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/vendor/jquery/jquery.js 304 [0.01, 127.0.0.1:65236][0m
-INFO 2025-07-21 20:19:51,951 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/vendor/jquery/jquery.js 304 [0.01, 127.0.0.1:65236][0m
-INFO 2025-07-21 20:19:51,951 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/core.js 304 [0.01, 127.0.0.1:65245][0m
-INFO 2025-07-21 20:19:51,951 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/core.js 304 [0.01, 127.0.0.1:65245][0m
-INFO 2025-07-21 20:19:51,951 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/actions.js 304 [0.00, 127.0.0.1:65246][0m
-INFO 2025-07-21 20:19:51,951 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/actions.js 304 [0.00, 127.0.0.1:65246][0m
-INFO 2025-07-21 20:19:51,953 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/admin/RelatedObjectLookups.js 304 [0.01, 127.0.0.1:65252][0m
-INFO 2025-07-21 20:19:51,953 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/admin/RelatedObjectLookups.js 304 [0.01, 127.0.0.1:65252][0m
-INFO 2025-07-21 20:19:51,960 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/prepopulate.js 304 [0.01, 127.0.0.1:65245][0m
-INFO 2025-07-21 20:19:51,960 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/prepopulate.js 304 [0.01, 127.0.0.1:65245][0m
-INFO 2025-07-21 20:19:51,960 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/widgets.css 304 [0.01, 127.0.0.1:65249][0m
-INFO 2025-07-21 20:19:51,960 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/widgets.css 304 [0.01, 127.0.0.1:65249][0m
-INFO 2025-07-21 20:19:51,961 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/urlify.js 304 [0.01, 127.0.0.1:65236][0m
-INFO 2025-07-21 20:19:51,961 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/urlify.js 304 [0.01, 127.0.0.1:65236][0m
-INFO 2025-07-21 20:19:51,961 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/vendor/xregexp/xregexp.js 304 [0.01, 127.0.0.1:65246][0m
-INFO 2025-07-21 20:19:51,961 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/vendor/xregexp/xregexp.js 304 [0.01, 127.0.0.1:65246][0m
-INFO 2025-07-21 20:19:51,961 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/prepopulate_init.js 304 [0.01, 127.0.0.1:65252][0m
-INFO 2025-07-21 20:19:51,961 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/prepopulate_init.js 304 [0.01, 127.0.0.1:65252][0m
-INFO 2025-07-21 20:19:51,965 runserver 39080 6115454976 [mHTTP GET /admin/jsi18n/ 200 [0.03, 127.0.0.1:65250][0m
-INFO 2025-07-21 20:19:51,965 runserver 39080 6115454976 [mHTTP GET /admin/jsi18n/ 200 [0.03, 127.0.0.1:65250][0m
-INFO 2025-07-21 20:19:51,967 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/nav_sidebar.js 304 [0.00, 127.0.0.1:65252][0m
-INFO 2025-07-21 20:19:51,967 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/nav_sidebar.js 304 [0.00, 127.0.0.1:65252][0m
-INFO 2025-07-21 20:19:51,969 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/change_form.js 304 [0.00, 127.0.0.1:65250][0m
-INFO 2025-07-21 20:19:51,969 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/change_form.js 304 [0.00, 127.0.0.1:65250][0m
-INFO 2025-07-21 20:19:54,451 runserver 39080 6115454976 [mHTTP GET /admin/core/tradingpair/ 200 [0.03, 127.0.0.1:65268][0m
-INFO 2025-07-21 20:19:54,451 runserver 39080 6115454976 [mHTTP GET /admin/core/tradingpair/ 200 [0.03, 127.0.0.1:65268][0m
-INFO 2025-07-21 20:19:54,465 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/base.css 304 [0.00, 127.0.0.1:65268][0m
-INFO 2025-07-21 20:19:54,465 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/base.css 304 [0.00, 127.0.0.1:65268][0m
-INFO 2025-07-21 20:19:54,472 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/dark_mode.css 304 [0.01, 127.0.0.1:65272][0m
-INFO 2025-07-21 20:19:54,472 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/dark_mode.css 304 [0.01, 127.0.0.1:65272][0m
-INFO 2025-07-21 20:19:54,473 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/responsive.css 304 [0.01, 127.0.0.1:65268][0m
-INFO 2025-07-21 20:19:54,473 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/responsive.css 304 [0.01, 127.0.0.1:65268][0m
-INFO 2025-07-21 20:19:54,473 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/nav_sidebar.css 304 [0.01, 127.0.0.1:65275][0m
-INFO 2025-07-21 20:19:54,473 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/nav_sidebar.css 304 [0.01, 127.0.0.1:65275][0m
-INFO 2025-07-21 20:19:54,474 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/forms.css 304 [0.01, 127.0.0.1:65279][0m
-INFO 2025-07-21 20:19:54,474 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/forms.css 304 [0.01, 127.0.0.1:65279][0m
-INFO 2025-07-21 20:19:54,474 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/changelists.css 304 [0.01, 127.0.0.1:65277][0m
-INFO 2025-07-21 20:19:54,474 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/changelists.css 304 [0.01, 127.0.0.1:65277][0m
-INFO 2025-07-21 20:19:54,480 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/jquery.init.js 304 [0.00, 127.0.0.1:65275][0m
-INFO 2025-07-21 20:19:54,480 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/jquery.init.js 304 [0.00, 127.0.0.1:65275][0m
-INFO 2025-07-21 20:19:54,481 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/vendor/jquery/jquery.js 304 [0.01, 127.0.0.1:65268][0m
-INFO 2025-07-21 20:19:54,481 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/vendor/jquery/jquery.js 304 [0.01, 127.0.0.1:65268][0m
-INFO 2025-07-21 20:19:54,481 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/admin/RelatedObjectLookups.js 304 [0.00, 127.0.0.1:65277][0m
-INFO 2025-07-21 20:19:54,481 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/admin/RelatedObjectLookups.js 304 [0.00, 127.0.0.1:65277][0m
-INFO 2025-07-21 20:19:54,481 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/theme.js 304 [0.01, 127.0.0.1:65272][0m
-INFO 2025-07-21 20:19:54,481 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/theme.js 304 [0.01, 127.0.0.1:65272][0m
-INFO 2025-07-21 20:19:54,483 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/core.js 304 [0.01, 127.0.0.1:65279][0m
-INFO 2025-07-21 20:19:54,483 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/core.js 304 [0.01, 127.0.0.1:65279][0m
-INFO 2025-07-21 20:19:54,488 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/vendor/xregexp/xregexp.js 304 [0.00, 127.0.0.1:65272][0m
-INFO 2025-07-21 20:19:54,488 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/vendor/xregexp/xregexp.js 304 [0.00, 127.0.0.1:65272][0m
-INFO 2025-07-21 20:19:54,488 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/actions.js 304 [0.00, 127.0.0.1:65275][0m
-INFO 2025-07-21 20:19:54,488 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/actions.js 304 [0.00, 127.0.0.1:65275][0m
-INFO 2025-07-21 20:19:54,488 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/widgets.css 304 [0.00, 127.0.0.1:65279][0m
-INFO 2025-07-21 20:19:54,488 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/widgets.css 304 [0.00, 127.0.0.1:65279][0m
-INFO 2025-07-21 20:19:54,488 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/urlify.js 304 [0.00, 127.0.0.1:65268][0m
-INFO 2025-07-21 20:19:54,488 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/urlify.js 304 [0.00, 127.0.0.1:65268][0m
-INFO 2025-07-21 20:19:54,491 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/prepopulate.js 304 [0.01, 127.0.0.1:65277][0m
-INFO 2025-07-21 20:19:54,491 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/prepopulate.js 304 [0.01, 127.0.0.1:65277][0m
-INFO 2025-07-21 20:19:54,494 runserver 39080 6115454976 [36mHTTP GET /static/admin/img/search.svg 304 [0.00, 127.0.0.1:65268][0m
-INFO 2025-07-21 20:19:54,494 runserver 39080 6115454976 [36mHTTP GET /static/admin/img/search.svg 304 [0.00, 127.0.0.1:65268][0m
-INFO 2025-07-21 20:19:54,495 runserver 39080 6115454976 [mHTTP GET /admin/jsi18n/ 200 [0.03, 127.0.0.1:65273][0m
-INFO 2025-07-21 20:19:54,495 runserver 39080 6115454976 [mHTTP GET /admin/jsi18n/ 200 [0.03, 127.0.0.1:65273][0m
-INFO 2025-07-21 20:19:54,498 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/nav_sidebar.js 304 [0.00, 127.0.0.1:65268][0m
-INFO 2025-07-21 20:19:54,498 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/nav_sidebar.js 304 [0.00, 127.0.0.1:65268][0m
-INFO 2025-07-21 20:19:54,499 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/filters.js 304 [0.00, 127.0.0.1:65273][0m
-INFO 2025-07-21 20:19:54,499 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/filters.js 304 [0.00, 127.0.0.1:65273][0m
-INFO 2025-07-21 20:19:57,542 runserver 39080 6115454976 [mHTTP GET /admin/core/tradingpair/add/ 200 [0.04, 127.0.0.1:65273][0m
-INFO 2025-07-21 20:19:57,542 runserver 39080 6115454976 [mHTTP GET /admin/core/tradingpair/add/ 200 [0.04, 127.0.0.1:65273][0m
-INFO 2025-07-21 20:19:57,564 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/theme.js 304 [0.00, 127.0.0.1:65272][0m
-INFO 2025-07-21 20:19:57,564 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/theme.js 304 [0.00, 127.0.0.1:65272][0m
-INFO 2025-07-21 20:19:57,566 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/nav_sidebar.css 304 [0.01, 127.0.0.1:65279][0m
-INFO 2025-07-21 20:19:57,566 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/nav_sidebar.css 304 [0.01, 127.0.0.1:65279][0m
-INFO 2025-07-21 20:19:57,567 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/forms.css 304 [0.01, 127.0.0.1:65275][0m
-INFO 2025-07-21 20:19:57,567 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/forms.css 304 [0.01, 127.0.0.1:65275][0m
-INFO 2025-07-21 20:19:57,567 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/base.css 304 [0.01, 127.0.0.1:65268][0m
-INFO 2025-07-21 20:19:57,567 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/base.css 304 [0.01, 127.0.0.1:65268][0m
-INFO 2025-07-21 20:19:57,567 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/dark_mode.css 304 [0.01, 127.0.0.1:65277][0m
-INFO 2025-07-21 20:19:57,567 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/dark_mode.css 304 [0.01, 127.0.0.1:65277][0m
-INFO 2025-07-21 20:19:57,574 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/vendor/jquery/jquery.js 304 [0.00, 127.0.0.1:65279][0m
-INFO 2025-07-21 20:19:57,574 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/vendor/jquery/jquery.js 304 [0.00, 127.0.0.1:65279][0m
-INFO 2025-07-21 20:19:57,575 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/responsive.css 304 [0.01, 127.0.0.1:65272][0m
-INFO 2025-07-21 20:19:57,575 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/responsive.css 304 [0.01, 127.0.0.1:65272][0m
-INFO 2025-07-21 20:19:57,575 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/jquery.init.js 304 [0.01, 127.0.0.1:65275][0m
-INFO 2025-07-21 20:19:57,575 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/jquery.init.js 304 [0.01, 127.0.0.1:65275][0m
-INFO 2025-07-21 20:19:57,575 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/core.js 304 [0.01, 127.0.0.1:65268][0m
-INFO 2025-07-21 20:19:57,575 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/core.js 304 [0.01, 127.0.0.1:65268][0m
-INFO 2025-07-21 20:19:57,576 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/admin/RelatedObjectLookups.js 304 [0.00, 127.0.0.1:65277][0m
-INFO 2025-07-21 20:19:57,576 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/admin/RelatedObjectLookups.js 304 [0.00, 127.0.0.1:65277][0m
-INFO 2025-07-21 20:19:57,583 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/actions.js 304 [0.00, 127.0.0.1:65272][0m
-INFO 2025-07-21 20:19:57,583 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/actions.js 304 [0.00, 127.0.0.1:65272][0m
-INFO 2025-07-21 20:19:57,583 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/widgets.css 304 [0.00, 127.0.0.1:65279][0m
-INFO 2025-07-21 20:19:57,583 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/widgets.css 304 [0.00, 127.0.0.1:65279][0m
-INFO 2025-07-21 20:19:57,583 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/prepopulate.js 304 [0.00, 127.0.0.1:65268][0m
-INFO 2025-07-21 20:19:57,583 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/prepopulate.js 304 [0.00, 127.0.0.1:65268][0m
-INFO 2025-07-21 20:19:57,584 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/vendor/xregexp/xregexp.js 304 [0.00, 127.0.0.1:65277][0m
-INFO 2025-07-21 20:19:57,584 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/vendor/xregexp/xregexp.js 304 [0.00, 127.0.0.1:65277][0m
-INFO 2025-07-21 20:19:57,585 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/urlify.js 304 [0.01, 127.0.0.1:65275][0m
-INFO 2025-07-21 20:19:57,585 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/urlify.js 304 [0.01, 127.0.0.1:65275][0m
-INFO 2025-07-21 20:19:57,589 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/prepopulate_init.js 304 [0.00, 127.0.0.1:65275][0m
-INFO 2025-07-21 20:19:57,589 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/prepopulate_init.js 304 [0.00, 127.0.0.1:65275][0m
-INFO 2025-07-21 20:19:57,592 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/nav_sidebar.js 304 [0.00, 127.0.0.1:65275][0m
-INFO 2025-07-21 20:19:57,592 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/nav_sidebar.js 304 [0.00, 127.0.0.1:65275][0m
-INFO 2025-07-21 20:19:57,594 runserver 39080 6115454976 [36mHTTP GET /static/admin/img/icon-changelink.svg 304 [0.00, 127.0.0.1:65275][0m
-INFO 2025-07-21 20:19:57,594 runserver 39080 6115454976 [36mHTTP GET /static/admin/img/icon-changelink.svg 304 [0.00, 127.0.0.1:65275][0m
-INFO 2025-07-21 20:19:57,597 runserver 39080 6115454976 [36mHTTP GET /static/admin/img/icon-addlink.svg 304 [0.00, 127.0.0.1:65275][0m
-INFO 2025-07-21 20:19:57,597 runserver 39080 6115454976 [36mHTTP GET /static/admin/img/icon-addlink.svg 304 [0.00, 127.0.0.1:65275][0m
-INFO 2025-07-21 20:19:57,599 runserver 39080 6115454976 [36mHTTP GET /static/admin/img/icon-viewlink.svg 304 [0.00, 127.0.0.1:65275][0m
-INFO 2025-07-21 20:19:57,599 runserver 39080 6115454976 [36mHTTP GET /static/admin/img/icon-viewlink.svg 304 [0.00, 127.0.0.1:65275][0m
-INFO 2025-07-21 20:19:57,600 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/change_form.js 304 [0.00, 127.0.0.1:65275][0m
-INFO 2025-07-21 20:19:57,600 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/change_form.js 304 [0.00, 127.0.0.1:65275][0m
-INFO 2025-07-21 20:19:57,611 runserver 39080 6115454976 [mHTTP GET /admin/jsi18n/ 200 [0.05, 127.0.0.1:65273][0m
-INFO 2025-07-21 20:19:57,611 runserver 39080 6115454976 [mHTTP GET /admin/jsi18n/ 200 [0.05, 127.0.0.1:65273][0m
-INFO 2025-07-21 20:20:23,349 runserver 39080 6115454976 [mHTTP GET /admin/core/currency/ 200 [0.03, 127.0.0.1:65349][0m
-INFO 2025-07-21 20:20:23,349 runserver 39080 6115454976 [mHTTP GET /admin/core/currency/ 200 [0.03, 127.0.0.1:65349][0m
-INFO 2025-07-21 20:20:23,365 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/base.css 304 [0.00, 127.0.0.1:65349][0m
-INFO 2025-07-21 20:20:23,365 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/base.css 304 [0.00, 127.0.0.1:65349][0m
-INFO 2025-07-21 20:20:23,375 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/dark_mode.css 304 [0.01, 127.0.0.1:65349][0m
-INFO 2025-07-21 20:20:23,375 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/dark_mode.css 304 [0.01, 127.0.0.1:65349][0m
-INFO 2025-07-21 20:20:23,376 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/forms.css 304 [0.00, 127.0.0.1:65361][0m
-INFO 2025-07-21 20:20:23,376 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/forms.css 304 [0.00, 127.0.0.1:65361][0m
-INFO 2025-07-21 20:20:23,376 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/nav_sidebar.css 304 [0.01, 127.0.0.1:65358][0m
-INFO 2025-07-21 20:20:23,376 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/nav_sidebar.css 304 [0.01, 127.0.0.1:65358][0m
-INFO 2025-07-21 20:20:23,377 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/changelists.css 304 [0.01, 127.0.0.1:65360][0m
-INFO 2025-07-21 20:20:23,377 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/changelists.css 304 [0.01, 127.0.0.1:65360][0m
-INFO 2025-07-21 20:20:23,377 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/theme.js 304 [0.01, 127.0.0.1:65355][0m
-INFO 2025-07-21 20:20:23,377 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/theme.js 304 [0.01, 127.0.0.1:65355][0m
-INFO 2025-07-21 20:20:23,384 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/responsive.css 304 [0.01, 127.0.0.1:65349][0m
-INFO 2025-07-21 20:20:23,384 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/responsive.css 304 [0.01, 127.0.0.1:65349][0m
-INFO 2025-07-21 20:20:23,384 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/vendor/jquery/jquery.js 304 [0.00, 127.0.0.1:65361][0m
-INFO 2025-07-21 20:20:23,384 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/vendor/jquery/jquery.js 304 [0.00, 127.0.0.1:65361][0m
-INFO 2025-07-21 20:20:23,385 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/core.js 304 [0.00, 127.0.0.1:65360][0m
-INFO 2025-07-21 20:20:23,385 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/core.js 304 [0.00, 127.0.0.1:65360][0m
-INFO 2025-07-21 20:20:23,385 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/jquery.init.js 304 [0.00, 127.0.0.1:65358][0m
-INFO 2025-07-21 20:20:23,385 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/jquery.init.js 304 [0.00, 127.0.0.1:65358][0m
-INFO 2025-07-21 20:20:23,386 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/admin/RelatedObjectLookups.js 304 [0.00, 127.0.0.1:65355][0m
-INFO 2025-07-21 20:20:23,386 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/admin/RelatedObjectLookups.js 304 [0.00, 127.0.0.1:65355][0m
-INFO 2025-07-21 20:20:23,392 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/vendor/xregexp/xregexp.js 304 [0.00, 127.0.0.1:65355][0m
-INFO 2025-07-21 20:20:23,392 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/vendor/xregexp/xregexp.js 304 [0.00, 127.0.0.1:65355][0m
-INFO 2025-07-21 20:20:23,392 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/actions.js 304 [0.00, 127.0.0.1:65361][0m
-INFO 2025-07-21 20:20:23,392 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/actions.js 304 [0.00, 127.0.0.1:65361][0m
-INFO 2025-07-21 20:20:23,392 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/widgets.css 304 [0.00, 127.0.0.1:65349][0m
-INFO 2025-07-21 20:20:23,392 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/widgets.css 304 [0.00, 127.0.0.1:65349][0m
-INFO 2025-07-21 20:20:23,392 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/urlify.js 304 [0.00, 127.0.0.1:65360][0m
-INFO 2025-07-21 20:20:23,392 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/urlify.js 304 [0.00, 127.0.0.1:65360][0m
-INFO 2025-07-21 20:20:23,394 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/prepopulate.js 304 [0.01, 127.0.0.1:65358][0m
-INFO 2025-07-21 20:20:23,394 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/prepopulate.js 304 [0.01, 127.0.0.1:65358][0m
-INFO 2025-07-21 20:20:23,397 runserver 39080 6115454976 [36mHTTP GET /static/admin/img/search.svg 304 [0.00, 127.0.0.1:65360][0m
-INFO 2025-07-21 20:20:23,397 runserver 39080 6115454976 [36mHTTP GET /static/admin/img/search.svg 304 [0.00, 127.0.0.1:65360][0m
-INFO 2025-07-21 20:20:23,399 runserver 39080 6115454976 [mHTTP GET /admin/jsi18n/ 200 [0.03, 127.0.0.1:65353][0m
-INFO 2025-07-21 20:20:23,399 runserver 39080 6115454976 [mHTTP GET /admin/jsi18n/ 200 [0.03, 127.0.0.1:65353][0m
-INFO 2025-07-21 20:20:23,402 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/nav_sidebar.js 304 [0.00, 127.0.0.1:65360][0m
-INFO 2025-07-21 20:20:23,402 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/nav_sidebar.js 304 [0.00, 127.0.0.1:65360][0m
-INFO 2025-07-21 20:20:23,402 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/filters.js 304 [0.00, 127.0.0.1:65353][0m
-INFO 2025-07-21 20:20:23,402 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/filters.js 304 [0.00, 127.0.0.1:65353][0m
-INFO 2025-07-21 20:20:25,812 runserver 39080 6115454976 [mHTTP GET /admin/core/currency/1/change/ 200 [0.03, 127.0.0.1:65366][0m
-INFO 2025-07-21 20:20:25,812 runserver 39080 6115454976 [mHTTP GET /admin/core/currency/1/change/ 200 [0.03, 127.0.0.1:65366][0m
-INFO 2025-07-21 20:20:25,836 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/base.css 304 [0.01, 127.0.0.1:65366][0m
-INFO 2025-07-21 20:20:25,836 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/base.css 304 [0.01, 127.0.0.1:65366][0m
-INFO 2025-07-21 20:20:25,837 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/forms.css 304 [0.01, 127.0.0.1:65375][0m
-INFO 2025-07-21 20:20:25,837 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/forms.css 304 [0.01, 127.0.0.1:65375][0m
-INFO 2025-07-21 20:20:25,837 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/theme.js 304 [0.01, 127.0.0.1:65377][0m
-INFO 2025-07-21 20:20:25,837 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/theme.js 304 [0.01, 127.0.0.1:65377][0m
-INFO 2025-07-21 20:20:25,837 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/dark_mode.css 304 [0.01, 127.0.0.1:65371][0m
-INFO 2025-07-21 20:20:25,837 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/dark_mode.css 304 [0.01, 127.0.0.1:65371][0m
-INFO 2025-07-21 20:20:25,838 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/nav_sidebar.css 304 [0.01, 127.0.0.1:65373][0m
-INFO 2025-07-21 20:20:25,838 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/nav_sidebar.css 304 [0.01, 127.0.0.1:65373][0m
-INFO 2025-07-21 20:20:25,845 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/responsive.css 304 [0.00, 127.0.0.1:65366][0m
-INFO 2025-07-21 20:20:25,845 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/responsive.css 304 [0.00, 127.0.0.1:65366][0m
-INFO 2025-07-21 20:20:25,846 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/core.js 304 [0.01, 127.0.0.1:65371][0m
-INFO 2025-07-21 20:20:25,846 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/core.js 304 [0.01, 127.0.0.1:65371][0m
-INFO 2025-07-21 20:20:25,847 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/jquery.init.js 304 [0.01, 127.0.0.1:65377][0m
-INFO 2025-07-21 20:20:25,847 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/jquery.init.js 304 [0.01, 127.0.0.1:65377][0m
-INFO 2025-07-21 20:20:25,847 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/admin/RelatedObjectLookups.js 304 [0.01, 127.0.0.1:65373][0m
-INFO 2025-07-21 20:20:25,847 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/admin/RelatedObjectLookups.js 304 [0.01, 127.0.0.1:65373][0m
-INFO 2025-07-21 20:20:25,847 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/vendor/jquery/jquery.js 304 [0.01, 127.0.0.1:65375][0m
-INFO 2025-07-21 20:20:25,847 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/vendor/jquery/jquery.js 304 [0.01, 127.0.0.1:65375][0m
-INFO 2025-07-21 20:20:25,854 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/widgets.css 304 [0.01, 127.0.0.1:65366][0m
-INFO 2025-07-21 20:20:25,854 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/widgets.css 304 [0.01, 127.0.0.1:65366][0m
-INFO 2025-07-21 20:20:25,854 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/urlify.js 304 [0.00, 127.0.0.1:65377][0m
-INFO 2025-07-21 20:20:25,854 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/urlify.js 304 [0.00, 127.0.0.1:65377][0m
-INFO 2025-07-21 20:20:25,854 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/prepopulate.js 304 [0.00, 127.0.0.1:65373][0m
-INFO 2025-07-21 20:20:25,854 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/prepopulate.js 304 [0.00, 127.0.0.1:65373][0m
-INFO 2025-07-21 20:20:25,855 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/vendor/xregexp/xregexp.js 304 [0.00, 127.0.0.1:65375][0m
-INFO 2025-07-21 20:20:25,855 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/vendor/xregexp/xregexp.js 304 [0.00, 127.0.0.1:65375][0m
-INFO 2025-07-21 20:20:25,855 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/actions.js 304 [0.00, 127.0.0.1:65371][0m
-INFO 2025-07-21 20:20:25,855 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/actions.js 304 [0.00, 127.0.0.1:65371][0m
-INFO 2025-07-21 20:20:25,859 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/prepopulate_init.js 304 [0.00, 127.0.0.1:65366][0m
-INFO 2025-07-21 20:20:25,859 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/prepopulate_init.js 304 [0.00, 127.0.0.1:65366][0m
-INFO 2025-07-21 20:20:25,862 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/nav_sidebar.js 304 [0.00, 127.0.0.1:65366][0m
-INFO 2025-07-21 20:20:25,862 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/nav_sidebar.js 304 [0.00, 127.0.0.1:65366][0m
-INFO 2025-07-21 20:20:25,864 runserver 39080 6115454976 [mHTTP GET /admin/jsi18n/ 200 [0.03, 127.0.0.1:65369][0m
-INFO 2025-07-21 20:20:25,864 runserver 39080 6115454976 [mHTTP GET /admin/jsi18n/ 200 [0.03, 127.0.0.1:65369][0m
-INFO 2025-07-21 20:20:25,866 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/change_form.js 304 [0.00, 127.0.0.1:65366][0m
-INFO 2025-07-21 20:20:25,866 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/change_form.js 304 [0.00, 127.0.0.1:65366][0m
-INFO 2025-07-21 20:20:28,071 runserver 39080 6115454976 [mHTTP GET /admin/core/tradingpair/ 200 [0.04, 127.0.0.1:65366][0m
-INFO 2025-07-21 20:20:28,071 runserver 39080 6115454976 [mHTTP GET /admin/core/tradingpair/ 200 [0.04, 127.0.0.1:65366][0m
-INFO 2025-07-21 20:20:28,085 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/base.css 304 [0.00, 127.0.0.1:65366][0m
-INFO 2025-07-21 20:20:28,085 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/base.css 304 [0.00, 127.0.0.1:65366][0m
-INFO 2025-07-21 20:20:28,098 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/theme.js 304 [0.00, 127.0.0.1:65377][0m
-INFO 2025-07-21 20:20:28,098 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/theme.js 304 [0.00, 127.0.0.1:65377][0m
-INFO 2025-07-21 20:20:28,098 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/forms.css 304 [0.00, 127.0.0.1:65373][0m
-INFO 2025-07-21 20:20:28,098 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/forms.css 304 [0.00, 127.0.0.1:65373][0m
-INFO 2025-07-21 20:20:28,099 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/changelists.css 304 [0.00, 127.0.0.1:65375][0m
-INFO 2025-07-21 20:20:28,099 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/changelists.css 304 [0.00, 127.0.0.1:65375][0m
-INFO 2025-07-21 20:20:28,099 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/nav_sidebar.css 304 [0.01, 127.0.0.1:65371][0m
-INFO 2025-07-21 20:20:28,099 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/nav_sidebar.css 304 [0.01, 127.0.0.1:65371][0m
-INFO 2025-07-21 20:20:28,100 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/dark_mode.css 304 [0.01, 127.0.0.1:65369][0m
-INFO 2025-07-21 20:20:28,100 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/dark_mode.css 304 [0.01, 127.0.0.1:65369][0m
-INFO 2025-07-21 20:20:28,106 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/jquery.init.js 304 [0.00, 127.0.0.1:65375][0m
-INFO 2025-07-21 20:20:28,106 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/jquery.init.js 304 [0.00, 127.0.0.1:65375][0m
-INFO 2025-07-21 20:20:28,107 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/admin/RelatedObjectLookups.js 304 [0.00, 127.0.0.1:65369][0m
-INFO 2025-07-21 20:20:28,107 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/admin/RelatedObjectLookups.js 304 [0.00, 127.0.0.1:65369][0m
-INFO 2025-07-21 20:20:28,107 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/responsive.css 304 [0.01, 127.0.0.1:65377][0m
-INFO 2025-07-21 20:20:28,107 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/responsive.css 304 [0.01, 127.0.0.1:65377][0m
-INFO 2025-07-21 20:20:28,108 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/core.js 304 [0.01, 127.0.0.1:65371][0m
-INFO 2025-07-21 20:20:28,108 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/core.js 304 [0.01, 127.0.0.1:65371][0m
-INFO 2025-07-21 20:20:28,109 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/vendor/jquery/jquery.js 304 [0.01, 127.0.0.1:65373][0m
-INFO 2025-07-21 20:20:28,109 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/vendor/jquery/jquery.js 304 [0.01, 127.0.0.1:65373][0m
-INFO 2025-07-21 20:20:28,116 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/widgets.css 304 [0.01, 127.0.0.1:65375][0m
-INFO 2025-07-21 20:20:28,116 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/widgets.css 304 [0.01, 127.0.0.1:65375][0m
-INFO 2025-07-21 20:20:28,117 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/urlify.js 304 [0.01, 127.0.0.1:65377][0m
-INFO 2025-07-21 20:20:28,117 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/urlify.js 304 [0.01, 127.0.0.1:65377][0m
-INFO 2025-07-21 20:20:28,117 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/prepopulate.js 304 [0.01, 127.0.0.1:65371][0m
-INFO 2025-07-21 20:20:28,117 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/prepopulate.js 304 [0.01, 127.0.0.1:65371][0m
-INFO 2025-07-21 20:20:28,118 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/vendor/xregexp/xregexp.js 304 [0.01, 127.0.0.1:65373][0m
-INFO 2025-07-21 20:20:28,118 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/vendor/xregexp/xregexp.js 304 [0.01, 127.0.0.1:65373][0m
-INFO 2025-07-21 20:20:28,118 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/actions.js 304 [0.01, 127.0.0.1:65369][0m
-INFO 2025-07-21 20:20:28,118 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/actions.js 304 [0.01, 127.0.0.1:65369][0m
-INFO 2025-07-21 20:20:28,122 runserver 39080 6115454976 [mHTTP GET /admin/jsi18n/ 200 [0.03, 127.0.0.1:65366][0m
-INFO 2025-07-21 20:20:28,122 runserver 39080 6115454976 [mHTTP GET /admin/jsi18n/ 200 [0.03, 127.0.0.1:65366][0m
-INFO 2025-07-21 20:20:28,122 runserver 39080 6115454976 [36mHTTP GET /static/admin/img/search.svg 304 [0.00, 127.0.0.1:65369][0m
-INFO 2025-07-21 20:20:28,122 runserver 39080 6115454976 [36mHTTP GET /static/admin/img/search.svg 304 [0.00, 127.0.0.1:65369][0m
-INFO 2025-07-21 20:20:28,126 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/nav_sidebar.js 304 [0.00, 127.0.0.1:65366][0m
-INFO 2025-07-21 20:20:28,126 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/nav_sidebar.js 304 [0.00, 127.0.0.1:65366][0m
-INFO 2025-07-21 20:20:28,126 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/filters.js 304 [0.00, 127.0.0.1:65369][0m
-INFO 2025-07-21 20:20:28,126 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/filters.js 304 [0.00, 127.0.0.1:65369][0m
-INFO 2025-07-21 20:23:53,407 runserver 39080 6115454976 [mHTTP GET /admin/core/tradingpair/ 200 [0.12, 127.0.0.1:49780][0m
-INFO 2025-07-21 20:23:53,407 runserver 39080 6115454976 [mHTTP GET /admin/core/tradingpair/ 200 [0.12, 127.0.0.1:49780][0m
-INFO 2025-07-21 20:23:53,452 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/base.css 304 [0.00, 127.0.0.1:49786][0m
-INFO 2025-07-21 20:23:53,452 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/base.css 304 [0.00, 127.0.0.1:49786][0m
-INFO 2025-07-21 20:23:53,453 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/forms.css 304 [0.00, 127.0.0.1:49791][0m
-INFO 2025-07-21 20:23:53,453 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/forms.css 304 [0.00, 127.0.0.1:49791][0m
-INFO 2025-07-21 20:23:53,453 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/changelists.css 304 [0.00, 127.0.0.1:49790][0m
-INFO 2025-07-21 20:23:53,453 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/changelists.css 304 [0.00, 127.0.0.1:49790][0m
-INFO 2025-07-21 20:23:53,453 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/nav_sidebar.css 304 [0.01, 127.0.0.1:49783][0m
-INFO 2025-07-21 20:23:53,453 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/nav_sidebar.css 304 [0.01, 127.0.0.1:49783][0m
-INFO 2025-07-21 20:23:53,454 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/dark_mode.css 304 [0.01, 127.0.0.1:49787][0m
-INFO 2025-07-21 20:23:53,454 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/dark_mode.css 304 [0.01, 127.0.0.1:49787][0m
-INFO 2025-07-21 20:23:53,464 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/responsive.css 304 [0.01, 127.0.0.1:49786][0m
-INFO 2025-07-21 20:23:53,464 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/responsive.css 304 [0.01, 127.0.0.1:49786][0m
-INFO 2025-07-21 20:23:53,465 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/jquery.init.js 304 [0.00, 127.0.0.1:49783][0m
-INFO 2025-07-21 20:23:53,465 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/jquery.init.js 304 [0.00, 127.0.0.1:49783][0m
-INFO 2025-07-21 20:23:53,465 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/theme.js 304 [0.01, 127.0.0.1:49791][0m
-INFO 2025-07-21 20:23:53,465 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/theme.js 304 [0.01, 127.0.0.1:49791][0m
-INFO 2025-07-21 20:23:53,465 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/core.js 304 [0.00, 127.0.0.1:49787][0m
-INFO 2025-07-21 20:23:53,465 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/core.js 304 [0.00, 127.0.0.1:49787][0m
-INFO 2025-07-21 20:23:53,467 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/vendor/jquery/jquery.js 304 [0.01, 127.0.0.1:49790][0m
-INFO 2025-07-21 20:23:53,467 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/vendor/jquery/jquery.js 304 [0.01, 127.0.0.1:49790][0m
-INFO 2025-07-21 20:23:53,473 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/urlify.js 304 [0.00, 127.0.0.1:49791][0m
-INFO 2025-07-21 20:23:53,473 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/urlify.js 304 [0.00, 127.0.0.1:49791][0m
-INFO 2025-07-21 20:23:53,474 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/admin/RelatedObjectLookups.js 304 [0.01, 127.0.0.1:49786][0m
-INFO 2025-07-21 20:23:53,474 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/admin/RelatedObjectLookups.js 304 [0.01, 127.0.0.1:49786][0m
-INFO 2025-07-21 20:23:53,474 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/prepopulate.js 304 [0.00, 127.0.0.1:49787][0m
-INFO 2025-07-21 20:23:53,474 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/prepopulate.js 304 [0.00, 127.0.0.1:49787][0m
-INFO 2025-07-21 20:23:53,474 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/vendor/xregexp/xregexp.js 304 [0.00, 127.0.0.1:49790][0m
-INFO 2025-07-21 20:23:53,474 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/vendor/xregexp/xregexp.js 304 [0.00, 127.0.0.1:49790][0m
-INFO 2025-07-21 20:23:53,475 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/actions.js 304 [0.01, 127.0.0.1:49783][0m
-INFO 2025-07-21 20:23:53,475 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/actions.js 304 [0.01, 127.0.0.1:49783][0m
-INFO 2025-07-21 20:23:53,478 runserver 39080 6115454976 [mHTTP GET /admin/jsi18n/ 200 [0.03, 127.0.0.1:49780][0m
-INFO 2025-07-21 20:23:53,478 runserver 39080 6115454976 [mHTTP GET /admin/jsi18n/ 200 [0.03, 127.0.0.1:49780][0m
-INFO 2025-07-21 20:23:53,482 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/widgets.css 304 [0.00, 127.0.0.1:49791][0m
-INFO 2025-07-21 20:23:53,482 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/widgets.css 304 [0.00, 127.0.0.1:49791][0m
-INFO 2025-07-21 20:23:53,482 runserver 39080 6115454976 [36mHTTP GET /static/admin/img/search.svg 304 [0.00, 127.0.0.1:49783][0m
-INFO 2025-07-21 20:23:53,482 runserver 39080 6115454976 [36mHTTP GET /static/admin/img/search.svg 304 [0.00, 127.0.0.1:49783][0m
-INFO 2025-07-21 20:23:53,484 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/nav_sidebar.js 304 [0.00, 127.0.0.1:49783][0m
-INFO 2025-07-21 20:23:53,484 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/nav_sidebar.js 304 [0.00, 127.0.0.1:49783][0m
-INFO 2025-07-21 20:23:53,494 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/filters.js 304 [0.00, 127.0.0.1:49783][0m
-INFO 2025-07-21 20:23:53,494 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/filters.js 304 [0.00, 127.0.0.1:49783][0m
-INFO 2025-07-21 20:23:53,498 runserver 39080 6115454976 [36mHTTP GET /static/admin/img/tooltag-add.svg 304 [0.00, 127.0.0.1:49791][0m
-INFO 2025-07-21 20:23:53,498 runserver 39080 6115454976 [36mHTTP GET /static/admin/img/tooltag-add.svg 304 [0.00, 127.0.0.1:49791][0m
-INFO 2025-07-21 20:23:53,498 runserver 39080 6115454976 [36mHTTP GET /static/admin/img/icon-addlink.svg 304 [0.00, 127.0.0.1:49783][0m
-INFO 2025-07-21 20:23:53,498 runserver 39080 6115454976 [36mHTTP GET /static/admin/img/icon-addlink.svg 304 [0.00, 127.0.0.1:49783][0m
-INFO 2025-07-21 20:23:53,499 runserver 39080 6115454976 [36mHTTP GET /static/admin/img/icon-viewlink.svg 304 [0.00, 127.0.0.1:49780][0m
-INFO 2025-07-21 20:23:53,499 runserver 39080 6115454976 [36mHTTP GET /static/admin/img/icon-viewlink.svg 304 [0.00, 127.0.0.1:49780][0m
-INFO 2025-07-21 20:25:03,377 runserver 39080 6115454976 [mHTTP GET /admin/core/tradingpair/ 200 [0.07, 127.0.0.1:50122][0m
-INFO 2025-07-21 20:25:03,377 runserver 39080 6115454976 [mHTTP GET /admin/core/tradingpair/ 200 [0.07, 127.0.0.1:50122][0m
-INFO 2025-07-21 20:25:03,432 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/base.css 304 [0.01, 127.0.0.1:50122][0m
-INFO 2025-07-21 20:25:03,432 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/base.css 304 [0.01, 127.0.0.1:50122][0m
-INFO 2025-07-21 20:25:03,438 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/nav_sidebar.css 304 [0.00, 127.0.0.1:50130][0m
-INFO 2025-07-21 20:25:03,438 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/nav_sidebar.css 304 [0.00, 127.0.0.1:50130][0m
-INFO 2025-07-21 20:25:03,438 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/dark_mode.css 304 [0.00, 127.0.0.1:50127][0m
-INFO 2025-07-21 20:25:03,438 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/dark_mode.css 304 [0.00, 127.0.0.1:50127][0m
-INFO 2025-07-21 20:25:03,439 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/forms.css 304 [0.00, 127.0.0.1:50122][0m
-INFO 2025-07-21 20:25:03,439 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/forms.css 304 [0.00, 127.0.0.1:50122][0m
-INFO 2025-07-21 20:25:03,439 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/theme.js 304 [0.00, 127.0.0.1:50131][0m
-INFO 2025-07-21 20:25:03,439 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/theme.js 304 [0.00, 127.0.0.1:50131][0m
-INFO 2025-07-21 20:25:03,439 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/changelists.css 304 [0.00, 127.0.0.1:50133][0m
-INFO 2025-07-21 20:25:03,439 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/changelists.css 304 [0.00, 127.0.0.1:50133][0m
-INFO 2025-07-21 20:25:03,447 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/responsive.css 304 [0.00, 127.0.0.1:50130][0m
-INFO 2025-07-21 20:25:03,447 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/responsive.css 304 [0.00, 127.0.0.1:50130][0m
-INFO 2025-07-21 20:25:03,449 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/core.js 304 [0.01, 127.0.0.1:50131][0m
-INFO 2025-07-21 20:25:03,449 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/core.js 304 [0.01, 127.0.0.1:50131][0m
-INFO 2025-07-21 20:25:03,449 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/jquery.init.js 304 [0.01, 127.0.0.1:50122][0m
-INFO 2025-07-21 20:25:03,449 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/jquery.init.js 304 [0.01, 127.0.0.1:50122][0m
-INFO 2025-07-21 20:25:03,450 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/vendor/jquery/jquery.js 304 [0.01, 127.0.0.1:50127][0m
-INFO 2025-07-21 20:25:03,450 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/vendor/jquery/jquery.js 304 [0.01, 127.0.0.1:50127][0m
-INFO 2025-07-21 20:25:03,450 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/admin/RelatedObjectLookups.js 304 [0.01, 127.0.0.1:50133][0m
-INFO 2025-07-21 20:25:03,450 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/admin/RelatedObjectLookups.js 304 [0.01, 127.0.0.1:50133][0m
-INFO 2025-07-21 20:25:03,458 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/urlify.js 304 [0.00, 127.0.0.1:50122][0m
-INFO 2025-07-21 20:25:03,458 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/urlify.js 304 [0.00, 127.0.0.1:50122][0m
-INFO 2025-07-21 20:25:03,461 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/actions.js 304 [0.01, 127.0.0.1:50131][0m
-INFO 2025-07-21 20:25:03,461 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/actions.js 304 [0.01, 127.0.0.1:50131][0m
-INFO 2025-07-21 20:25:03,462 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/prepopulate.js 304 [0.01, 127.0.0.1:50127][0m
-INFO 2025-07-21 20:25:03,462 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/prepopulate.js 304 [0.01, 127.0.0.1:50127][0m
-INFO 2025-07-21 20:25:03,462 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/widgets.css 304 [0.01, 127.0.0.1:50130][0m
-INFO 2025-07-21 20:25:03,462 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/widgets.css 304 [0.01, 127.0.0.1:50130][0m
-INFO 2025-07-21 20:25:03,463 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/vendor/xregexp/xregexp.js 304 [0.01, 127.0.0.1:50133][0m
-INFO 2025-07-21 20:25:03,463 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/vendor/xregexp/xregexp.js 304 [0.01, 127.0.0.1:50133][0m
-INFO 2025-07-21 20:25:03,468 runserver 39080 6115454976 [36mHTTP GET /static/admin/img/search.svg 304 [0.00, 127.0.0.1:50133][0m
-INFO 2025-07-21 20:25:03,468 runserver 39080 6115454976 [36mHTTP GET /static/admin/img/search.svg 304 [0.00, 127.0.0.1:50133][0m
-INFO 2025-07-21 20:25:03,469 runserver 39080 6115454976 [mHTTP GET /admin/jsi18n/ 200 [0.04, 127.0.0.1:50125][0m
-INFO 2025-07-21 20:25:03,469 runserver 39080 6115454976 [mHTTP GET /admin/jsi18n/ 200 [0.04, 127.0.0.1:50125][0m
-INFO 2025-07-21 20:25:03,480 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/nav_sidebar.js 304 [0.00, 127.0.0.1:50125][0m
-INFO 2025-07-21 20:25:03,480 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/nav_sidebar.js 304 [0.00, 127.0.0.1:50125][0m
-INFO 2025-07-21 20:25:03,482 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/filters.js 304 [0.00, 127.0.0.1:50133][0m
-INFO 2025-07-21 20:25:03,482 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/filters.js 304 [0.00, 127.0.0.1:50133][0m
-INFO 2025-07-21 20:25:11,585 runserver 39080 6115454976 [mHTTP POST /admin/core/tradingpair/ 200 [0.04, 127.0.0.1:50150][0m
-INFO 2025-07-21 20:25:11,585 runserver 39080 6115454976 [mHTTP POST /admin/core/tradingpair/ 200 [0.04, 127.0.0.1:50150][0m
-INFO 2025-07-21 20:25:11,616 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/base.css 304 [0.01, 127.0.0.1:50150][0m
-INFO 2025-07-21 20:25:11,616 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/base.css 304 [0.01, 127.0.0.1:50150][0m
-INFO 2025-07-21 20:25:11,617 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/dark_mode.css 304 [0.00, 127.0.0.1:50154][0m
-INFO 2025-07-21 20:25:11,617 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/dark_mode.css 304 [0.00, 127.0.0.1:50154][0m
-INFO 2025-07-21 20:25:11,617 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/vendor/jquery/jquery.js 304 [0.00, 127.0.0.1:50161][0m
-INFO 2025-07-21 20:25:11,617 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/vendor/jquery/jquery.js 304 [0.00, 127.0.0.1:50161][0m
-INFO 2025-07-21 20:25:11,617 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/nav_sidebar.css 304 [0.01, 127.0.0.1:50156][0m
-INFO 2025-07-21 20:25:11,617 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/nav_sidebar.css 304 [0.01, 127.0.0.1:50156][0m
-INFO 2025-07-21 20:25:11,618 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/jquery.init.js 304 [0.01, 127.0.0.1:50162][0m
-INFO 2025-07-21 20:25:11,618 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/jquery.init.js 304 [0.01, 127.0.0.1:50162][0m
-INFO 2025-07-21 20:25:11,618 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/theme.js 304 [0.01, 127.0.0.1:50159][0m
-INFO 2025-07-21 20:25:11,618 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/theme.js 304 [0.01, 127.0.0.1:50159][0m
-INFO 2025-07-21 20:25:11,626 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/urlify.js 304 [0.00, 127.0.0.1:50162][0m
-INFO 2025-07-21 20:25:11,626 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/urlify.js 304 [0.00, 127.0.0.1:50162][0m
-INFO 2025-07-21 20:25:11,626 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/core.js 304 [0.01, 127.0.0.1:50154][0m
-INFO 2025-07-21 20:25:11,626 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/core.js 304 [0.01, 127.0.0.1:50154][0m
-INFO 2025-07-21 20:25:11,626 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/responsive.css 304 [0.01, 127.0.0.1:50150][0m
-INFO 2025-07-21 20:25:11,626 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/responsive.css 304 [0.01, 127.0.0.1:50150][0m
-INFO 2025-07-21 20:25:11,627 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/admin/RelatedObjectLookups.js 304 [0.00, 127.0.0.1:50161][0m
-INFO 2025-07-21 20:25:11,627 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/admin/RelatedObjectLookups.js 304 [0.00, 127.0.0.1:50161][0m
-INFO 2025-07-21 20:25:11,627 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/prepopulate.js 304 [0.00, 127.0.0.1:50159][0m
-INFO 2025-07-21 20:25:11,627 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/prepopulate.js 304 [0.00, 127.0.0.1:50159][0m
-INFO 2025-07-21 20:25:11,627 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/actions.js 304 [0.00, 127.0.0.1:50156][0m
-INFO 2025-07-21 20:25:11,627 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/actions.js 304 [0.00, 127.0.0.1:50156][0m
-INFO 2025-07-21 20:25:11,634 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/vendor/xregexp/xregexp.js 304 [0.00, 127.0.0.1:50162][0m
-INFO 2025-07-21 20:25:11,634 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/vendor/xregexp/xregexp.js 304 [0.00, 127.0.0.1:50162][0m
-INFO 2025-07-21 20:25:11,634 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/nav_sidebar.js 304 [0.00, 127.0.0.1:50156][0m
-INFO 2025-07-21 20:25:11,634 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/nav_sidebar.js 304 [0.00, 127.0.0.1:50156][0m
-INFO 2025-07-21 20:25:11,642 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/cancel.js 304 [0.00, 127.0.0.1:50156][0m
-INFO 2025-07-21 20:25:11,642 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/cancel.js 304 [0.00, 127.0.0.1:50156][0m
-INFO 2025-07-21 20:25:11,647 runserver 39080 6115454976 [36mHTTP GET /static/admin/img/icon-addlink.svg 304 [0.00, 127.0.0.1:50156][0m
-INFO 2025-07-21 20:25:11,647 runserver 39080 6115454976 [36mHTTP GET /static/admin/img/icon-addlink.svg 304 [0.00, 127.0.0.1:50156][0m
-INFO 2025-07-21 20:25:12,936 runserver 39080 6115454976 [32mHTTP POST /admin/core/tradingpair/ 302 [0.04, 127.0.0.1:50156][0m
-INFO 2025-07-21 20:25:12,936 runserver 39080 6115454976 [32mHTTP POST /admin/core/tradingpair/ 302 [0.04, 127.0.0.1:50156][0m
-INFO 2025-07-21 20:25:12,965 runserver 39080 6115454976 [mHTTP GET /admin/core/tradingpair/ 200 [0.03, 127.0.0.1:50156][0m
-INFO 2025-07-21 20:25:12,965 runserver 39080 6115454976 [mHTTP GET /admin/core/tradingpair/ 200 [0.03, 127.0.0.1:50156][0m
-INFO 2025-07-21 20:25:12,978 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/base.css 304 [0.00, 127.0.0.1:50156][0m
-INFO 2025-07-21 20:25:12,978 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/base.css 304 [0.00, 127.0.0.1:50156][0m
-INFO 2025-07-21 20:25:12,982 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/dark_mode.css 304 [0.01, 127.0.0.1:50162][0m
-INFO 2025-07-21 20:25:12,982 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/dark_mode.css 304 [0.01, 127.0.0.1:50162][0m
-INFO 2025-07-21 20:25:12,982 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/changelists.css 304 [0.01, 127.0.0.1:50154][0m
-INFO 2025-07-21 20:25:12,982 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/changelists.css 304 [0.01, 127.0.0.1:50154][0m
-INFO 2025-07-21 20:25:12,983 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/nav_sidebar.css 304 [0.01, 127.0.0.1:50161][0m
-INFO 2025-07-21 20:25:12,983 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/nav_sidebar.css 304 [0.01, 127.0.0.1:50161][0m
-INFO 2025-07-21 20:25:12,983 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/theme.js 304 [0.01, 127.0.0.1:50150][0m
-INFO 2025-07-21 20:25:12,983 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/theme.js 304 [0.01, 127.0.0.1:50150][0m
-INFO 2025-07-21 20:25:12,987 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/forms.css 304 [0.01, 127.0.0.1:50156][0m
-INFO 2025-07-21 20:25:12,987 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/forms.css 304 [0.01, 127.0.0.1:50156][0m
-INFO 2025-07-21 20:25:12,990 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/vendor/jquery/jquery.js 304 [0.00, 127.0.0.1:50154][0m
-INFO 2025-07-21 20:25:12,990 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/vendor/jquery/jquery.js 304 [0.00, 127.0.0.1:50154][0m
-INFO 2025-07-21 20:25:12,991 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/responsive.css 304 [0.01, 127.0.0.1:50162][0m
-INFO 2025-07-21 20:25:12,991 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/responsive.css 304 [0.01, 127.0.0.1:50162][0m
-INFO 2025-07-21 20:25:12,991 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/jquery.init.js 304 [0.00, 127.0.0.1:50161][0m
-INFO 2025-07-21 20:25:12,991 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/jquery.init.js 304 [0.00, 127.0.0.1:50161][0m
-INFO 2025-07-21 20:25:12,991 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/core.js 304 [0.00, 127.0.0.1:50150][0m
-INFO 2025-07-21 20:25:12,991 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/core.js 304 [0.00, 127.0.0.1:50150][0m
-INFO 2025-07-21 20:25:12,997 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/admin/RelatedObjectLookups.js 304 [0.01, 127.0.0.1:50156][0m
-INFO 2025-07-21 20:25:12,997 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/admin/RelatedObjectLookups.js 304 [0.01, 127.0.0.1:50156][0m
-INFO 2025-07-21 20:25:12,999 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/urlify.js 304 [0.01, 127.0.0.1:50161][0m
-INFO 2025-07-21 20:25:12,999 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/urlify.js 304 [0.01, 127.0.0.1:50161][0m
-INFO 2025-07-21 20:25:13,000 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/actions.js 304 [0.01, 127.0.0.1:50162][0m
-INFO 2025-07-21 20:25:13,000 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/actions.js 304 [0.01, 127.0.0.1:50162][0m
-INFO 2025-07-21 20:25:13,000 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/widgets.css 304 [0.01, 127.0.0.1:50154][0m
-INFO 2025-07-21 20:25:13,000 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/widgets.css 304 [0.01, 127.0.0.1:50154][0m
-INFO 2025-07-21 20:25:13,000 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/prepopulate.js 304 [0.01, 127.0.0.1:50150][0m
-INFO 2025-07-21 20:25:13,000 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/prepopulate.js 304 [0.01, 127.0.0.1:50150][0m
-INFO 2025-07-21 20:25:13,004 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/vendor/xregexp/xregexp.js 304 [0.01, 127.0.0.1:50156][0m
-INFO 2025-07-21 20:25:13,004 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/vendor/xregexp/xregexp.js 304 [0.01, 127.0.0.1:50156][0m
-INFO 2025-07-21 20:25:13,006 runserver 39080 6115454976 [36mHTTP GET /static/admin/img/search.svg 304 [0.00, 127.0.0.1:50150][0m
-INFO 2025-07-21 20:25:13,006 runserver 39080 6115454976 [36mHTTP GET /static/admin/img/search.svg 304 [0.00, 127.0.0.1:50150][0m
-INFO 2025-07-21 20:25:13,008 runserver 39080 6115454976 [mHTTP GET /admin/jsi18n/ 200 [0.03, 127.0.0.1:50159][0m
-INFO 2025-07-21 20:25:13,008 runserver 39080 6115454976 [mHTTP GET /admin/jsi18n/ 200 [0.03, 127.0.0.1:50159][0m
-INFO 2025-07-21 20:25:13,010 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/nav_sidebar.js 304 [0.00, 127.0.0.1:50150][0m
-INFO 2025-07-21 20:25:13,010 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/nav_sidebar.js 304 [0.00, 127.0.0.1:50150][0m
-INFO 2025-07-21 20:25:13,013 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/filters.js 304 [0.00, 127.0.0.1:50159][0m
-INFO 2025-07-21 20:25:13,013 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/filters.js 304 [0.00, 127.0.0.1:50159][0m
-INFO 2025-07-21 20:25:13,024 runserver 39080 6115454976 [36mHTTP GET /static/admin/img/icon-viewlink.svg 304 [0.00, 127.0.0.1:50159][0m
-INFO 2025-07-21 20:25:13,024 runserver 39080 6115454976 [36mHTTP GET /static/admin/img/icon-viewlink.svg 304 [0.00, 127.0.0.1:50159][0m
-INFO 2025-07-21 20:25:13,026 runserver 39080 6115454976 [36mHTTP GET /static/admin/img/tooltag-add.svg 304 [0.00, 127.0.0.1:50150][0m
-INFO 2025-07-21 20:25:13,026 runserver 39080 6115454976 [36mHTTP GET /static/admin/img/tooltag-add.svg 304 [0.00, 127.0.0.1:50150][0m
-INFO 2025-07-21 20:25:13,028 runserver 39080 6115454976 [36mHTTP GET /static/admin/img/icon-yes.svg 304 [0.01, 127.0.0.1:50156][0m
-INFO 2025-07-21 20:25:13,028 runserver 39080 6115454976 [36mHTTP GET /static/admin/img/icon-yes.svg 304 [0.01, 127.0.0.1:50156][0m
-INFO 2025-07-21 20:25:18,551 runserver 39080 6115454976 [mHTTP GET /admin/core/tradingpair/ 200 [0.05, 127.0.0.1:50186][0m
-INFO 2025-07-21 20:25:18,551 runserver 39080 6115454976 [mHTTP GET /admin/core/tradingpair/ 200 [0.05, 127.0.0.1:50186][0m
-INFO 2025-07-21 20:25:18,579 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/base.css 304 [0.01, 127.0.0.1:50186][0m
-INFO 2025-07-21 20:25:18,579 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/base.css 304 [0.01, 127.0.0.1:50186][0m
-INFO 2025-07-21 20:25:18,581 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/nav_sidebar.css 304 [0.00, 127.0.0.1:50193][0m
-INFO 2025-07-21 20:25:18,581 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/nav_sidebar.css 304 [0.00, 127.0.0.1:50193][0m
-INFO 2025-07-21 20:25:18,581 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/dark_mode.css 304 [0.01, 127.0.0.1:50191][0m
-INFO 2025-07-21 20:25:18,581 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/dark_mode.css 304 [0.01, 127.0.0.1:50191][0m
-INFO 2025-07-21 20:25:18,582 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/forms.css 304 [0.01, 127.0.0.1:50197][0m
-INFO 2025-07-21 20:25:18,582 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/forms.css 304 [0.01, 127.0.0.1:50197][0m
-INFO 2025-07-21 20:25:18,582 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/changelists.css 304 [0.01, 127.0.0.1:50196][0m
-INFO 2025-07-21 20:25:18,582 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/changelists.css 304 [0.01, 127.0.0.1:50196][0m
-INFO 2025-07-21 20:25:18,585 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/responsive.css 304 [0.00, 127.0.0.1:50186][0m
-INFO 2025-07-21 20:25:18,585 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/responsive.css 304 [0.00, 127.0.0.1:50186][0m
-INFO 2025-07-21 20:25:18,588 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/jquery.init.js 304 [0.00, 127.0.0.1:50197][0m
-INFO 2025-07-21 20:25:18,588 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/jquery.init.js 304 [0.00, 127.0.0.1:50197][0m
-INFO 2025-07-21 20:25:18,588 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/theme.js 304 [0.00, 127.0.0.1:50193][0m
-INFO 2025-07-21 20:25:18,588 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/theme.js 304 [0.00, 127.0.0.1:50193][0m
-INFO 2025-07-21 20:25:18,588 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/core.js 304 [0.00, 127.0.0.1:50196][0m
-INFO 2025-07-21 20:25:18,588 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/core.js 304 [0.00, 127.0.0.1:50196][0m
-INFO 2025-07-21 20:25:18,588 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/vendor/jquery/jquery.js 304 [0.00, 127.0.0.1:50191][0m
-INFO 2025-07-21 20:25:18,588 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/vendor/jquery/jquery.js 304 [0.00, 127.0.0.1:50191][0m
-INFO 2025-07-21 20:25:18,593 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/admin/RelatedObjectLookups.js 304 [0.01, 127.0.0.1:50186][0m
-INFO 2025-07-21 20:25:18,593 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/admin/RelatedObjectLookups.js 304 [0.01, 127.0.0.1:50186][0m
-INFO 2025-07-21 20:25:18,595 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/actions.js 304 [0.00, 127.0.0.1:50197][0m
-INFO 2025-07-21 20:25:18,595 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/actions.js 304 [0.00, 127.0.0.1:50197][0m
-INFO 2025-07-21 20:25:18,595 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/urlify.js 304 [0.00, 127.0.0.1:50193][0m
-INFO 2025-07-21 20:25:18,595 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/urlify.js 304 [0.00, 127.0.0.1:50193][0m
-INFO 2025-07-21 20:25:18,595 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/prepopulate.js 304 [0.00, 127.0.0.1:50196][0m
-INFO 2025-07-21 20:25:18,595 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/prepopulate.js 304 [0.00, 127.0.0.1:50196][0m
-INFO 2025-07-21 20:25:18,595 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/vendor/xregexp/xregexp.js 304 [0.00, 127.0.0.1:50191][0m
-INFO 2025-07-21 20:25:18,595 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/vendor/xregexp/xregexp.js 304 [0.00, 127.0.0.1:50191][0m
-INFO 2025-07-21 20:25:18,599 runserver 39080 6115454976 [36mHTTP GET /static/admin/img/search.svg 304 [0.00, 127.0.0.1:50191][0m
-INFO 2025-07-21 20:25:18,599 runserver 39080 6115454976 [36mHTTP GET /static/admin/img/search.svg 304 [0.00, 127.0.0.1:50191][0m
-INFO 2025-07-21 20:25:18,600 runserver 39080 6115454976 [mHTTP GET /admin/jsi18n/ 200 [0.02, 127.0.0.1:50189][0m
-INFO 2025-07-21 20:25:18,600 runserver 39080 6115454976 [mHTTP GET /admin/jsi18n/ 200 [0.02, 127.0.0.1:50189][0m
-INFO 2025-07-21 20:25:18,629 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/nav_sidebar.js 304 [0.00, 127.0.0.1:50189][0m
-INFO 2025-07-21 20:25:18,629 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/nav_sidebar.js 304 [0.00, 127.0.0.1:50189][0m
-INFO 2025-07-21 20:25:18,630 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/filters.js 304 [0.00, 127.0.0.1:50191][0m
-INFO 2025-07-21 20:25:18,630 runserver 39080 6115454976 [36mHTTP GET /static/admin/js/filters.js 304 [0.00, 127.0.0.1:50191][0m
-INFO 2025-07-21 20:25:18,630 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/widgets.css 304 [0.00, 127.0.0.1:50196][0m
-INFO 2025-07-21 20:25:18,630 runserver 39080 6115454976 [36mHTTP GET /static/admin/css/widgets.css 304 [0.00, 127.0.0.1:50196][0m
-INFO 2025-07-21 20:25:33,336 runserver 39080 6115454976 [mHTTP GET / 200 [0.05, 127.0.0.1:50223][0m
-INFO 2025-07-21 20:25:33,336 runserver 39080 6115454976 [mHTTP GET / 200 [0.05, 127.0.0.1:50223][0m
-INFO 2025-07-21 20:25:33,670 runserver 39080 6115454976 WebSocket HANDSHAKING /ws/arbitrage/ [127.0.0.1:50226]
-INFO 2025-07-21 20:25:33,670 runserver 39080 6115454976 WebSocket HANDSHAKING /ws/arbitrage/ [127.0.0.1:50226]
-INFO 2025-07-21 20:25:33,693 runserver 39080 6115454976 WebSocket CONNECT /ws/arbitrage/ [127.0.0.1:50226]
-INFO 2025-07-21 20:25:33,693 runserver 39080 6115454976 WebSocket CONNECT /ws/arbitrage/ [127.0.0.1:50226]
-INFO 2025-07-21 20:25:46,411 runserver 39080 6115454976 [mHTTP GET / 200 [0.03, 127.0.0.1:50268][0m
-INFO 2025-07-21 20:25:46,411 runserver 39080 6115454976 [mHTTP GET / 200 [0.03, 127.0.0.1:50268][0m
-INFO 2025-07-21 20:25:46,417 runserver 39080 6115454976 WebSocket DISCONNECT /ws/arbitrage/ [127.0.0.1:50226]
-INFO 2025-07-21 20:25:46,417 runserver 39080 6115454976 WebSocket DISCONNECT /ws/arbitrage/ [127.0.0.1:50226]
-INFO 2025-07-21 20:25:46,540 runserver 39080 6115454976 WebSocket HANDSHAKING /ws/arbitrage/ [127.0.0.1:50272]
-INFO 2025-07-21 20:25:46,540 runserver 39080 6115454976 WebSocket HANDSHAKING /ws/arbitrage/ [127.0.0.1:50272]
-INFO 2025-07-21 20:25:46,554 runserver 39080 6115454976 WebSocket CONNECT /ws/arbitrage/ [127.0.0.1:50272]
-INFO 2025-07-21 20:25:46,554 runserver 39080 6115454976 WebSocket CONNECT /ws/arbitrage/ [127.0.0.1:50272]
+INFO 2025-07-22 01:01:57,603 cli 59236 8444927744 Starting server at tcp:port=8000:interface=0.0.0.0
+INFO 2025-07-22 01:01:57,603 server 59236 8444927744 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-07-22 01:01:57,603 server 59236 8444927744 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-07-22 01:01:57,604 server 59236 8444927744 Listening on TCP address 0.0.0.0:8000
+INFO 2025-07-22 01:11:52,049 server 59236 8444927744 Killed 1 pending application instances
+INFO 2025-07-22 01:12:20,713 cli 60396 8444927744 Starting server at tcp:port=8000:interface=0.0.0.0
+INFO 2025-07-22 01:12:20,713 server 60396 8444927744 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-07-22 01:12:20,713 server 60396 8444927744 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-07-22 01:12:20,714 server 60396 8444927744 Listening on TCP address 0.0.0.0:8000
+INFO 2025-07-22 01:15:04,852 server 60396 8444927744 Killed 1 pending application instances
+INFO 2025-07-22 01:15:17,453 cli 60947 8444927744 Starting server at tcp:port=8000:interface=0.0.0.0
+INFO 2025-07-22 01:15:17,454 server 60947 8444927744 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-07-22 01:15:17,454 server 60947 8444927744 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-07-22 01:15:17,454 server 60947 8444927744 Listening on TCP address 0.0.0.0:8000
+INFO 2025-07-22 01:17:31,421 server 60947 8444927744 Killed 1 pending application instances
+INFO 2025-07-22 01:17:54,894 cli 61431 8444927744 Starting server at tcp:port=8000:interface=0.0.0.0
+INFO 2025-07-22 01:17:54,894 server 61431 8444927744 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-07-22 01:17:54,894 server 61431 8444927744 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-07-22 01:17:54,895 server 61431 8444927744 Listening on TCP address 0.0.0.0:8000
+INFO 2025-07-22 01:18:11,713 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:11,714 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:11,715 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:11,715 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:11,915 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:11,916 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:11,916 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:11,916 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:12,115 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:12,115 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:12,116 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:12,117 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:12,325 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:12,325 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:12,325 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:12,326 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:12,515 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:12,516 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:12,519 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:12,519 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:12,723 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:12,724 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:12,724 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:12,724 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:12,924 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:12,924 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:12,924 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:12,925 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:13,124 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:13,125 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:13,125 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:13,126 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:13,336 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:13,336 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:13,336 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:13,336 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:13,518 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:13,519 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:13,519 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:13,519 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:13,726 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:13,726 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:13,726 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:13,727 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:13,929 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:13,929 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:13,930 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:13,930 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:14,129 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:14,132 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:14,132 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:14,132 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:14,331 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:14,332 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:14,332 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:14,332 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:14,534 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:14,534 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:14,534 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:14,535 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:14,730 core 61477 8444927744 18 of 18 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:14,730 core 61477 8444927744 18 of 18 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:14,731 core 61477 8444927744 18 of 18 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:14,731 core 61477 8444927744 18 of 18 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:25,799 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:25,800 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:25,801 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:25,801 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:26,001 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:26,001 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:26,002 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:26,002 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:26,201 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:26,202 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:26,202 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:26,202 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:26,408 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:26,408 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:26,409 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:26,409 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:26,607 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:26,608 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:26,608 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:26,609 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:26,807 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:26,809 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:26,809 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:26,809 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:27,006 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:27,006 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:27,006 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:27,007 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:27,209 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:27,210 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:27,210 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:27,210 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:27,428 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:27,439 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:27,451 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:27,460 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:27,608 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:27,608 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:27,609 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:27,609 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:27,814 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:27,814 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:27,815 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:27,815 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:28,030 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:28,034 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:28,035 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:28,037 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:28,236 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:28,237 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:28,242 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:28,247 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:28,420 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:28,420 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:28,421 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:28,421 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:28,623 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:28,624 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:28,624 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:28,625 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:28,822 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:28,822 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:28,823 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:18:28,823 core 61477 8444927744 18 of 19 channels over capacity in group arbitrage_updates
+INFO 2025-07-22 01:20:48,209 server 61431 8444927744 Killed 1 pending application instances
+INFO 2025-07-22 01:20:54,137 cli 62105 8444927744 Starting server at tcp:port=8000:interface=0.0.0.0
+INFO 2025-07-22 01:20:54,137 server 62105 8444927744 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-07-22 01:20:54,137 server 62105 8444927744 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-07-22 01:20:54,137 server 62105 8444927744 Listening on TCP address 0.0.0.0:8000
+INFO 2025-07-22 01:22:50,296 server 62105 8444927744 Killed 1 pending application instances
+INFO 2025-07-22 01:23:09,293 cli 62779 8444927744 Starting server at tcp:port=8000:interface=0.0.0.0
+INFO 2025-07-22 01:23:09,293 server 62779 8444927744 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-07-22 01:23:09,293 server 62779 8444927744 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-07-22 01:23:09,294 server 62779 8444927744 Listening on TCP address 0.0.0.0:8000
+INFO 2025-07-22 01:25:13,413 server 62779 8444927744 Killed 1 pending application instances
+INFO 2025-07-22 01:25:25,245 cli 63233 8444927744 Starting server at tcp:port=8000:interface=0.0.0.0
+INFO 2025-07-22 01:25:25,246 server 63233 8444927744 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-07-22 01:25:25,246 server 63233 8444927744 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-07-22 01:25:25,246 server 63233 8444927744 Listening on TCP address 0.0.0.0:8000
+INFO 2025-07-22 01:30:51,730 server 63233 8444927744 Killed 1 pending application instances
+INFO 2025-07-22 01:31:02,927 cli 63921 8444927744 Starting server at tcp:port=8000:interface=0.0.0.0
+INFO 2025-07-22 01:31:02,927 server 63921 8444927744 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-07-22 01:31:02,927 server 63921 8444927744 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-07-22 01:31:02,927 server 63921 8444927744 Listening on TCP address 0.0.0.0:8000
+INFO 2025-07-22 01:34:09,009 server 63921 8444927744 Killed 1 pending application instances
+INFO 2025-07-22 01:34:22,573 cli 64482 8444927744 Starting server at tcp:port=8000:interface=0.0.0.0
+INFO 2025-07-22 01:34:22,573 server 64482 8444927744 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-07-22 01:34:22,573 server 64482 8444927744 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-07-22 01:34:22,574 server 64482 8444927744 Listening on TCP address 0.0.0.0:8000
+INFO 2025-07-22 01:47:05,348 server 64482 8444927744 Killed 1 pending application instances
+INFO 2025-07-22 01:47:16,579 cli 65497 8444927744 Starting server at tcp:port=8000:interface=0.0.0.0
+INFO 2025-07-22 01:47:16,579 server 65497 8444927744 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-07-22 01:47:16,579 server 65497 8444927744 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-07-22 01:47:16,580 server 65497 8444927744 Listening on TCP address 0.0.0.0:8000
+INFO 2025-07-22 01:51:15,052 server 65497 8444927744 Killed 1 pending application instances
+INFO 2025-07-22 01:51:27,434 cli 66074 8444927744 Starting server at tcp:port=8000:interface=0.0.0.0
+INFO 2025-07-22 01:51:27,434 server 66074 8444927744 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-07-22 01:51:27,435 server 66074 8444927744 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-07-22 01:51:27,435 server 66074 8444927744 Listening on TCP address 0.0.0.0:8000

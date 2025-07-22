@@ -5,6 +5,7 @@ from decimal import Decimal
 from typing import Dict, List, Any, Optional
 from dataclasses import dataclass
 from channels.layers import get_channel_layer
+from channels.db import database_sync_to_async
 from core.redis_manager import redis_manager
 from core.models import TradingPair
 
@@ -66,24 +67,27 @@ class FastArbitrageCalculator:
                     # Save opportunities
                     await self._save_opportunities(opportunities)
                     
-                    # Broadcast to WebSocket
-                    await self._broadcast_opportunities(opportunities)
+                    # Only broadcast significant opportunities (> 1% profit) to reduce channel load
+                    significant_opportunities = [opp for opp in opportunities if opp.profit_percentage > 1.0]
+                    if significant_opportunities:
+                        await self._broadcast_opportunities(significant_opportunities)
                     
-                    performance_logger.info(f"Found {len(opportunities)} arbitrage opportunities")
+                    performance_logger.info(f"Found {len(opportunities)} arbitrage opportunities ({len(significant_opportunities)} significant)")
                 
                 # Calculate processing time
                 processing_time = asyncio.get_event_loop().time() - start_time
                 performance_logger.debug(f"Arbitrage calculation took {processing_time:.4f}s")
                 
-                # Sleep to maintain 50ms cycle (high speed)
-                await asyncio.sleep(max(0.05 - processing_time, 0.01))
+                # Sleep to maintain 200ms cycle (reduced to prevent channel overflow)
+                await asyncio.sleep(max(0.2 - processing_time, 0.1))
                 
             except Exception as e:
                 logger.error(f"Error in arbitrage calculation: {e}")
                 await asyncio.sleep(1)
 
-    async def _update_trading_pairs_cache(self):
-        """Update trading pairs cache from database"""
+    @database_sync_to_async
+    def _update_trading_pairs_cache_sync(self):
+        """Update trading pairs cache from database (sync version)"""
         try:
             # Get active trading pairs
             pairs = TradingPair.objects.filter(
@@ -91,14 +95,14 @@ class FastArbitrageCalculator:
                 exchange__is_active=True
             ).select_related('exchange', 'base_currency', 'quote_currency')
             
-            self.trading_pairs_cache = {}
+            trading_pairs_cache = {}
             
             for pair in pairs:
                 key = f"{pair.base_currency.symbol}_{pair.quote_currency.symbol}"
-                if key not in self.trading_pairs_cache:
-                    self.trading_pairs_cache[key] = []
+                if key not in trading_pairs_cache:
+                    trading_pairs_cache[key] = []
                 
-                self.trading_pairs_cache[key].append({
+                trading_pairs_cache[key].append({
                     'exchange': pair.exchange.name,
                     'symbol': pair.api_symbol,
                     'arbitrage_threshold': float(pair.arbitrage_threshold),
@@ -106,10 +110,16 @@ class FastArbitrageCalculator:
                     'max_volume': float(pair.max_volume)
                 })
             
-            logger.debug(f"Updated trading pairs cache: {len(self.trading_pairs_cache)} currency pairs")
+            logger.debug(f"Updated trading pairs cache: {len(trading_pairs_cache)} currency pairs")
+            return trading_pairs_cache
             
         except Exception as e:
             logger.error(f"Error updating trading pairs cache: {e}")
+            return {}
+            
+    async def _update_trading_pairs_cache(self):
+        """Update trading pairs cache from database"""
+        self.trading_pairs_cache = await self._update_trading_pairs_cache_sync()
 
     async def _find_arbitrage_opportunities(self) -> List[ArbitrageOpportunity]:
         """Find arbitrage opportunities between exchanges"""

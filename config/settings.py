@@ -1,6 +1,9 @@
 import os
 from pathlib import Path
 from dotenv import load_dotenv
+from django.templatetags.static import static
+from django.urls import reverse_lazy
+from django.utils.translation import gettext_lazy as _
 
 # Load environment variables
 load_dotenv()
@@ -17,6 +20,7 @@ ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1,0.0.0.0').split(
 
 # Applications
 INSTALLED_APPS = [
+    'unfold',
     'daphne',
     'django.contrib.admin',
     'django.contrib.auth',
@@ -248,3 +252,54 @@ LOGGING = {
 
 # Default ID
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Django Unfold Configuration
+UNFOLD = {
+    'SITE_TITLE': 'Digital Currency Arbitrage',
+    'SITE_HEADER': 'Arbitrage Admin',
+    'SITE_SYMBOL': '💰',
+    'SHOW_HISTORY': True,
+    'SHOW_VIEW_ON_SITE': True,
+    'COLORS': {
+        'primary': {
+            '50': '250 245 255',
+            '100': '243 232 255',
+            '200': '233 213 255',
+            '300': '216 180 254',
+            '400': '196 181 253',
+            '500': '168 85 247',
+            '600': '147 51 234',
+            '700': '126 34 206',
+            '800': '107 33 168',
+            '900': '88 28 135',
+            '950': '59 7 100',
+        },
+    },
+    'SIDEBAR': {
+        'show_search': True,
+        'show_all_applications': True,
+        'navigation': [
+            {
+                'title': _('Trading'),
+                'icon': 'currency_exchange',
+                'items': [
+                    {
+                        'title': _('Exchanges'),
+                        'icon': 'store',
+                        'link': reverse_lazy('admin:core_exchange_changelist'),
+                    },
+                    {
+                        'title': _('Currencies'),
+                        'icon': 'payments',
+                        'link': reverse_lazy('admin:core_currency_changelist'),
+                    },
+                    {
+                        'title': _('Trading Pairs'),
+                        'icon': 'swap_horiz',
+                        'link': reverse_lazy('admin:core_tradingpair_changelist'),
+                    },
+                ],
+            },
+        ],
+    },
+}

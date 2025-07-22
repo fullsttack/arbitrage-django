@@ -1,10 +1,18 @@
 import asyncio
 import logging
 import multiprocessing
-import uvloop
 from concurrent.futures import ThreadPoolExecutor
+
+# Try to import uvloop for better performance
+try:
+    import uvloop
+    UVLOOP_AVAILABLE = True
+except ImportError:
+    UVLOOP_AVAILABLE = False
+    logging.warning("uvloop not available, using default event loop")
 from typing import Dict, List
 from django.conf import settings
+from channels.db import database_sync_to_async
 from .services.wallex import WallexService
 from .services.lbank import LBankService
 from .services.ramzinex import RamzinexService
@@ -17,11 +25,15 @@ performance_logger = logging.getLogger('performance')
 
 class HighPerformanceWorkersManager:
     def __init__(self, worker_count=None):
-        # Use uvloop for better performance
-        try:
-            asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
-        except:
-            logger.warning("uvloop not available, using default event loop")
+        # Use uvloop for better performance if available
+        if UVLOOP_AVAILABLE:
+            try:
+                asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
+                logger.info("Using uvloop for better performance")
+            except Exception as e:
+                logger.warning(f"Failed to set uvloop: {e}")
+        else:
+            logger.info("Using default asyncio event loop")
         
         self.worker_count = worker_count or getattr(settings, 'WORKER_COUNT', multiprocessing.cpu_count() * 2)
         
@@ -81,8 +93,9 @@ class HighPerformanceWorkersManager:
         except Exception as e:
             logger.error(f"Worker error: {e}")
 
-    async def _get_trading_pairs(self) -> Dict[str, List[str]]:
-        """Get active trading pairs from database"""
+    @database_sync_to_async
+    def _get_trading_pairs_sync(self):
+        """Get active trading pairs from database (sync version)"""
         pairs_by_exchange = {}
         
         try:
@@ -108,72 +121,150 @@ class HighPerformanceWorkersManager:
             logger.error(f"Error loading trading pairs: {e}")
         
         return pairs_by_exchange
+        
+    async def _get_trading_pairs(self) -> Dict[str, List[str]]:
+        """Get active trading pairs from database"""
+        return await self._get_trading_pairs_sync()
 
     async def _start_wallex_worker(self, pairs: List[str]):
-        """Worker 1: Wallex price updater"""
+        """Worker 1: Wallex price updater with auto-reconnection"""
         if not pairs:
             logger.info("No Wallex pairs configured")
             return
         
-        try:
-            service = self.services['wallex']
-            await service.connect()
-            await service.subscribe_to_pairs(pairs)
-            
-            performance_logger.info(f"Wallex worker started with {len(pairs)} pairs")
-            
-            # Keep worker alive
-            while self.is_running:
-                await asyncio.sleep(1)
+        service = self.services['wallex']
+        retry_count = 0
+        max_retries = 5
+        
+        while self.is_running:
+            try:
+                if not service.is_connected:
+                    logger.info(f"Wallex connecting (attempt {retry_count + 1})...")
+                    await service.connect()
+                    await service.subscribe_to_pairs(pairs)
+                    
+                    if retry_count == 0:
+                        performance_logger.info(f"Wallex worker started with {len(pairs)} pairs")
+                    else:
+                        logger.info(f"Wallex reconnected successfully")
+                    
+                    retry_count = 0  # Reset retry count on successful connection
                 
-        except Exception as e:
-            logger.error(f"Wallex worker error: {e}")
-        finally:
+                # Check connection health
+                await asyncio.sleep(5)
+                
+            except Exception as e:
+                retry_count += 1
+                logger.error(f"Wallex worker error (attempt {retry_count}/{max_retries}): {e}")
+                
+                if retry_count >= max_retries:
+                    logger.error("Wallex max retries reached, stopping worker")
+                    break
+                
+                # Exponential backoff
+                wait_time = min(30, 2 ** retry_count)
+                logger.info(f"Wallex retrying in {wait_time} seconds...")
+                await asyncio.sleep(wait_time)
+        
+        try:
             await service.disconnect()
+        except:
+            pass
 
     async def _start_lbank_worker(self, pairs: List[str]):
-        """Worker 2: LBank price updater"""
+        """Worker 2: LBank price updater with auto-reconnection"""
         if not pairs:
             logger.info("No LBank pairs configured")
             return
         
-        try:
-            service = self.services['lbank']
-            await service.connect()
-            await service.subscribe_to_pairs(pairs)
-            
-            performance_logger.info(f"LBank worker started with {len(pairs)} pairs")
-            
-            # Keep worker alive
-            while self.is_running:
-                await asyncio.sleep(1)
+        service = self.services['lbank']
+        retry_count = 0
+        max_retries = 5
+        
+        while self.is_running:
+            try:
+                if not service.is_connected:
+                    logger.info(f"LBank connecting (attempt {retry_count + 1})...")
+                    await service.connect()
+                    await service.subscribe_to_pairs(pairs)
+                    
+                    if retry_count == 0:
+                        performance_logger.info(f"LBank worker started with {len(pairs)} pairs")
+                    else:
+                        logger.info(f"LBank reconnected successfully")
+                    
+                    retry_count = 0  # Reset retry count on successful connection
                 
-        except Exception as e:
-            logger.error(f"LBank worker error: {e}")
-        finally:
+                # Check connection health
+                await asyncio.sleep(5)
+                
+            except Exception as e:
+                retry_count += 1
+                logger.error(f"LBank worker error (attempt {retry_count}/{max_retries}): {e}")
+                
+                if retry_count >= max_retries:
+                    logger.error("LBank max retries reached, stopping worker")
+                    break
+                
+                # Exponential backoff
+                wait_time = min(30, 2 ** retry_count)
+                logger.info(f"LBank retrying in {wait_time} seconds...")
+                await asyncio.sleep(wait_time)
+        
+        try:
             await service.disconnect()
+        except:
+            pass
 
     async def _start_ramzinex_worker(self, pairs: List[str]):
-        """Worker 3: Ramzinex price updater"""
+        """Worker 3: Ramzinex price updater with auto-reconnection"""
         if not pairs:
             logger.info("No Ramzinex pairs configured")
             return
         
-        try:
-            service = self.services['ramzinex']
-            await service.connect()
-            await service.subscribe_to_pairs(pairs)
-            
-            performance_logger.info(f"Ramzinex worker started with {len(pairs)} pairs")
-            
-            # Keep worker alive
-            while self.is_running:
-                await asyncio.sleep(1)
+        service = self.services['ramzinex']
+        retry_count = 0
+        max_retries = 5
+        
+        while self.is_running:
+            try:
+                if not service.is_connected:
+                    logger.info(f"Ramzinex connecting (attempt {retry_count + 1})...")
+                    await service.connect()
+                    
+                    # Only subscribe after successful connection
+                    if service.is_connected:
+                        await service.subscribe_to_pairs(pairs)
+                        
+                        if retry_count == 0:
+                            performance_logger.info(f"Ramzinex worker started with {len(pairs)} pairs")
+                        else:
+                            logger.info(f"Ramzinex reconnected successfully")
+                        
+                        retry_count = 0  # Reset retry count on successful connection
+                    else:
+                        logger.warning("Ramzinex connection failed, skipping subscription")
                 
-        except Exception as e:
-            logger.error(f"Ramzinex worker error: {e}")
-        finally:
+                # Check connection health more frequently for Ramzinex
+                await asyncio.sleep(3)
+                
+            except Exception as e:
+                retry_count += 1
+                logger.error(f"Ramzinex worker error (attempt {retry_count}/{max_retries}): {e}")
+                
+                if retry_count >= max_retries:
+                    logger.error("Ramzinex max retries reached, stopping worker")
+                    break
+                
+                # Exponential backoff
+                wait_time = min(30, 2 ** retry_count)
+                logger.info(f"Ramzinex retrying in {wait_time} seconds...")
+                await asyncio.sleep(wait_time)
+        
+        try:
             await service.disconnect()
+        except:
+            pass
 
     async def _start_cleanup_worker(self):
         """Worker: Cleanup old data"""

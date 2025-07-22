@@ -43,9 +43,9 @@ class RedisManager:
             'timestamp': timestamp
         }
         
-        # Save with short TTL for real-time data
+        # Save price data - keep last price until new update arrives
         key = f"prices:{exchange}:{symbol}"
-        await self.redis_client.setex(key, 30, json.dumps(price_data))  # TTL 30 seconds
+        await self.redis_client.set(key, json.dumps(price_data))  # No TTL - keep last price
         
         logger.debug(f"Price saved: {exchange} {symbol} - bid:{bid_price}, ask:{ask_price}")
     
@@ -145,7 +145,7 @@ class RedisManager:
         """Clean up old price data and opportunities"""
         current_time = asyncio.get_event_loop().time()
         
-        # Clean old prices (older than 60 seconds)
+        # Clean old prices (older than 1 hour - keep last prices available)
         price_keys = await self.redis_client.keys("prices:*")
         cleaned_prices = 0
         
@@ -154,10 +154,12 @@ class RedisManager:
             if data:
                 try:
                     price_data = json.loads(data)
-                    if current_time - price_data['timestamp'] > 60:
+                    # Only clean very old prices (older than 1 hour)
+                    if current_time - price_data['timestamp'] > 3600:
                         await self.redis_client.delete(key)
                         cleaned_prices += 1
                 except:
+                    # Only delete corrupted data
                     await self.redis_client.delete(key)
                     cleaned_prices += 1
         

@@ -58,11 +58,15 @@ class ArbitrageConsumer(AsyncWebsocketConsumer):
                     }
                 }))
                 
-                await asyncio.sleep(2)  # Update every 2 seconds
+                # Also send updated prices every 5 seconds (not too frequent)
+                if prices_count > 0:
+                    await self.send_prices_update()
+                
+                await asyncio.sleep(5)  # Update every 5 seconds
                 
             except Exception as e:
                 logger.error(f"Redis monitoring error: {e}")
-                await asyncio.sleep(5)
+                await asyncio.sleep(10)
 
     async def send_initial_data(self):
         """Send initial opportunities and prices"""
@@ -70,6 +74,7 @@ class ArbitrageConsumer(AsyncWebsocketConsumer):
             # Get recent opportunities
             opportunities = await redis_manager.get_latest_opportunities(50)
             
+            logger.info(f"Sending {len(opportunities)} initial opportunities")
             await self.send(text_data=json.dumps({
                 'type': 'initial_opportunities',
                 'data': opportunities
@@ -78,6 +83,38 @@ class ArbitrageConsumer(AsyncWebsocketConsumer):
             # Get current prices
             prices = await redis_manager.get_all_current_prices()
             prices_list = []
+            
+            logger.info(f"Got {len(prices)} price keys from Redis: {list(prices.keys())}")
+            
+            for key, price_data in prices.items():
+                # Convert key format "prices:exchange:symbol" to readable format
+                parts = key.split(':')
+                if len(parts) >= 3:
+                    price_data['exchange'] = parts[1]
+                    price_data['symbol'] = parts[2]
+                    # Ensure bid_volume and ask_volume are present
+                    price_data['bid_volume'] = price_data.get('bid_volume', 0)
+                    price_data['ask_volume'] = price_data.get('ask_volume', 0)
+                    prices_list.append(price_data)
+                    logger.debug(f"Processed price: {price_data}")
+            
+            logger.info(f"Sending {len(prices_list)} initial prices to WebSocket")
+            await self.send(text_data=json.dumps({
+                'type': 'initial_prices',
+                'data': prices_list
+            }))
+            
+        except Exception as e:
+            logger.error(f"Error sending initial data: {e}", exc_info=True)
+
+    async def send_prices_update(self):
+        """Send updated prices"""
+        try:
+            # Get current prices
+            prices = await redis_manager.get_all_current_prices()
+            prices_list = []
+            
+            logger.debug(f"Prices update: Got {len(prices)} price keys from Redis")
             
             for key, price_data in prices.items():
                 # Convert key format "prices:exchange:symbol" to readable format
@@ -90,13 +127,17 @@ class ArbitrageConsumer(AsyncWebsocketConsumer):
                     price_data['ask_volume'] = price_data.get('ask_volume', 0)
                     prices_list.append(price_data)
             
-            await self.send(text_data=json.dumps({
-                'type': 'initial_prices',
-                'data': prices_list
-            }))
-            
+            if prices_list:
+                logger.debug(f"Sending {len(prices_list)} updated prices to WebSocket")
+                await self.send(text_data=json.dumps({
+                    'type': 'prices_update',
+                    'data': prices_list
+                }))
+            else:
+                logger.warning("No prices to send in update")
+                
         except Exception as e:
-            logger.error(f"Error sending initial data: {e}")
+            logger.error(f"Error sending prices update: {e}", exc_info=True)
 
     async def send_opportunities(self, event):
         """Send new arbitrage opportunities"""

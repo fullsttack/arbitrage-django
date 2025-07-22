@@ -35,23 +35,9 @@ class BaseExchangeService(ABC):
             ask_volume=float(ask_volume)
         )
         
-        # Broadcast to WebSocket
-        if self.channel_layer:
-            await self.channel_layer.group_send(
-                'arbitrage_updates',
-                {
-                    'type': 'send_price_update',
-                    'price_data': {
-                        'exchange': self.exchange_name,
-                        'symbol': symbol,
-                        'bid_price': float(bid_price),
-                        'ask_price': float(ask_price),
-                        'bid_volume': float(bid_volume),
-                        'ask_volume': float(ask_volume),
-                        'timestamp': asyncio.get_event_loop().time()
-                    }
-                }
-            )
+        # Skip WebSocket broadcast for individual prices to reduce channel load
+        # Prices will be available through arbitrage opportunities
+        logger.debug(f"Saved {self.exchange_name} {symbol}: bid={bid_price}, ask={ask_price}")
 
     @abstractmethod
     async def connect(self):

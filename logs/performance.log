@@ -1,0 +1,468 @@
+[2025-07-22 01:02:00,311] PERF workers.__init__ - Initialized with 8 workers
+[2025-07-22 01:02:00,327] PERF workers.start_all_workers - Starting 16 high-performance workers...
+[2025-07-22 01:02:00,345] PERF workers._get_trading_pairs_sync - Loaded 9 trading pairs across 3 exchanges
+[2025-07-22 01:02:00,345] PERF workers.start_all_workers - Started 9 worker tasks
+[2025-07-22 01:02:00,381] PERF workers._start_cleanup_worker - Cleanup worker started
+[2025-07-22 01:02:00,381] PERF workers._start_monitoring_worker - Monitoring worker started
+[2025-07-22 01:02:00,384] PERF workers._start_monitoring_worker - System stats - Opportunities: 0, Prices: 5, Redis memory: 2.30M
+[2025-07-22 01:02:01,207] PERF workers._start_wallex_worker - Wallex worker started with 3 pairs
+[2025-07-22 01:02:02,035] PERF workers._start_lbank_worker - LBank worker started with 3 pairs
+[2025-07-22 01:02:02,341] PERF workers._start_ramzinex_worker - Ramzinex worker started with 3 pairs
+[2025-07-22 01:03:00,391] PERF workers._start_monitoring_worker - System stats - Opportunities: 0, Prices: 6, Redis memory: 2.20M
+[2025-07-22 01:04:00,394] PERF workers._start_monitoring_worker - System stats - Opportunities: 0, Prices: 6, Redis memory: 2.20M
+[2025-07-22 01:05:00,399] PERF workers._start_monitoring_worker - System stats - Opportunities: 0, Prices: 6, Redis memory: 2.21M
+[2025-07-22 01:06:00,420] PERF workers._start_monitoring_worker - System stats - Opportunities: 0, Prices: 3, Redis memory: 2.20M
+[2025-07-22 01:07:00,428] PERF workers._start_monitoring_worker - System stats - Opportunities: 0, Prices: 3, Redis memory: 2.20M
+[2025-07-22 01:08:00,435] PERF workers._start_monitoring_worker - System stats - Opportunities: 0, Prices: 3, Redis memory: 2.20M
+[2025-07-22 01:09:00,439] PERF workers._start_monitoring_worker - System stats - Opportunities: 0, Prices: 3, Redis memory: 2.20M
+[2025-07-22 01:10:00,442] PERF workers._start_monitoring_worker - System stats - Opportunities: 0, Prices: 3, Redis memory: 2.20M
+[2025-07-22 01:11:00,446] PERF workers._start_monitoring_worker - System stats - Opportunities: 0, Prices: 3, Redis memory: 2.20M
+[2025-07-22 01:12:00,073] PERF workers.stop_all_workers - Stopping all workers...
+[2025-07-22 01:12:24,331] PERF workers.__init__ - Initialized with 8 workers
+[2025-07-22 01:12:24,348] PERF workers.start_all_workers - Starting 16 high-performance workers...
+[2025-07-22 01:12:24,368] PERF workers._get_trading_pairs_sync - Loaded 9 trading pairs across 3 exchanges
+[2025-07-22 01:12:24,369] PERF workers.start_all_workers - Started 9 worker tasks
+[2025-07-22 01:12:24,404] PERF workers._start_cleanup_worker - Cleanup worker started
+[2025-07-22 01:12:24,404] PERF workers._start_monitoring_worker - Monitoring worker started
+[2025-07-22 01:12:24,411] PERF workers._start_monitoring_worker - System stats - Opportunities: 0, Prices: 2, Redis memory: 2.22M
+[2025-07-22 01:12:25,111] PERF workers._start_wallex_worker - Wallex worker started with 3 pairs
+[2025-07-22 01:12:25,771] PERF workers._start_lbank_worker - LBank worker started with 3 pairs
+[2025-07-22 01:12:25,792] PERF workers._start_ramzinex_worker - Ramzinex worker started with 3 pairs
+[2025-07-22 01:12:51,759] PERF workers._start_ramzinex_worker - Ramzinex worker started with 3 pairs
+[2025-07-22 01:13:07,767] PERF workers._start_ramzinex_worker - Ramzinex worker started with 3 pairs
+[2025-07-22 01:13:13,707] PERF workers._start_ramzinex_worker - Ramzinex worker started with 3 pairs
+[2025-07-22 01:13:24,413] PERF workers._start_monitoring_worker - System stats - Opportunities: 0, Prices: 6, Redis memory: 2.20M
+[2025-07-22 01:13:29,571] PERF workers._start_ramzinex_worker - Ramzinex worker started with 3 pairs
+[2025-07-22 01:13:35,548] PERF workers._start_ramzinex_worker - Ramzinex worker started with 3 pairs
+[2025-07-22 01:13:51,467] PERF workers._start_ramzinex_worker - Ramzinex worker started with 3 pairs
+[2025-07-22 01:13:57,230] PERF workers._start_ramzinex_worker - Ramzinex worker started with 3 pairs
+[2025-07-22 01:14:08,189] PERF workers._start_ramzinex_worker - Ramzinex worker started with 3 pairs
+[2025-07-22 01:14:14,167] PERF workers._start_ramzinex_worker - Ramzinex worker started with 3 pairs
+[2025-07-22 01:14:20,127] PERF workers._start_ramzinex_worker - Ramzinex worker started with 3 pairs
+[2025-07-22 01:14:24,415] PERF workers._start_monitoring_worker - System stats - Opportunities: 0, Prices: 6, Redis memory: 2.20M
+[2025-07-22 01:14:31,083] PERF workers._start_ramzinex_worker - Ramzinex worker started with 3 pairs
+[2025-07-22 01:14:37,222] PERF workers._start_ramzinex_worker - Ramzinex worker started with 3 pairs
+[2025-07-22 01:14:43,144] PERF workers._start_ramzinex_worker - Ramzinex worker started with 3 pairs
+[2025-07-22 01:14:49,432] PERF workers._start_ramzinex_worker - Ramzinex worker started with 3 pairs
+[2025-07-22 01:14:55,380] PERF workers._start_ramzinex_worker - Ramzinex worker started with 3 pairs
+[2025-07-22 01:15:01,248] PERF workers._start_ramzinex_worker - Ramzinex worker started with 3 pairs
+[2025-07-22 01:15:08,176] PERF workers._start_ramzinex_worker - Ramzinex worker started with 3 pairs
+[2025-07-22 01:15:08,770] PERF workers.stop_all_workers - Stopping all workers...
+[2025-07-22 01:15:20,995] PERF workers.__init__ - Initialized with 8 workers
+[2025-07-22 01:15:21,013] PERF workers.start_all_workers - Starting 16 high-performance workers...
+[2025-07-22 01:15:21,034] PERF workers._get_trading_pairs_sync - Loaded 9 trading pairs across 3 exchanges
+[2025-07-22 01:15:21,034] PERF workers.start_all_workers - Started 9 worker tasks
+[2025-07-22 01:15:21,070] PERF workers._start_cleanup_worker - Cleanup worker started
+[2025-07-22 01:15:21,070] PERF workers._start_monitoring_worker - Monitoring worker started
+[2025-07-22 01:15:21,076] PERF workers._start_monitoring_worker - System stats - Opportunities: 0, Prices: 6, Redis memory: 2.22M
+[2025-07-22 01:15:21,768] PERF workers._start_wallex_worker - Wallex worker started with 3 pairs
+[2025-07-22 01:15:23,111] PERF workers._start_ramzinex_worker - Ramzinex worker started with 3 pairs
+[2025-07-22 01:15:23,828] PERF workers._start_lbank_worker - LBank worker started with 3 pairs
+[2025-07-22 01:15:54,561] PERF workers._start_ramzinex_worker - Ramzinex worker started with 3 pairs
+[2025-07-22 01:16:16,001] PERF workers._start_ramzinex_worker - Ramzinex worker started with 3 pairs
+[2025-07-22 01:16:21,080] PERF workers._start_monitoring_worker - System stats - Opportunities: 0, Prices: 6, Redis memory: 2.20M
+[2025-07-22 01:16:27,474] PERF workers._start_ramzinex_worker - Ramzinex worker started with 3 pairs
+[2025-07-22 01:16:33,954] PERF workers._start_ramzinex_worker - Ramzinex worker started with 3 pairs
+[2025-07-22 01:16:50,418] PERF workers._start_ramzinex_worker - Ramzinex worker started with 3 pairs
+[2025-07-22 01:16:56,997] PERF workers._start_ramzinex_worker - Ramzinex worker started with 3 pairs
+[2025-07-22 01:17:03,433] PERF workers._start_ramzinex_worker - Ramzinex worker started with 3 pairs
+[2025-07-22 01:17:09,926] PERF workers._start_ramzinex_worker - Ramzinex worker started with 3 pairs
+[2025-07-22 01:17:16,385] PERF workers._start_ramzinex_worker - Ramzinex worker started with 3 pairs
+[2025-07-22 01:17:21,084] PERF workers._start_monitoring_worker - System stats - Opportunities: 0, Prices: 6, Redis memory: 2.20M
+[2025-07-22 01:17:22,824] PERF workers._start_ramzinex_worker - Ramzinex worker started with 3 pairs
+[2025-07-22 01:17:29,293] PERF workers._start_ramzinex_worker - Ramzinex worker started with 3 pairs
+[2025-07-22 01:17:35,763] PERF workers._start_ramzinex_worker - Ramzinex worker started with 3 pairs
+[2025-07-22 01:17:41,772] PERF workers.stop_all_workers - Stopping all workers...
+[2025-07-22 01:17:42,283] PERF workers._start_ramzinex_worker - Ramzinex worker started with 3 pairs
+[2025-07-22 01:17:45,713] PERF workers.stop_all_workers - Stopping all workers...
+[2025-07-22 01:17:45,881] PERF workers.stop_all_workers - Stopping all workers...
+[2025-07-22 01:17:57,143] PERF workers.__init__ - Initialized with 8 workers
+[2025-07-22 01:17:57,160] PERF workers.start_all_workers - Starting 16 high-performance workers...
+[2025-07-22 01:17:57,179] PERF workers._get_trading_pairs_sync - Loaded 9 trading pairs across 3 exchanges
+[2025-07-22 01:17:57,179] PERF workers.start_all_workers - Started 9 worker tasks
+[2025-07-22 01:17:57,215] PERF workers._start_cleanup_worker - Cleanup worker started
+[2025-07-22 01:17:57,215] PERF workers._start_monitoring_worker - Monitoring worker started
+[2025-07-22 01:17:57,220] PERF workers._start_monitoring_worker - System stats - Opportunities: 0, Prices: 6, Redis memory: 2.22M
+[2025-07-22 01:17:57,912] PERF workers._start_wallex_worker - Wallex worker started with 3 pairs
+[2025-07-22 01:17:58,575] PERF workers._start_lbank_worker - LBank worker started with 3 pairs
+[2025-07-22 01:17:59,248] PERF workers._start_ramzinex_worker - Ramzinex worker started with 3 pairs
+[2025-07-22 01:18:06,696] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:06,697] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:06,697] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:06,700] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:06,885] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:06,886] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:06,886] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:06,886] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:07,084] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:07,084] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:07,084] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:07,084] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:07,288] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:07,288] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:07,291] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:07,291] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:07,496] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:07,496] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:07,497] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:07,497] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:07,692] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:07,693] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:07,693] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:07,693] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:07,891] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:07,891] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:07,891] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:07,891] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:08,092] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:08,093] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:08,093] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:08,093] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:08,292] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:08,292] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:08,293] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:08,294] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:08,495] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:08,495] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:08,495] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:08,495] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:08,694] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:08,695] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:08,695] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:08,695] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:08,896] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:08,897] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:08,897] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:08,897] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:09,097] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:09,097] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:09,097] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:09,098] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:09,297] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:09,298] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:09,298] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:09,298] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:09,498] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:09,499] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:09,499] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:09,499] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:09,701] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:09,702] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:09,702] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:09,703] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:09,902] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:09,902] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:09,902] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:09,902] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:10,106] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:10,106] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:10,106] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:10,106] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:10,305] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:10,306] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:10,306] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:10,306] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:10,505] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:10,505] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:10,506] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:10,506] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:10,703] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:10,703] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:10,703] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:10,704] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:10,907] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:10,908] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:10,908] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:10,908] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:11,110] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:11,110] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:11,111] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:11,111] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:11,311] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:11,312] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:11,313] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:11,313] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:11,511] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:11,513] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:11,514] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:11,514] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:11,714] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:11,714] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:11,715] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:11,715] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:11,916] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:11,916] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:11,916] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:11,916] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:12,115] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:12,116] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:12,116] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:12,117] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:12,325] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:12,325] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:12,325] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:12,326] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:12,515] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:12,516] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:12,519] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:12,519] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:12,724] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:12,724] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:12,724] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:12,725] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:12,924] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:12,924] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:12,925] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:12,925] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:13,124] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:13,125] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:13,125] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:13,126] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:13,336] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:13,336] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:13,336] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:13,336] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:13,518] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:13,519] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:13,519] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:13,519] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:13,726] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:13,726] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:13,726] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:13,727] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:13,929] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:13,930] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:13,930] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:13,930] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:14,130] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:14,132] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:14,132] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:14,132] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:14,332] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:14,332] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:14,332] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:14,332] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:14,534] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:14,534] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:14,535] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:14,535] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:14,730] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:14,730] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:14,731] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:14,731] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:25,799] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:25,800] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:25,801] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:25,801] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:26,001] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:26,002] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:26,002] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:26,002] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:26,201] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:26,202] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:26,202] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:26,202] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:26,408] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:26,408] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:26,409] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:26,409] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:26,607] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:26,608] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:26,608] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:26,609] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:26,807] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:26,809] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:26,809] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:26,809] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:27,006] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:27,006] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:27,006] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:27,007] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:27,209] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:27,210] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:27,210] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:27,210] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:27,429] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:27,440] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:27,451] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:27,461] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:27,608] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:27,609] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:27,609] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:27,609] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:27,814] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:27,815] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:27,815] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:27,815] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:28,030] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:28,035] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:28,035] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:28,037] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:28,237] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:28,237] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:28,242] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:28,247] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:28,420] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:28,420] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:28,421] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:28,422] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:28,624] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:28,624] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:28,625] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:28,625] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:28,822] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:28,823] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:28,823] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:28,823] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:18:30,657] PERF workers._start_ramzinex_worker - Ramzinex worker started with 3 pairs
+[2025-07-22 01:18:52,017] PERF workers._start_ramzinex_worker - Ramzinex worker started with 3 pairs
+[2025-07-22 01:18:57,223] PERF workers._start_monitoring_worker - System stats - Opportunities: 103, Prices: 6, Redis memory: 3.04M
+[2025-07-22 01:19:03,480] PERF workers._start_ramzinex_worker - Ramzinex worker started with 3 pairs
+[2025-07-22 01:19:14,946] PERF workers._start_ramzinex_worker - Ramzinex worker started with 3 pairs
+[2025-07-22 01:19:15,744] PERF workers.stop_all_workers - Stopping all workers...
+[2025-07-22 01:19:21,995] PERF workers.__init__ - Initialized with 8 workers
+[2025-07-22 01:19:22,014] PERF workers.start_all_workers - Starting 16 high-performance workers...
+[2025-07-22 01:19:22,035] PERF workers._get_trading_pairs_sync - Loaded 9 trading pairs across 3 exchanges
+[2025-07-22 01:19:22,035] PERF workers.start_all_workers - Started 9 worker tasks
+[2025-07-22 01:19:22,070] PERF workers._start_cleanup_worker - Cleanup worker started
+[2025-07-22 01:19:22,070] PERF workers._start_monitoring_worker - Monitoring worker started
+[2025-07-22 01:19:22,086] PERF workers._start_monitoring_worker - System stats - Opportunities: 103, Prices: 6, Redis memory: 2.30M
+[2025-07-22 01:19:22,776] PERF workers._start_wallex_worker - Wallex worker started with 3 pairs
+[2025-07-22 01:19:23,283] PERF workers._start_lbank_worker - LBank worker started with 3 pairs
+[2025-07-22 01:19:24,145] PERF workers._start_ramzinex_worker - Ramzinex worker started with 3 pairs
+[2025-07-22 01:19:55,620] PERF workers._start_ramzinex_worker - Ramzinex worker started with 3 pairs
+[2025-07-22 01:20:17,317] PERF workers._start_ramzinex_worker - Ramzinex worker started with 3 pairs
+[2025-07-22 01:20:22,092] PERF workers._start_monitoring_worker - System stats - Opportunities: 103, Prices: 6, Redis memory: 2.27M
+[2025-07-22 01:20:28,778] PERF workers._start_ramzinex_worker - Ramzinex worker started with 3 pairs
+[2025-07-22 01:20:35,185] PERF workers._start_ramzinex_worker - Ramzinex worker started with 3 pairs
+[2025-07-22 01:20:44,094] PERF workers.stop_all_workers - Stopping all workers...
+[2025-07-22 01:20:57,590] PERF workers.__init__ - Initialized with 8 workers
+[2025-07-22 01:20:57,607] PERF workers.start_all_workers - Starting 16 high-performance workers...
+[2025-07-22 01:20:57,626] PERF workers._get_trading_pairs_sync - Loaded 9 trading pairs across 3 exchanges
+[2025-07-22 01:20:57,626] PERF workers.start_all_workers - Started 9 worker tasks
+[2025-07-22 01:20:57,663] PERF workers._start_cleanup_worker - Cleanup worker started
+[2025-07-22 01:20:57,663] PERF workers._start_monitoring_worker - Monitoring worker started
+[2025-07-22 01:20:57,670] PERF workers._start_monitoring_worker - System stats - Opportunities: 103, Prices: 6, Redis memory: 2.30M
+[2025-07-22 01:20:58,433] PERF workers._start_wallex_worker - Wallex worker started with 3 pairs
+[2025-07-22 01:20:59,666] PERF workers._start_lbank_worker - LBank worker started with 3 pairs
+[2025-07-22 01:20:59,711] PERF workers._start_ramzinex_worker - Ramzinex worker started with 3 pairs
+[2025-07-22 01:21:09,752] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:21:09,752] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:21:09,752] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:21:09,753] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:21:09,947] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:21:09,948] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:21:09,949] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:21:09,949] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:21:10,170] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:21:10,172] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:21:10,175] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:21:10,175] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:21:10,350] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:21:10,350] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:21:10,351] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:21:10,351] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:21:10,551] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:21:10,552] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:21:10,552] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:21:10,552] PERF calculator.start_calculation - Found 1 arbitrage opportunities (1 significant)
+[2025-07-22 01:21:41,236] PERF workers._start_ramzinex_worker - Ramzinex worker started with 3 pairs
+[2025-07-22 01:21:57,669] PERF workers._start_monitoring_worker - System stats - Opportunities: 111, Prices: 6, Redis memory: 2.46M
+[2025-07-22 01:22:02,740] PERF workers._start_ramzinex_worker - Ramzinex worker started with 3 pairs
+[2025-07-22 01:22:24,007] PERF workers._start_ramzinex_worker - Ramzinex worker started with 3 pairs
+[2025-07-22 01:22:45,502] PERF workers._start_ramzinex_worker - Ramzinex worker started with 3 pairs
+[2025-07-22 01:22:54,045] PERF workers.stop_all_workers - Stopping all workers...
+[2025-07-22 01:23:13,097] PERF workers.__init__ - Initialized with 8 workers
+[2025-07-22 01:23:13,114] PERF workers.start_all_workers - Starting 16 high-performance workers...
+[2025-07-22 01:23:13,132] PERF workers._get_trading_pairs_sync - Loaded 9 trading pairs across 3 exchanges
+[2025-07-22 01:23:13,133] PERF workers.start_all_workers - Started 9 worker tasks
+[2025-07-22 01:23:13,169] PERF workers._start_cleanup_worker - Cleanup worker started
+[2025-07-22 01:23:13,169] PERF workers._start_monitoring_worker - Monitoring worker started
+[2025-07-22 01:23:13,181] PERF workers._start_monitoring_worker - System stats - Opportunities: 111, Prices: 6, Redis memory: 2.27M
+[2025-07-22 01:23:13,865] PERF workers._start_wallex_worker - Wallex worker started with 3 pairs
+[2025-07-22 01:23:14,763] PERF workers._start_lbank_worker - LBank worker started with 3 pairs
+[2025-07-22 01:23:15,242] PERF workers._start_ramzinex_worker - Ramzinex worker started with 3 pairs
+[2025-07-22 01:24:13,184] PERF workers._start_monitoring_worker - System stats - Opportunities: 111, Prices: 6, Redis memory: 2.22M
+[2025-07-22 01:25:13,189] PERF workers._start_monitoring_worker - System stats - Opportunities: 111, Prices: 6, Redis memory: 2.23M
+[2025-07-22 01:25:18,206] PERF workers.stop_all_workers - Stopping all workers...
+[2025-07-22 01:25:27,408] PERF workers.__init__ - Initialized with 8 workers
+[2025-07-22 01:25:27,427] PERF workers.start_all_workers - Starting 16 high-performance workers...
+[2025-07-22 01:25:27,470] PERF workers._get_trading_pairs_sync - Loaded 9 trading pairs across 3 exchanges
+[2025-07-22 01:25:27,471] PERF workers.start_all_workers - Started 9 worker tasks
+[2025-07-22 01:25:27,506] PERF workers._start_cleanup_worker - Cleanup worker started
+[2025-07-22 01:25:27,506] PERF workers._start_monitoring_worker - Monitoring worker started
+[2025-07-22 01:25:27,511] PERF workers._start_monitoring_worker - System stats - Opportunities: 111, Prices: 6, Redis memory: 2.23M
+[2025-07-22 01:25:28,203] PERF workers._start_wallex_worker - Wallex worker started with 3 pairs
+[2025-07-22 01:25:28,820] PERF workers._start_lbank_worker - LBank worker started with 3 pairs
+[2025-07-22 01:25:29,543] PERF workers._start_ramzinex_worker - Ramzinex worker started with 3 pairs
+[2025-07-22 01:26:27,512] PERF workers._start_monitoring_worker - System stats - Opportunities: 111, Prices: 6, Redis memory: 2.22M
+[2025-07-22 01:27:27,520] PERF workers._start_monitoring_worker - System stats - Opportunities: 111, Prices: 6, Redis memory: 2.22M
+[2025-07-22 01:28:27,522] PERF workers._start_monitoring_worker - System stats - Opportunities: 111, Prices: 2, Redis memory: 2.22M
+[2025-07-22 01:28:36,058] PERF workers._start_lbank_worker - LBank worker started with 3 pairs
+[2025-07-22 01:29:27,526] PERF workers._start_monitoring_worker - System stats - Opportunities: 8, Prices: 3, Redis memory: 2.21M
+[2025-07-22 01:30:27,531] PERF workers._start_monitoring_worker - System stats - Opportunities: 8, Prices: 3, Redis memory: 2.21M
+[2025-07-22 01:30:53,563] PERF workers.stop_all_workers - Stopping all workers...
+[2025-07-22 01:31:05,660] PERF workers.__init__ - Initialized with 8 workers
+[2025-07-22 01:31:05,677] PERF workers.start_all_workers - Starting 16 high-performance workers...
+[2025-07-22 01:31:05,700] PERF workers._get_trading_pairs_sync - Loaded 9 trading pairs across 3 exchanges
+[2025-07-22 01:31:05,701] PERF workers.start_all_workers - Started 9 worker tasks
+[2025-07-22 01:31:05,737] PERF workers._start_cleanup_worker - Cleanup worker started
+[2025-07-22 01:31:05,737] PERF workers._start_monitoring_worker - Monitoring worker started
+[2025-07-22 01:31:05,742] PERF workers._start_monitoring_worker - System stats - Opportunities: 8, Prices: 3, Redis memory: 2.23M
+[2025-07-22 01:31:06,527] PERF workers._start_wallex_worker - Wallex worker started with 3 pairs
+[2025-07-22 01:31:07,316] PERF workers._start_lbank_worker - LBank worker started with 3 pairs
+[2025-07-22 01:31:07,846] PERF workers._start_ramzinex_worker - Ramzinex worker started with 3 pairs
+[2025-07-22 01:32:05,743] PERF workers._start_monitoring_worker - System stats - Opportunities: 0, Prices: 6, Redis memory: 2.21M
+[2025-07-22 01:33:05,752] PERF workers._start_monitoring_worker - System stats - Opportunities: 0, Prices: 6, Redis memory: 2.21M
+[2025-07-22 01:34:05,757] PERF workers._start_monitoring_worker - System stats - Opportunities: 0, Prices: 6, Redis memory: 2.21M
+[2025-07-22 01:34:15,180] PERF workers.stop_all_workers - Stopping all workers...
+[2025-07-22 01:34:25,495] PERF workers.__init__ - Initialized with 8 workers
+[2025-07-22 01:34:25,511] PERF workers.start_all_workers - Starting 16 high-performance workers...
+[2025-07-22 01:34:25,529] PERF workers._get_trading_pairs_sync - Loaded 9 trading pairs across 3 exchanges
+[2025-07-22 01:34:25,530] PERF workers.start_all_workers - Started 9 worker tasks
+[2025-07-22 01:34:25,567] PERF workers._start_cleanup_worker - Cleanup worker started
+[2025-07-22 01:34:25,567] PERF workers._start_monitoring_worker - Monitoring worker started
+[2025-07-22 01:34:25,572] PERF workers._start_monitoring_worker - System stats - Opportunities: 0, Prices: 6, Redis memory: 2.23M
+[2025-07-22 01:34:26,260] PERF workers._start_wallex_worker - Wallex worker started with 3 pairs
+[2025-07-22 01:34:27,249] PERF workers._start_lbank_worker - LBank worker started with 3 pairs
+[2025-07-22 01:34:27,592] PERF workers._start_ramzinex_worker - Ramzinex worker started with 3 pairs
+[2025-07-22 01:35:25,576] PERF workers._start_monitoring_worker - System stats - Opportunities: 0, Prices: 9, Redis memory: 2.21M
+[2025-07-22 01:36:25,569] PERF workers._start_monitoring_worker - System stats - Opportunities: 0, Prices: 9, Redis memory: 2.21M
+[2025-07-22 01:37:25,573] PERF workers._start_monitoring_worker - System stats - Opportunities: 0, Prices: 9, Redis memory: 2.21M
+[2025-07-22 01:38:25,576] PERF workers._start_monitoring_worker - System stats - Opportunities: 0, Prices: 9, Redis memory: 2.21M
+[2025-07-22 01:39:25,579] PERF workers._start_monitoring_worker - System stats - Opportunities: 0, Prices: 8, Redis memory: 2.22M
+[2025-07-22 01:40:25,583] PERF workers._start_monitoring_worker - System stats - Opportunities: 0, Prices: 9, Redis memory: 2.21M
+[2025-07-22 01:41:25,587] PERF workers._start_monitoring_worker - System stats - Opportunities: 0, Prices: 9, Redis memory: 2.20M
+[2025-07-22 01:42:25,588] PERF workers._start_monitoring_worker - System stats - Opportunities: 0, Prices: 9, Redis memory: 2.20M
+[2025-07-22 01:43:25,592] PERF workers._start_monitoring_worker - System stats - Opportunities: 0, Prices: 8, Redis memory: 2.21M
+[2025-07-22 01:44:25,595] PERF workers._start_monitoring_worker - System stats - Opportunities: 0, Prices: 8, Redis memory: 2.21M
+[2025-07-22 01:45:25,599] PERF workers._start_monitoring_worker - System stats - Opportunities: 0, Prices: 8, Redis memory: 2.20M
+[2025-07-22 01:46:25,602] PERF workers._start_monitoring_worker - System stats - Opportunities: 0, Prices: 8, Redis memory: 2.20M
+[2025-07-22 01:47:11,181] PERF workers.stop_all_workers - Stopping all workers...
+[2025-07-22 01:47:18,821] PERF workers.__init__ - Initialized with 8 workers
+[2025-07-22 01:47:18,837] PERF workers.start_all_workers - Starting 16 high-performance workers...
+[2025-07-22 01:47:18,859] PERF workers._get_trading_pairs_sync - Loaded 9 trading pairs across 3 exchanges
+[2025-07-22 01:47:18,859] PERF workers.start_all_workers - Started 9 worker tasks
+[2025-07-22 01:47:18,896] PERF workers._start_cleanup_worker - Cleanup worker started
+[2025-07-22 01:47:18,896] PERF workers._start_monitoring_worker - Monitoring worker started
+[2025-07-22 01:47:18,900] PERF workers._start_monitoring_worker - System stats - Opportunities: 0, Prices: 8, Redis memory: 2.22M
+[2025-07-22 01:47:19,670] PERF workers._start_wallex_worker - Wallex worker started with 3 pairs
+[2025-07-22 01:47:21,000] PERF workers._start_ramzinex_worker - Ramzinex worker started with 3 pairs
+[2025-07-22 01:47:21,117] PERF workers._start_lbank_worker - LBank worker started with 3 pairs
+[2025-07-22 01:48:18,904] PERF workers._start_monitoring_worker - System stats - Opportunities: 0, Prices: 8, Redis memory: 2.20M
+[2025-07-22 01:49:18,907] PERF workers._start_monitoring_worker - System stats - Opportunities: 0, Prices: 8, Redis memory: 2.20M
+[2025-07-22 01:50:12,568] PERF workers._start_lbank_worker - LBank worker started with 3 pairs
+[2025-07-22 01:50:18,913] PERF workers._start_monitoring_worker - System stats - Opportunities: 0, Prices: 8, Redis memory: 2.19M
+[2025-07-22 01:51:18,943] PERF workers._start_monitoring_worker - System stats - Opportunities: 0, Prices: 8, Redis memory: 2.18M
+[2025-07-22 01:51:18,963] PERF workers.stop_all_workers - Stopping all workers...
+[2025-07-22 01:51:29,928] PERF workers.__init__ - Initialized with 8 workers
+[2025-07-22 01:51:29,946] PERF workers.start_all_workers - Starting 16 high-performance workers...
+[2025-07-22 01:51:29,999] PERF workers._get_trading_pairs_sync - Loaded 9 trading pairs across 3 exchanges
+[2025-07-22 01:51:29,999] PERF workers.start_all_workers - Started 9 worker tasks
+[2025-07-22 01:51:30,036] PERF workers._start_cleanup_worker - Cleanup worker started
+[2025-07-22 01:51:30,036] PERF workers._start_monitoring_worker - Monitoring worker started
+[2025-07-22 01:51:30,041] PERF workers._start_monitoring_worker - System stats - Opportunities: 0, Prices: 5, Redis memory: 2.20M
+[2025-07-22 01:51:30,751] PERF workers._start_wallex_worker - Wallex worker started with 3 pairs
+[2025-07-22 01:51:31,039] PERF workers._start_lbank_worker - LBank worker started with 3 pairs
+[2025-07-22 01:51:32,119] PERF workers._start_ramzinex_worker - Ramzinex worker started with 3 pairs
+[2025-07-22 01:52:30,045] PERF workers._start_monitoring_worker - System stats - Opportunities: 0, Prices: 8, Redis memory: 2.19M
