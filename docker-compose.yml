@@ -11,8 +11,8 @@ services:
       POSTGRES_PASSWORD: arbitrage_pass
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
+    #ports:
+    #  - "5432:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U arbitrage_user -d arbitrage"]
       interval: 5s
@@ -26,8 +26,8 @@ services:
     command: redis-server --appendonly yes
     volumes:
       - redis_data:/data
-    ports:
-      - "6379:6379"
+    #ports:
+    #  - "6379:6379"
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
@@ -41,7 +41,7 @@ services:
     environment:
       # Django settings
       DEBUG: "False"
-      SECRET_KEY: "django-production-secret-key-change-this-in-production"
+      SECRET_KEY: "django-insecure-@9t@4rn2xrlbuh95k9nv16$vhoy%s7eallm3s2&q%6=1p+v^7n"
       ALLOWED_HOSTS: "localhost,127.0.0.1,0.0.0.0,web"
       
       # Database settings
@@ -102,7 +102,7 @@ services:
     environment:
       # Same environment as web service
       DEBUG: "False"
-      SECRET_KEY: "django-production-secret-key-change-this-in-production"
+      SECRET_KEY: "django-insecure-@9t@4rn2xrlbuh95k9nv16$vhoy%s7eals2&q%6=1p+v^7n@ffc"
       
       # Database settings
       DB_ENGINE: "django.db.backends.postgresql"

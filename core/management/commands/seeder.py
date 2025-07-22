@@ -47,6 +47,7 @@ class Command(BaseCommand):
             {'symbol': 'XRP', 'name': 'Ripple', 'display_name': 'ریپل'},
             {'symbol': 'DOGE', 'name': 'DOGE', 'display_name': 'دوج'},
             {'symbol': 'ETH', 'name': 'Ethereum', 'display_name': 'اتریوم'},
+            {'symbol': 'NOT', 'name': 'Not', 'display_name': 'نات'},
             {'symbol': 'USDT', 'name': 'Tether', 'display_name': 'تتر'},
         ]
         
@@ -63,7 +64,7 @@ class Command(BaseCommand):
         # Create Trading Pairs
         trading_pairs_data = []
         exchanges = ['wallex', 'lbank', 'ramzinex']
-        base_currencies = ['XRP', 'DOGE', 'ETH']
+        base_currencies = ['XRP', 'DOGE', 'ETH', 'NOT']
         quote_currency = 'USDT'
         symbol_formats = {
             'wallex': lambda base: f'{base}USDT',
@@ -71,7 +72,7 @@ class Command(BaseCommand):
             'ramzinex': lambda base: f'{base}/USDT',
         }
         pair_ids = {
-            'ramzinex': {'XRP': '643', 'DOGE': '432', 'ETH': '13'}
+            'ramzinex': {'XRP': '643', 'DOGE': '432', 'ETH': '13', 'NOT': '509'}
         }
         for exchange in exchanges:
             for base in base_currencies:
