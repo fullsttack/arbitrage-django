@@ -58,9 +58,7 @@ class ArbitrageConsumer(AsyncWebsocketConsumer):
                     }
                 }))
                 
-                # Also send updated prices every 5 seconds (not too frequent)
-                if prices_count > 0:
-                    await self.send_prices_update()
+                # Skip bulk price updates - individual updates come from exchange services
                 
                 await asyncio.sleep(5)  # Update every 5 seconds
                 
