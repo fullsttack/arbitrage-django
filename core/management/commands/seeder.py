@@ -82,7 +82,7 @@ class Command(BaseCommand):
                     'quote_currency': quote_currency,
                     'symbol_format': symbol_formats[exchange](base),
                     'pair_id': pair_ids.get(exchange, {}).get(base, None),
-                    'arbitrage_threshold': 1.0,
+                    'arbitrage_threshold': 0.01,
                     'min_volume': 0.001,
                     'max_volume': 100000
                 })

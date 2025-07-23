@@ -55,7 +55,7 @@ class FastArbitrageCalculator:
         self.CACHE_UPDATE_INTERVAL = 30  # Update cache every 30 seconds
         self.CALCULATION_INTERVAL = 0.15  # Faster calculation interval (150ms)
         self.MIN_CALCULATION_INTERVAL = 0.05  # Minimum interval (50ms)
-        self.SIGNIFICANT_PROFIT_THRESHOLD = 1.0  # Only broadcast opportunities > 1%
+        self.SIGNIFICANT_PROFIT_THRESHOLD = 0.01  # Broadcast threshold - should match DB threshold
         
     async def start_calculation(self):
         """Start arbitrage calculation loop with enhanced performance"""
@@ -78,11 +78,25 @@ class FastArbitrageCalculator:
                     # Save all opportunities
                     await self._save_opportunities(opportunities)
                     
-                    # Only broadcast significant opportunities to reduce channel load
-                    significant_opportunities = [
-                        opp for opp in opportunities 
-                        if opp.profit_percentage > self.SIGNIFICANT_PROFIT_THRESHOLD
-                    ]
+                    # Only broadcast opportunities that meet their individual DB thresholds
+                    significant_opportunities = []
+                    for opp in opportunities:
+                        # Get minimum threshold for this currency pair from trading pairs cache
+                        base_quote = f"{opp.base_currency}_{opp.quote_currency}"
+                        min_threshold_for_pair = float('inf')
+                        
+                        if base_quote in self.trading_pairs_cache:
+                            for pair_info in self.trading_pairs_cache[base_quote]:
+                                if (pair_info['exchange'] == opp.buy_exchange or 
+                                    pair_info['exchange'] == opp.sell_exchange):
+                                    min_threshold_for_pair = min(min_threshold_for_pair, pair_info['arbitrage_threshold'])
+                        
+                        # Use database threshold instead of hard-coded one
+                        if min_threshold_for_pair != float('inf') and opp.profit_percentage > min_threshold_for_pair:
+                            significant_opportunities.append(opp)
+                        elif min_threshold_for_pair == float('inf') and opp.profit_percentage > self.SIGNIFICANT_PROFIT_THRESHOLD:
+                            # Fallback to hard-coded threshold if no DB threshold found
+                            significant_opportunities.append(opp)
                     
                     if significant_opportunities:
                         await self._broadcast_opportunities(significant_opportunities)
@@ -138,7 +152,7 @@ class FastArbitrageCalculator:
                 
                 trading_pairs_cache[key].append({
                     'exchange': pair.exchange.name,
-                    'symbol': pair.api_symbol,
+                    'symbol': pair.arbitrage_symbol,  # Use consistent symbol for matching
                     'arbitrage_threshold': float(pair.arbitrage_threshold),
                     'min_volume': float(pair.min_volume),
                     'max_volume': float(pair.max_volume)
@@ -336,9 +350,8 @@ class FastArbitrageCalculator:
             return None
 
     async def _save_opportunities(self, opportunities: List[ArbitrageOpportunity]):
-        """Save opportunities to Redis with batch processing"""
+        """Save opportunities to Redis with Redis-level deduplication"""
         try:
-            # Batch save for better performance
             save_tasks = []
             for opp in opportunities:
                 opportunity_data = {

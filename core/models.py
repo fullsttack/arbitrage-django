@@ -104,9 +104,15 @@ class TradingPair(models.Model):
     
     @property
     def api_symbol(self):
-        """Symbol used in the API"""
+        """Symbol used in the API - for WebSocket subscription"""
         if self.exchange.name == 'ramzinex':
             return self.pair_id or '2'  # Default for XRP
+        return self.symbol_format
+    
+    @property
+    def arbitrage_symbol(self):
+        """Symbol used for arbitrage calculation - consistent with Redis keys"""
+        # Always use symbol_format for arbitrage matching
         return self.symbol_format
     
     def get_api_url(self):

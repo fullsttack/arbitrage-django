@@ -84,10 +84,10 @@
         }
     </style>
 </head>
-<body class="bg-black text-white min-h-screen font-sans">
+<body class=" bg-black text-white min-h-screen font-sans">
     <!-- Header -->
     <header class="bg-gray-900 border-b border-gray-800">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="w-full mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center py-6">
                 <div class="flex items-center">
                     <i class="fas fa-chart-line text-primary-500 text-2xl mr-3"></i>
@@ -110,8 +110,22 @@
     <div id="notifications-container" class="fixed top-4 right-4 z-50 space-y-2"></div>
 
     <!-- Stats Overview -->
-    <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <section class="container mx-auto w-full px-4 sm:px-6 lg:px-8 py-8">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
+            <!-- Best Opportunity -->
+            <div class="bg-gradient-to-r from-yellow-900 to-orange-900 rounded-xl p-6 border border-yellow-600">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-yellow-200 text-sm">Best Opportunity</p>
+                        <p id="stat-best-profit" class="text-2xl font-bold text-yellow-400">-</p>
+                        <p id="stat-best-pair" class="text-xs text-yellow-300 mt-1">-</p>
+                    </div>
+                    <div class="bg-yellow-500 bg-opacity-30 p-3 rounded-lg">
+                        <i class="fas fa-trophy text-yellow-400 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+
             <!-- Total Opportunities -->
             <div class="bg-gray-900 rounded-xl p-6 border border-gray-800">
                 <div class="flex items-center justify-between">
@@ -227,6 +241,29 @@
                         <div class="flex items-center space-x-4">
                             <span id="opportunities-count" class="text-sm text-gray-400">0 opportunities</span>
                             <span id="opportunities-last-update" class="text-sm text-gray-400">Last update: -</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Pagination Controls -->
+                    <div id="opportunities-pagination" class="flex justify-between items-center mb-4">
+                        <div class="flex items-center space-x-2">
+                            <button id="prev-page" class="bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded text-sm disabled:opacity-50 disabled:cursor-not-allowed">
+                                Previous
+                            </button>
+                            <span id="page-info" class="text-sm text-gray-400">Page 1 of 1</span>
+                            <button id="next-page" class="bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded text-sm disabled:opacity-50 disabled:cursor-not-allowed">
+                                Next
+                            </button>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <span class="text-sm text-gray-400">Show:</span>
+                            <select id="items-per-page" class="bg-gray-700 border border-gray-600 rounded px-2 py-1 text-sm">
+                                <option value="10">10</option>
+                                <option value="20" selected>20</option>
+                                <option value="50">50</option>
+                                <option value="100">100</option>
+                            </select>
+                            <span class="text-sm text-gray-400">per page</span>
                         </div>
                     </div>
                     
@@ -368,6 +405,11 @@
                 this.lastNotificationTime = 0;
                 this.currencyNames = {}; // Store currency names mapping
                 this.lastUpdateTimes = new Map(); // Track last update times for animation
+                this.bestOpportunity = null; // Track best opportunity
+                
+                // Pagination for opportunities
+                this.currentPage = 1;
+                this.itemsPerPage = 20;
                 
                 this.init();
             }
@@ -376,6 +418,7 @@
                 this.setupTabs();
                 this.setupWebSocket();
                 this.setupRefreshButton();
+                this.setupPagination();
                 this.loadInitialData();
                 
                 // Auto-refresh every 30 seconds
@@ -590,18 +633,23 @@
                 if (!opportunities || opportunities.length === 0) {
                     tbody.innerHTML = `
                         <tr>
-                            <td colspan="11" class="text-center py-8 text-gray-500">
+                            <td colspan="12" class="text-center py-8 text-gray-500">
                                 <i class="fas fa-search text-2xl mb-2"></i>
                                 <div>No opportunities found</div>
                             </td>
                         </tr>
                     `;
+                    this.updatePaginationControls(0);
                     return;
                 }
 
-                this.opportunitiesData = opportunities;
+                // Calculate pagination
+                const totalPages = Math.ceil(opportunities.length / this.itemsPerPage);
+                const startIndex = (this.currentPage - 1) * this.itemsPerPage;
+                const endIndex = startIndex + this.itemsPerPage;
+                const paginatedOpportunities = opportunities.slice(startIndex, endIndex);
 
-                tbody.innerHTML = opportunities.map(opp => {
+                tbody.innerHTML = paginatedOpportunities.map(opp => {
                     const profitClass = opp.profit_percentage > 2 ? 'text-green-400 pulse-green' : 
                                       opp.profit_percentage > 1 ? 'text-green-400' : 'text-yellow-400';
                     const timeAgo = this.getTimeAgo(opp.timestamp);
@@ -636,9 +684,96 @@
                     `;
                 }).join('');
 
-                // Update counts
+                // Update counts and pagination
                 document.getElementById('opportunities-count').textContent = `${opportunities.length} opportunities`;
                 document.getElementById('opportunities-last-update').textContent = `Last update: ${new Date().toLocaleTimeString()}`;
+                this.updatePaginationControls(opportunities.length);
+                
+                // Don't update best opportunity here - it comes from API now
+            }
+
+            updateBestOpportunity(opportunities) {
+                if (!opportunities || opportunities.length === 0) {
+                    document.getElementById('stat-best-profit').textContent = '-';
+                    document.getElementById('stat-best-pair').textContent = '-';
+                    this.bestOpportunity = null;
+                    return;
+                }
+                
+                // Find the opportunity with highest profit percentage
+                const bestOpp = opportunities.reduce((best, current) => {
+                    return current.profit_percentage > best.profit_percentage ? current : best;
+                });
+                
+                // Update best opportunity display
+                document.getElementById('stat-best-profit').textContent = `${bestOpp.profit_percentage.toFixed(2)}%`;
+                
+                // Get currency name
+                const baseSymbol = bestOpp.base_currency || this.extractBaseSymbol(bestOpp.symbol);
+                const currencyName = bestOpp.currency_name || this.currencyNames[baseSymbol] || baseSymbol;
+                
+                document.getElementById('stat-best-pair').textContent = 
+                    `${currencyName} (${bestOpp.buy_exchange} → ${bestOpp.sell_exchange})`;
+                
+                // Add animation if it's a new best
+                if (!this.bestOpportunity || bestOpp.profit_percentage > this.bestOpportunity.profit_percentage) {
+                    const profitElement = document.getElementById('stat-best-profit');
+                    profitElement.classList.add('flash-profit');
+                    setTimeout(() => {
+                        profitElement.classList.remove('flash-profit');
+                    }, 2000);
+                }
+                
+                this.bestOpportunity = bestOpp;
+            }
+
+            updateBestOpportunityFromAPI(bestOpp) {
+                // Update best opportunity display with API data (from all opportunities, not just displayed ones)
+                document.getElementById('stat-best-profit').textContent = `${bestOpp.profit_percentage.toFixed(2)}%`;
+                
+                // Get currency name
+                const baseSymbol = bestOpp.base_currency || this.extractBaseSymbol(bestOpp.symbol);
+                const currencyName = bestOpp.currency_name || this.currencyNames[baseSymbol] || baseSymbol;
+                
+                document.getElementById('stat-best-pair').textContent = 
+                    `${currencyName} (${bestOpp.buy_exchange} → ${bestOpp.sell_exchange})`;
+                
+                // Add animation if it's a new best
+                if (!this.bestOpportunity || bestOpp.profit_percentage > this.bestOpportunity.profit_percentage) {
+                    const profitElement = document.getElementById('stat-best-profit');
+                    profitElement.classList.add('flash-profit');
+                    setTimeout(() => {
+                        profitElement.classList.remove('flash-profit');
+                    }, 2000);
+                }
+                
+                this.bestOpportunity = bestOpp;
+            }
+
+            updatePaginationControls(totalItems) {
+                const totalPages = Math.ceil(totalItems / this.itemsPerPage);
+                
+                // Update page info
+                document.getElementById('page-info').textContent = `Page ${this.currentPage} of ${totalPages}`;
+                
+                // Update button states
+                const prevBtn = document.getElementById('prev-page');
+                const nextBtn = document.getElementById('next-page');
+                
+                prevBtn.disabled = this.currentPage <= 1;
+                nextBtn.disabled = this.currentPage >= totalPages;
+                
+                if (prevBtn.disabled) {
+                    prevBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                } else {
+                    prevBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                }
+                
+                if (nextBtn.disabled) {
+                    nextBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                } else {
+                    nextBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                }
             }
 
             updateOpportunities(newOpportunities) {
@@ -664,14 +799,14 @@
                     }
                 }
 
-                // Update opportunities data
+                // Update opportunities data (keep more for pagination)
                 this.opportunitiesData = [...newOpportunities, ...this.opportunitiesData]
-                    .slice(0, 100); // Keep only latest 100
+                    .slice(0, 500); // Keep more for pagination
 
-                // If we're on the opportunities tab, update the table
-                if (!document.getElementById('content-opportunities').classList.contains('hidden')) {
-                    this.updateOpportunitiesTable(this.opportunitiesData);
-                }
+                // Always update the table regardless of which tab is active
+                this.updateOpportunitiesTable(this.opportunitiesData);
+                
+                // Best opportunity is updated from API, not from WebSocket data
             }
 
             updateSystemStats(stats) {
@@ -736,6 +871,30 @@
                 }, 300);
             }
 
+            setupPagination() {
+                // Setup pagination controls for opportunities
+                document.getElementById('prev-page').addEventListener('click', () => {
+                    if (this.currentPage > 1) {
+                        this.currentPage--;
+                        this.updateOpportunitiesTable(this.opportunitiesData);
+                    }
+                });
+                
+                document.getElementById('next-page').addEventListener('click', () => {
+                    const totalPages = Math.ceil(this.opportunitiesData.length / this.itemsPerPage);
+                    if (this.currentPage < totalPages) {
+                        this.currentPage++;
+                        this.updateOpportunitiesTable(this.opportunitiesData);
+                    }
+                });
+                
+                document.getElementById('items-per-page').addEventListener('change', (e) => {
+                    this.itemsPerPage = parseInt(e.target.value);
+                    this.currentPage = 1; // Reset to first page
+                    this.updateOpportunitiesTable(this.opportunitiesData);
+                });
+            }
+
             setupRefreshButton() {
                 document.getElementById('refresh-data').addEventListener('click', () => {
                     this.loadInitialData();
@@ -783,6 +942,11 @@
                                 this.currencyNames = { ...this.currencyNames, ...oppsData.currency_names };
                             }
                             this.updateOpportunitiesTable(oppsData.data);
+                            
+                            // Update best opportunity from API (not from displayed data)
+                            if (oppsData.best_opportunity) {
+                                this.updateBestOpportunityFromAPI(oppsData.best_opportunity);
+                            }
                         }
                     }
                 } catch (error) {
