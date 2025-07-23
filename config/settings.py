@@ -16,7 +16,7 @@ LOGS_DIR.mkdir(exist_ok=True)
 # Security
 SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-@9t@4rn2xrlbuh95k9nv16$vhoy%s7eallm3s2&q%6=1p+v^7n')
 DEBUG = os.getenv('DEBUG', 'True').lower() == 'true'
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1,0.0.0.0').split(',')
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1,0.0.0.0,pardak.ir,www.pardak.ir').split(',')
 
 # Applications
 INSTALLED_APPS = [
