@@ -132,6 +132,11 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+CSRF_TRUSTED_ORIGINS = ['https://pardak.ir']
+CSRF_COOKIE_SECURE = True  # If using HTTPS
+SESSION_COOKIE_SECURE = True  # If using HTTPS
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
 # Internationalization
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'UTC'
