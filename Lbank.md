@@ -1,6 +1,8 @@
-
+مثال برای گرفتن 
 
 https://api.lbkex.com/v2/depth.do?symbol=xrp_usdt&size=1
+
+خروجی زیر رو میده اولی قیمت دومی حجم
 
 {
     "result": "true",

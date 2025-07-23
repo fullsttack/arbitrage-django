@@ -1,103 +1,48 @@
-مارکت های والکس
-با استفاده از API زیر میتوانید لیست کاملی از مارکت های فعال در والکس را دریافت کنید.
-همچنین در هر نوع معامله ی والکس نحوه ی دریافت مارکت های فعال در آن معامله به طور کامل آموزش داده شده است.
-
-
-get
-/hector/web/v1/markets
-curl
-
-
-curl -i -X GET \
-  https://api.wallex.ir/hector/web/v1/markets \
-  -H 'x-api-key: YOUR_API_KEY_HERE'
-Response
-200
-application/json
-
-
-
+مثال برای گرفتن قیمت بازار
+https://api.wallex.ir/v1/depth?symbol=XRPUSDT
+خروجی زیر رو میده اولی قیمت دومی حجم برای خرید و فروش
 
 {
-  "success": true,
-  "message": "The operation was successful",
-  "result": {
-    "markets": [
-      {
-        "symbol": "string",
-        "base_asset": "string",
-        "quote_asset": "string",
-        "fa_base_asset": "string",
-        "fa_quote_asset": "string",
-        "en_base_asset": "string",
-        "en_quote_asset": "string",
-        "categories": [ … ],
-        "price": "string",
-        "change_24h": 0.1,
-        "volume_24h": 0.1,
-        "change_7D": 0.1,
-        "quote_volume_24h": 0.1,
-        "spot_is_new": true,
-        "otc_is_new": true,
-        "is_new": true,
-        "is_spot": true,
-        "is_otc": true,
-        "is_margin": true,
-        "is_tmn_based": true,
-        "is_usdt_based": true,
-        "is_zero_fee": true,
-        "leverage_step": 0.1,
-        "max_leverage": 0,
-        "created_at": "2019-08-24T14:15:22Z",
-        "amount_precision": 0,
-        "price_precision": 0,
-        "flags": [ … ]
-      }
-    ]
-  }
-}
-توضیحات Response-Body
-
-
-{
-  "result": {
-    "markets": [
-      {
-        "symbol": "بازار معامله",
-        "base_asset": "رمزارز معامله شونده",
-        "quote_asset": "ارز قیمت گذار",
-        "fa_base_asset": "نماد ارز معامله شونده",
-        "fa_quote_asset": "نماد ارز قیمت گذار",
-        "en_base_asset": "نماد ارز معامله شونده",
-        "en_quote_asset": "نماد ارز قیمت گذار",
-        "categories": [
-          "number"
+    "result": {
+        "ask": [
+            {
+                "price": 3.51436,
+                "quantity": 262.3,
+                "sum": "921.816628"
+            },
+            {
+                "price": 3.51437,
+                "quantity": 149.4,
+                "sum": "525.046878"
+            },
+            {
+                "price": 3.51769,
+                "quantity": 262.1,
+                "sum": "921.986549"
+            },
+            
         ],
-        "price": "قیمت در لحظه فراخوانی ای پی آي",
-        "change_24h": "تغییرات 24 ساعته",
-        "volume_24h": "حجم 24 ساعته",
-        "change_7D": "تغییرات هفت روزه",
-        "quote_volume_24h": "حجم تغییرات 24 ساعته",
-        "spot_is_new": "آیا به تازگی در بازار اسپات اضافه شده هست",
-        "otc_is_new": "آیا به تازگی در بازار خریدفروش آنی اضافه شده هست",
-        "is_new": "آیا ارز جدید هست",
-        "is_spot": "وضعیت فعال بودن در بازار اسپات",
-        "is_otc": "وضعیت فعال بودن در بازار خرید فروش آنی",
-        "is_margin": "وضعیت فعال بودن در بازار تعهدی",
-        "is_tmn_based": "وضعیت فعال بودن در پایه بازار تومان",
-        "is_usdt_based": "وضعیت فعال بودن در پایه بازار تتر",
-        "is_zero_fee": "وضعیت رایگان بودن کارمزد در این بازار",
-        "leverage_step": "-",
-        "max_leverage": "-",
-        "created_at": "زمان اضافه شدن رمز ارز",
-        "amount_precision": "-",
-        "price_precision": "-",
-        "flags": ["-"]
-      }
-    ],
-    "message": "The operation was successful",
+        "bid": [
+            {
+                "price": 3.5003,
+                "quantity": 381.2,
+                "sum": "1334.31436"
+            },
+            {
+                "price": 3.50011,
+                "quantity": 263.4,
+                "sum": "921.928974"
+            },
+            {
+                "price": 3.5001,
+                "quantity": 142.8,
+                "sum": "499.81428"
+            },
+            
+        ]
+    },
+    "message": "عملیات موفقیت‌آمیز بود.",
     "success": true
-  }
 }
 
 عمق بازارها
