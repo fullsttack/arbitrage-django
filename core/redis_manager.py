@@ -87,32 +87,23 @@ class RedisManager:
         """Save or update arbitrage opportunity to Redis (avoid duplicates)"""
         timestamp = time.time()  # Use actual unix timestamp
         
-        # Create unique key based on trading pair and direction (not timestamp)
+        # Simple storage without deduplication - save all opportunities
         symbol = opportunity.get('symbol')
         buy_exchange = opportunity.get('buy_exchange')
         sell_exchange = opportunity.get('sell_exchange')
-        unique_id = f"{buy_exchange}_{sell_exchange}_{symbol}"
+        
+        # Create unique key with timestamp
+        timestamp_ms = int(timestamp * 1000)
+        unique_id = f"{buy_exchange}_{sell_exchange}_{symbol}_{timestamp_ms}"
         
         opportunity['timestamp'] = timestamp
         opportunity['id'] = unique_id
         opportunity['last_updated'] = timestamp
         
-        # Use consistent key for same trading opportunity
+        # Use timestamp-based key for complete uniqueness  
         key = f"opportunity:{unique_id}"
         
-        # Check if opportunity already exists
-        existing_data = await self.redis_client.get(key)
-        if existing_data:
-            try:
-                existing_opportunity = json.loads(existing_data)
-                # Update existing opportunity with new data
-                existing_opportunity.update(opportunity)
-                opportunity = existing_opportunity
-                logger.debug(f"Updated existing arbitrage opportunity: {symbol} - {opportunity.get('profit_percentage', 0):.2f}% profit")
-            except:
-                logger.debug(f"Failed to parse existing opportunity, creating new one")
-        else:
-            logger.info(f"New arbitrage opportunity: {symbol} - {opportunity.get('profit_percentage', 0):.2f}% profit")
+        logger.debug(f"Saving opportunity: {symbol} - {opportunity.get('profit_percentage', 0):.2f}% profit")
         
         # Save opportunity (no TTL - keep until 24 hours cleanup)
         await self.redis_client.set(key, json.dumps(opportunity))
@@ -120,8 +111,8 @@ class RedisManager:
         # Add/update in sorted set for easy retrieval
         await self.redis_client.zadd("opportunities:latest", {key: timestamp})
         
-        # Keep only latest 1000 opportunities (increased from 500)
-        await self.redis_client.zremrangebyrank("opportunities:latest", 0, -1001)
+        # Keep only latest 10000 opportunities to see more data
+        await self.redis_client.zremrangebyrank("opportunities:latest", 0, -10001)
     
     async def get_latest_opportunities(self, limit: int = 50) -> List[Dict[str, Any]]:
         """Get latest arbitrage opportunities"""
@@ -147,6 +138,38 @@ class RedisManager:
         """Get count of active prices"""
         keys = await self.redis_client.keys("prices:*")
         return len(keys)
+    
+    async def get_highest_profit_opportunity(self) -> Optional[Dict[str, Any]]:
+        """Get the opportunity with the highest profit percentage from ALL opportunities"""
+        try:
+            # Get all opportunity keys directly - don't rely on sorted set limit
+            opportunity_keys = await self.redis_client.keys("opportunity:*")
+            
+            if not opportunity_keys:
+                return None
+            
+            highest_profit_opp = None
+            highest_profit = -float('inf')
+            
+            # Check all opportunities to find the true maximum
+            for key in opportunity_keys:
+                data = await self.redis_client.get(key)
+                if data:
+                    try:
+                        opp_data = json.loads(data)
+                        profit_percentage = opp_data.get('profit_percentage', 0)
+                        
+                        if isinstance(profit_percentage, (int, float)) and profit_percentage > highest_profit:
+                            highest_profit = profit_percentage
+                            highest_profit_opp = opp_data
+                    except (json.JSONDecodeError, KeyError, TypeError):
+                        continue
+            
+            return highest_profit_opp
+            
+        except Exception as e:
+            logger.error(f"Error getting highest profit opportunity: {e}")
+            return None
     
     async def get_redis_stats(self) -> Dict[str, Any]:
         """Get Redis statistics"""
