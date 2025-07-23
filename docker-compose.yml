@@ -43,6 +43,7 @@ services:
       DEBUG: "False"
       SECRET_KEY: "django-insecure-@9t@4rn2xrlbuh95k9nv16$vhoy%s7eallm3s2&q%6=1p+v^7n"
       ALLOWED_HOSTS: "localhost,127.0.0.1,0.0.0.0,pardak.ir,www.pardak.ir"
+      CSRF_TRUSTED_ORIGINS: "https://pardak.ir,http://pardak.ir,ws://pardak.ir,wss://pardak.ir"
       
       # Database settings
       DB_ENGINE: "django.db.backends.postgresql"
