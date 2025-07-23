@@ -86,64 +86,6 @@ services:
       redis:
         condition: service_healthy
     
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/admin/login/"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-    
-    restart: unless-stopped
-
-  # Workers Service (for background tasks)
-  workers:
-    build: .
-    container_name: arbitrage-workers
-    command: uv run python manage.py start_workers
-    environment:
-      # Same environment as web service
-      DEBUG: "False"
-      SECRET_KEY: "django-insecure-@9t@4rn2xrlbuh95k9nv16$vhoy%s7eals2&q%6=1p+v^7n@ffc"
-      
-      # Database settings
-      DB_ENGINE: "django.db.backends.postgresql"
-      DB_NAME: "arbitrage"
-      DB_USER: "arbitrage_user"
-      DB_PASSWORD: "arbitrage_pass"
-      DB_HOST: "postgres"
-      DB_PORT: "5432"
-      
-      # Redis settings
-      REDIS_HOST: "redis"
-      REDIS_PORT: "6379"
-      REDIS_DB: "0"
-      REDIS_PASSWORD: ""
-      
-      # Performance settings
-      WORKER_COUNT: "8"
-      ASGI_WORKERS: "4"
-      MAX_CONNECTIONS: "1000"
-      
-      # Exchange API keys
-      WALLEX_API_KEY: ""
-      LBANK_API_KEY: ""
-      RAMZINEX_API_KEY: ""
-      
-      # Logging
-      LOG_LEVEL: "INFO"
-      LOG_MAX_SIZE: "100MB"
-      LOG_BACKUP_COUNT: "10"
-    
-    volumes:
-      - ./logs:/app/logs
-    
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      web:
-        condition: service_healthy
-    
     restart: unless-stopped
 
 

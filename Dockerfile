@@ -55,16 +55,6 @@ done\n\
 echo "Running migrations..."\n\
 uv run python manage.py migrate\n\
 \n\
-echo "Creating superuser if not exists..."\n\
-uv run python manage.py shell -c "\n\
-from django.contrib.auth.models import User\n\
-if not User.objects.filter(username='"'"'admin'"'"').exists():\n\
-    User.objects.create_superuser('"'"'admin'"'"', '"'"'admin@example.com'"'"', '"'"'admin123'"'"')\n\
-    print('"'"'Superuser created: admin/admin123'"'"')\n\
-else:\n\
-    print('"'"'Superuser already exists'"'"')\n\
-"\n\
-\n\
 echo "Seeding database..."\n\
 uv run python manage.py seeder\n\
 \n\
