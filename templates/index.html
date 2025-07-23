@@ -410,6 +410,7 @@
                 // Pagination for opportunities
                 this.currentPage = 1;
                 this.itemsPerPage = 20;
+                this.opportunitiesData = []; // Initialize as empty array
                 
                 this.init();
             }
@@ -692,42 +693,16 @@
                 // Don't update best opportunity here - it comes from API now
             }
 
-            updateBestOpportunity(opportunities) {
-                if (!opportunities || opportunities.length === 0) {
+
+            updateBestOpportunity(bestOpp) {
+                // Handle empty or null data
+                if (!bestOpp) {
                     document.getElementById('stat-best-profit').textContent = '-';
                     document.getElementById('stat-best-pair').textContent = '-';
                     this.bestOpportunity = null;
                     return;
                 }
                 
-                // Find the opportunity with highest profit percentage
-                const bestOpp = opportunities.reduce((best, current) => {
-                    return current.profit_percentage > best.profit_percentage ? current : best;
-                });
-                
-                // Update best opportunity display
-                document.getElementById('stat-best-profit').textContent = `${bestOpp.profit_percentage.toFixed(2)}%`;
-                
-                // Get currency name
-                const baseSymbol = bestOpp.base_currency || this.extractBaseSymbol(bestOpp.symbol);
-                const currencyName = bestOpp.currency_name || this.currencyNames[baseSymbol] || baseSymbol;
-                
-                document.getElementById('stat-best-pair').textContent = 
-                    `${currencyName} (${bestOpp.buy_exchange} → ${bestOpp.sell_exchange})`;
-                
-                // Add animation if it's a new best
-                if (!this.bestOpportunity || bestOpp.profit_percentage > this.bestOpportunity.profit_percentage) {
-                    const profitElement = document.getElementById('stat-best-profit');
-                    profitElement.classList.add('flash-profit');
-                    setTimeout(() => {
-                        profitElement.classList.remove('flash-profit');
-                    }, 2000);
-                }
-                
-                this.bestOpportunity = bestOpp;
-            }
-
-            updateBestOpportunityFromAPI(bestOpp) {
                 // Update best opportunity display with API data (from all opportunities, not just displayed ones)
                 document.getElementById('stat-best-profit').textContent = `${bestOpp.profit_percentage.toFixed(2)}%`;
                 
@@ -738,8 +713,8 @@
                 document.getElementById('stat-best-pair').textContent = 
                     `${currencyName} (${bestOpp.buy_exchange} → ${bestOpp.sell_exchange})`;
                 
-                // Add animation if it's a new best
-                if (!this.bestOpportunity || bestOpp.profit_percentage > this.bestOpportunity.profit_percentage) {
+                // Add animation if it's a new best - use strict comparison to prevent constant animation
+                if (!this.bestOpportunity || bestOpp.profit_percentage > this.bestOpportunity.profit_percentage + 0.001) {
                     const profitElement = document.getElementById('stat-best-profit');
                     profitElement.classList.add('flash-profit');
                     setTimeout(() => {
@@ -751,7 +726,17 @@
             }
 
             updatePaginationControls(totalItems) {
-                const totalPages = Math.ceil(totalItems / this.itemsPerPage);
+                // Ensure totalItems is a valid number
+                const validTotalItems = Math.max(0, totalItems || 0);
+                const totalPages = Math.max(1, Math.ceil(validTotalItems / this.itemsPerPage));
+                
+                // Ensure current page is within valid range
+                if (this.currentPage > totalPages) {
+                    this.currentPage = totalPages;
+                }
+                if (this.currentPage < 1) {
+                    this.currentPage = 1;
+                }
                 
                 // Update page info
                 document.getElementById('page-info').textContent = `Page ${this.currentPage} of ${totalPages}`;
@@ -760,23 +745,30 @@
                 const prevBtn = document.getElementById('prev-page');
                 const nextBtn = document.getElementById('next-page');
                 
-                prevBtn.disabled = this.currentPage <= 1;
-                nextBtn.disabled = this.currentPage >= totalPages;
-                
-                if (prevBtn.disabled) {
-                    prevBtn.classList.add('opacity-50', 'cursor-not-allowed');
-                } else {
-                    prevBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-                }
-                
-                if (nextBtn.disabled) {
-                    nextBtn.classList.add('opacity-50', 'cursor-not-allowed');
-                } else {
-                    nextBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                if (prevBtn && nextBtn) {
+                    prevBtn.disabled = this.currentPage <= 1;
+                    nextBtn.disabled = this.currentPage >= totalPages || validTotalItems === 0;
+                    
+                    if (prevBtn.disabled) {
+                        prevBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                    } else {
+                        prevBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                    }
+                    
+                    if (nextBtn.disabled) {
+                        nextBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                    } else {
+                        nextBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                    }
                 }
             }
 
             updateOpportunities(newOpportunities) {
+                // Validate input
+                if (!Array.isArray(newOpportunities)) {
+                    return;
+                }
+                
                 // Show notifications for new profitable opportunities
                 const now = Date.now();
                 if (now - this.lastNotificationTime > 3000) { // Throttle notifications
@@ -800,13 +792,15 @@
                 }
 
                 // Update opportunities data (keep more for pagination)
-                this.opportunitiesData = [...newOpportunities, ...this.opportunitiesData]
+                // Ensure this.opportunitiesData is always an array
+                const existingData = Array.isArray(this.opportunitiesData) ? this.opportunitiesData : [];
+                this.opportunitiesData = [...newOpportunities, ...existingData]
                     .slice(0, 500); // Keep more for pagination
 
                 // Always update the table regardless of which tab is active
                 this.updateOpportunitiesTable(this.opportunitiesData);
                 
-                // Best opportunity is updated from API, not from WebSocket data
+                // DO NOT update best opportunity here - it comes from API only
             }
 
             updateSystemStats(stats) {
@@ -873,26 +867,40 @@
 
             setupPagination() {
                 // Setup pagination controls for opportunities
-                document.getElementById('prev-page').addEventListener('click', () => {
-                    if (this.currentPage > 1) {
-                        this.currentPage--;
-                        this.updateOpportunitiesTable(this.opportunitiesData);
-                    }
-                });
+                const prevBtn = document.getElementById('prev-page');
+                const nextBtn = document.getElementById('next-page');
+                const itemsSelect = document.getElementById('items-per-page');
                 
-                document.getElementById('next-page').addEventListener('click', () => {
-                    const totalPages = Math.ceil(this.opportunitiesData.length / this.itemsPerPage);
-                    if (this.currentPage < totalPages) {
-                        this.currentPage++;
-                        this.updateOpportunitiesTable(this.opportunitiesData);
-                    }
-                });
+                if (prevBtn) {
+                    prevBtn.addEventListener('click', () => {
+                        if (this.currentPage > 1) {
+                            this.currentPage--;
+                            this.updateOpportunitiesTable(this.opportunitiesData || []);
+                        }
+                    });
+                }
                 
-                document.getElementById('items-per-page').addEventListener('change', (e) => {
-                    this.itemsPerPage = parseInt(e.target.value);
-                    this.currentPage = 1; // Reset to first page
-                    this.updateOpportunitiesTable(this.opportunitiesData);
-                });
+                if (nextBtn) {
+                    nextBtn.addEventListener('click', () => {
+                        const dataLength = (this.opportunitiesData || []).length;
+                        const totalPages = Math.ceil(dataLength / this.itemsPerPage);
+                        if (this.currentPage < totalPages && dataLength > 0) {
+                            this.currentPage++;
+                            this.updateOpportunitiesTable(this.opportunitiesData || []);
+                        }
+                    });
+                }
+                
+                if (itemsSelect) {
+                    itemsSelect.addEventListener('change', (e) => {
+                        const newItemsPerPage = parseInt(e.target.value);
+                        if (!isNaN(newItemsPerPage) && newItemsPerPage > 0) {
+                            this.itemsPerPage = newItemsPerPage;
+                            this.currentPage = 1; // Reset to first page
+                            this.updateOpportunitiesTable(this.opportunitiesData || []);
+                        }
+                    });
+                }
             }
 
             setupRefreshButton() {
@@ -945,7 +953,10 @@
                             
                             // Update best opportunity from API (not from displayed data)
                             if (oppsData.best_opportunity) {
-                                this.updateBestOpportunityFromAPI(oppsData.best_opportunity);
+                                this.updateBestOpportunity(oppsData.best_opportunity);
+                            } else {
+                                // Clear best opportunity if no data
+                                this.updateBestOpportunity(null);
                             }
                         }
                     }
