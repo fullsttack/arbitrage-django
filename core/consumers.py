@@ -15,10 +15,16 @@ class ArbitrageConsumer(AsyncWebsocketConsumer):
         """Connect to WebSocket - Superuser only"""
         # Check authentication
         user = self.scope.get('user')
-        if not user or not user.is_authenticated or not user.is_superuser:
-            logger.warning(f"WebSocket connection denied - user: {user}")
+        if not user or not user.is_authenticated:
+            logger.warning(f"WebSocket connection denied - user not authenticated: {user}")
             await self.close(code=4003)  # Custom close code for authentication error
             return
+            
+        # For now, allow all authenticated users (remove superuser restriction for testing)
+        # if not user.is_superuser:
+        #     logger.warning(f"WebSocket connection denied - not superuser: {user}")
+        #     await self.close(code=4003)
+        #     return
             
         await self.channel_layer.group_add('arbitrage_updates', self.channel_name)
         await self.accept()

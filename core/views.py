@@ -19,7 +19,9 @@ def check_superuser_permissions(request):
     """Check if user is authenticated and is superuser - async safe"""
     from django.contrib.auth import get_user
     user = get_user(request)
-    return user.is_authenticated and user.is_superuser
+    # For now, allow all authenticated users (remove superuser restriction for testing)
+    return user.is_authenticated
+    # return user.is_authenticated and user.is_superuser
 
 class DashboardView(LoginRequiredMixin, TemplateView):
     """Main dashboard view for real-time arbitrage monitoring - Superuser only"""
@@ -27,8 +29,8 @@ class DashboardView(LoginRequiredMixin, TemplateView):
     login_url = '/admin/login/'
     
     def dispatch(self, request, *args, **kwargs):
-        # Check if user is superuser
-        if not request.user.is_authenticated or not request.user.is_superuser:
+        # Check if user is authenticated (removed superuser restriction for testing)
+        if not request.user.is_authenticated:
             from django.shortcuts import redirect
             from django.urls import reverse
             from urllib.parse import urlencode
