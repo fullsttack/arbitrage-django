@@ -15,6 +15,7 @@ class LBankService(BaseExchangeService):
         self.websocket_url = 'wss://www.lbkex.net/ws/V2/'
         self.websocket = None
         self.subscribed_pairs = set()
+        self.pending_subscriptions = {}  # Track pending subscriptions
         self.ping_counter = 1
         
     async def connect(self):
@@ -65,7 +66,7 @@ class LBankService(BaseExchangeService):
                     return False
 
     async def subscribe_to_pairs(self, pairs: List[str]):
-        """Subscribe to trading pairs"""
+        """Subscribe to trading pairs with response validation"""
         if not self.is_connected or not self.websocket:
             logger.error("LBank: Cannot subscribe - not connected")
             return False
@@ -75,24 +76,37 @@ class LBankService(BaseExchangeService):
         for symbol in pairs:
             if symbol not in self.subscribed_pairs:
                 try:
-                    # Subscribe to depth updates
+                    # Subscribe to depth updates - according to official LBank docs
                     subscribe_msg = {
                         "action": "subscribe",
                         "subscribe": "depth",
                         "pair": symbol,
-                        "depth": "5"
+                        "depth": "100"  # Official docs use "100", not "5"
                     }
                     
+                    logger.info(f"LBank subscribing to {symbol}...")
                     await self.websocket.send(json.dumps(subscribe_msg))
-                    self.subscribed_pairs.add(symbol)
-                    successful_subscriptions += 1
-                    logger.info(f"LBank subscribed to {symbol}")
+                    
+                    # Track pending subscription
+                    self.pending_subscriptions[symbol] = time.time()
                     
                     # Small delay between subscriptions
-                    await asyncio.sleep(0.1)
+                    await asyncio.sleep(0.5)
                     
                 except Exception as e:
                     logger.error(f"LBank subscription error for {symbol}: {e}")
+        
+        # Wait for subscription confirmations or data
+        await asyncio.sleep(3)
+        
+        # Count actually working subscriptions
+        for symbol in pairs:
+            # Check if we received data or confirmation for this symbol
+            if symbol in self.subscribed_pairs:
+                successful_subscriptions += 1
+                logger.info(f"LBank confirmed subscription for {symbol}")
+            else:
+                logger.warning(f"LBank no confirmation received for {symbol}")
         
         logger.info(f"LBank: Successfully subscribed to {successful_subscriptions}/{len(pairs)} pairs")
         return successful_subscriptions > 0
@@ -167,7 +181,13 @@ class LBankService(BaseExchangeService):
             
             # Handle subscription confirmations
             elif 'subscribe' in data or 'subscribed' in data:
-                logger.debug(f"LBank subscription response: {data}")
+                logger.info(f"LBank subscription response: {data}")
+                # Mark subscription as confirmed
+                pair = data.get('pair', '')
+                if pair and pair in self.pending_subscriptions:
+                    self.subscribed_pairs.add(pair)
+                    del self.pending_subscriptions[pair]
+                    logger.info(f"LBank confirmed subscription for {pair}")
             
             # Handle errors
             elif 'error' in data or data.get('success') is False:
@@ -214,6 +234,12 @@ class LBankService(BaseExchangeService):
             depth_data = data.get('depth', {})
             symbol = data.get('pair', '')
             
+            # Mark subscription as working when we receive data
+            if symbol and symbol in self.pending_subscriptions:
+                self.subscribed_pairs.add(symbol)
+                del self.pending_subscriptions[symbol]
+                logger.info(f"LBank confirmed subscription for {symbol} via data reception")
+            
             # Get best bid and ask
             asks = depth_data.get('asks', [])
             bids = depth_data.get('bids', [])
@@ -243,7 +269,7 @@ class LBankService(BaseExchangeService):
 
     async def _ping_handler(self):
         """Enhanced ping handler for LBank"""
-        ping_interval = 25  # Send ping every 25 seconds
+        ping_interval = 50  # Send ping every 50 seconds (LBank tolerance is 60s)
         
         while self.is_connected and self.websocket:
             try:
@@ -259,11 +285,11 @@ class LBankService(BaseExchangeService):
                     logger.debug(f"LBank ping sent: {self.ping_counter}")
                     self.ping_counter += 1
                     
-                    # Check if we got a recent pong
+                    # Check if we got a recent pong (LBank docs say 1 minute tolerance)
                     current_time = time.time()
                     if self.last_ping_time > 0:
                         ping_age = current_time - self.last_ping_time
-                        if ping_age > self.PING_TIMEOUT:
+                        if ping_age > 90:  # 90 seconds tolerance per LBank docs (1 minute + buffer)
                             logger.warning(f"LBank: No pong for {ping_age:.1f}s - connection may be dead")
                             self.mark_connection_dead("Ping timeout")
                             break
@@ -285,4 +311,5 @@ class LBankService(BaseExchangeService):
         
         self.websocket = None
         self.subscribed_pairs.clear()
+        self.pending_subscriptions.clear()
         logger.info("LBank WebSocket disconnected")
