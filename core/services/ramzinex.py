@@ -20,9 +20,9 @@ class RamzinexService(BaseExchangeService):
         self.subscription_map = {}  # Map subscription IDs to pair IDs
         self.pair_symbol_map = {}  # Map pair IDs to symbol formats
         
-        # Centrifugo specific settings
-        self.CENTRIFUGO_TIMEOUT = 25  # Server will disconnect after 25 seconds without pong
-        self.PONG_SAFETY_MARGIN = 20  # Send pong every 20 seconds to be safe
+        # Centrifugo specific settings (per official Ramzinex docs)
+        self.CENTRIFUGO_PING_TIMEOUT = 25  # Server disconnects after 25 seconds without pong
+        self.PING_CHECK_INTERVAL = 20      # Check for server pings every 20 seconds
         
     async def _build_pair_symbol_mapping(self):
         """Build mapping between pair IDs and symbol formats from database"""
@@ -141,10 +141,12 @@ class RamzinexService(BaseExchangeService):
                     self.subscription_id_counter += 1
                     subscription_id = self.subscription_id_counter
                     
-                    # Subscribe to orderbook channel
+                    # Subscribe to orderbook channel with Centrifugo protocol
                     subscribe_msg = {
                         'subscribe': {
-                            'channel': f'orderbook:{pair_id}'
+                            'channel': f'orderbook:{pair_id}',
+                            'recover': True,        # Enable message recovery
+                            'delta': 'fossil'       # Enable delta compression 
                         },
                         'id': subscription_id
                     }
@@ -300,16 +302,22 @@ class RamzinexService(BaseExchangeService):
             if channel.startswith('orderbook:'):
                 pair_id = channel.replace('orderbook:', '')
                 
-                # Parse the data field
+                # Parse the data field (per Ramzinex docs: can be JSON string or direct object)
                 data_str = pub_data.get('data', '')
                 if isinstance(data_str, str):
                     try:
+                        # Parse JSON string format (per docs example)
                         orderbook_data = json.loads(data_str)
                         await self._process_orderbook_data(pair_id, orderbook_data)
-                    except:
-                        logger.debug(f"Ramzinex push data not JSON, possibly compressed: {data_str[:100]}")
-                else:
+                    except json.JSONDecodeError:
+                        logger.debug(f"Ramzinex push data not valid JSON: {data_str[:100]}...")
+                    except Exception as e:
+                        logger.error(f"Ramzinex push data processing error: {e}")
+                elif isinstance(data_str, dict):
+                    # Direct object format
                     await self._process_orderbook_data(pair_id, data_str)
+                else:
+                    logger.debug(f"Ramzinex unknown data format: {type(data_str)}")
                     
         except Exception as e:
             logger.error(f"Ramzinex push data processing error: {e}")
@@ -324,9 +332,9 @@ class RamzinexService(BaseExchangeService):
             logger.debug(f"Ramzinex pair {pair_id}: buys={len(buys)}, sells={len(sells)}")
             
             if buys and sells:
-                # According to Ramzinex docs: format is [price, volume, total, flag, null, ?, timestamp]
-                # Buys: highest price in first element
-                # Sells: lowest price in last element
+                # Per official Ramzinex docs: format is [price, volume, total, flag, null, ?, timestamp]
+                # Buys: highest price first (descending order)
+                # Sells: lowest price last (ascending order, so last = lowest ask)
                 
                 # Best bid (highest buy price) - first in buys
                 if isinstance(buys[0], list) and len(buys[0]) >= 2:
@@ -362,24 +370,25 @@ class RamzinexService(BaseExchangeService):
         return None
 
     async def _ping_handler(self):
-        """Monitor connection health - server sends ping, we respond with pong"""
-        logger.info("Ramzinex ping handler started - monitoring server pings")
+        """Monitor connection health - server sends ping every 25s, we must respond with pong"""
+        logger.info("Ramzinex ping handler started - monitoring server pings (25s timeout per docs)")
         
         while self.is_connected and self.websocket:
             try:
-                await asyncio.sleep(self.PONG_SAFETY_MARGIN)
+                await asyncio.sleep(self.PING_CHECK_INTERVAL)
                 
                 if self.is_connected:
-                    # Check if we received a ping recently
+                    # Check if we received a ping recently (per Ramzinex docs: 25s timeout)
                     current_time = time.time()
                     if self.last_ping_time > 0:
                         ping_age = current_time - self.last_ping_time
-                        if ping_age > self.CENTRIFUGO_TIMEOUT:
-                            logger.warning(f"Ramzinex: No ping from server for {ping_age:.1f}s - connection may be dead")
-                            self.mark_connection_dead("Server ping timeout")
+                        if ping_age > self.CENTRIFUGO_PING_TIMEOUT:
+                            logger.warning(f"Ramzinex: No ping from server for {ping_age:.1f}s - connection dead per docs (25s limit)")
+                            self.mark_connection_dead("Server ping timeout per docs")
                             break
-                    
-                    logger.debug("Ramzinex connection health check - still connected")
+                        logger.debug(f"Ramzinex connection healthy - last ping {ping_age:.1f}s ago")
+                    else:
+                        logger.debug("Ramzinex connection healthy - waiting for first ping")
                     
             except Exception as e:
                 logger.error(f"Ramzinex ping handler error: {e}")

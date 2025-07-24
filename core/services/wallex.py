@@ -17,6 +17,8 @@ class WallexService(BaseExchangeService):
         self.subscribed_pairs = set()
         self.partial_data = {}  # Store partial orderbook data
         self.pending_subscriptions = {}  # Track pending subscriptions
+        self.connection_start_time = 0  # Track connection time for 30min limit
+        self.message_count_per_channel = {}  # Track message count per channel (50 max)
         
     async def connect(self):
         """Connect to Wallex WebSocket with enhanced error handling"""
@@ -44,6 +46,7 @@ class WallexService(BaseExchangeService):
                 
                 self.is_connected = True
                 self.reset_connection_state()
+                self.connection_start_time = time.time()  # Track for 30min limit
                 
                 # Start health monitoring
                 asyncio.create_task(self.health_monitor())
@@ -312,27 +315,36 @@ class WallexService(BaseExchangeService):
                         logger.warning("Wallex: WebSocket is closed but marked as connected")
                         self.mark_connection_dead("WebSocket closed")
                         break
+                    
+                    # Check 30-minute connection limit (per Wallex docs)
+                    if self.connection_start_time > 0:
+                        connection_age = current_time - self.connection_start_time
+                        if connection_age > 1800:  # 30 minutes
+                            logger.info("Wallex: Approaching 30min connection limit, reconnecting...")
+                            self.mark_connection_dead("30min connection limit")
+                            break
                         
             except Exception as e:
                 logger.error(f"Wallex connection health checker error: {e}")
                 break
 
     async def _manual_ping_handler(self):
-        """Manual ping handler for Wallex - send periodic connection checks"""
-        ping_interval = 120  # Send ping every 2 minutes
+        """Manual ping handler for Wallex - respond to server pings every 20s"""
+        ping_interval = 25  # Check for server pings every 25 seconds
         
         while self.is_connected and self.websocket:
             try:
                 await asyncio.sleep(ping_interval)
                 
                 if self.is_connected and self.websocket:
-                    # Send a simple ping frame
+                    # Wallex docs: Server sends PING every 20s, we should respond with PONG
+                    # This is just a health check - server handles actual ping/pong
                     try:
                         await self.websocket.ping()
-                        logger.debug("Wallex manual ping sent")
+                        logger.debug("Wallex ping health check sent")
                         self.update_ping_time()
                     except Exception as ping_error:
-                        logger.warning(f"Wallex manual ping failed: {ping_error}")
+                        logger.warning(f"Wallex ping health check failed: {ping_error}")
                         # Don't mark as dead immediately, let health check handle it
                     
             except Exception as e:
@@ -357,4 +369,6 @@ class WallexService(BaseExchangeService):
         self.subscribed_pairs.clear()
         self.partial_data.clear()
         self.pending_subscriptions.clear()
+        self.message_count_per_channel.clear()
+        self.connection_start_time = 0
         logger.info("Wallex WebSocket disconnected")
