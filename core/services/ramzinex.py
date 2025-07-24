@@ -1,28 +1,33 @@
 import asyncio
 import json
 import logging
-import websockets
 import time
 from decimal import Decimal
 from typing import Dict, Any, Optional, List
 from .base import BaseExchangeService
+
+try:
+    from centrifuge import Client
+    CENTRIFUGE_AVAILABLE = True
+except ImportError:
+    CENTRIFUGE_AVAILABLE = False
+    logging.error("centrifuge-python not available, Ramzinex service disabled")
 
 logger = logging.getLogger(__name__)
 
 class RamzinexService(BaseExchangeService):
     def __init__(self):
         super().__init__('ramzinex')
-        self.websocket_url = 'wss://websocket.ramzinex.com/websocket'
-        self.websocket = None
-        self.subscribed_pairs = set()
-        self.connection_id = None
-        self.subscription_id_counter = 2
-        self.subscription_map = {}  # Map subscription IDs to pair IDs
-        self.pair_symbol_map = {}  # Map pair IDs to symbol formats
         
-        # Centrifugo specific settings (per official Ramzinex docs)
-        self.CENTRIFUGO_PING_TIMEOUT = 25  # Server disconnects after 25 seconds without pong
-        self.PING_CHECK_INTERVAL = 20      # Check for server pings every 20 seconds
+        # Initialize attributes regardless of centrifuge availability
+        self.websocket_url = 'wss://websocket.ramzinex.com/websocket'
+        self.client = None
+        self.subscribed_pairs = set()
+        self.pair_symbol_map = {}  # Map pair IDs to symbol formats
+        self.subscriptions = {}    # Store active subscriptions
+        
+        if not CENTRIFUGE_AVAILABLE:
+            logger.error("centrifuge-python not available - Ramzinex service disabled")
         
     async def _build_pair_symbol_mapping(self):
         """Build mapping between pair IDs and symbol formats from database"""
@@ -45,74 +50,48 @@ class RamzinexService(BaseExchangeService):
             logger.error(f"Error building Ramzinex pair-symbol mapping: {e}")
         
     async def connect(self):
-        """Connect to Ramzinex WebSocket with Centrifugo protocol"""
+        """Connect to Ramzinex using centrifuge-python client"""
+        if not CENTRIFUGE_AVAILABLE:
+            logger.error("Ramzinex: centrifuge-python not available")
+            return False
+            
         max_retries = 5
         for attempt in range(max_retries):
             try:
                 logger.info(f"Ramzinex connection attempt {attempt + 1}/{max_retries}")
                 
                 # Close existing connection if any
-                if self.websocket:
+                if self.client:
                     try:
-                        await self.websocket.close()
+                        await self.client.disconnect()
                     except:
                         pass
                 
-                # Simplified connection parameters - only use supported ones
-                self.websocket = await websockets.connect(
-                    self.websocket_url,
-                    ping_interval=None,  # Handle ping manually for Centrifugo
-                    ping_timeout=None,
-                    close_timeout=10
+                # Create centrifuge client
+                self.client = Client(
+                    address=self.websocket_url,
+                    name="python-arbitrage"
                 )
                 
-                # Send connection message according to Centrifugo protocol
-                connect_msg = {
-                    'connect': {'name': 'python-arbitrage'},
-                    'id': 1
-                }
+                # Set up event handlers
+                self.client.on_connect = self._on_connect
+                self.client.on_disconnect = self._on_disconnect
+                self.client.on_error = self._on_error
                 
-                logger.info(f"Ramzinex sending connect: {connect_msg}")
-                await self.websocket.send(json.dumps(connect_msg))
+                # Connect to server
+                await self.client.connect()
                 
-                # Wait for connection response with timeout
-                try:
-                    response = await asyncio.wait_for(self.websocket.recv(), timeout=10)
-                    logger.info(f"Ramzinex connection response: {response}")
-                    
-                    resp_data = json.loads(response)
-                    if resp_data.get('id') == 1 and 'connect' in resp_data:
-                        connect_result = resp_data.get('connect', {})
-                        self.connection_id = connect_result.get('client')
-                        logger.info(f"Ramzinex connection confirmed, client ID: {self.connection_id}")
-                        
-                        self.is_connected = True
-                        self.reset_connection_state()
-                        
-                        # Build pair-symbol mapping after connection
-                        await self._build_pair_symbol_mapping()
-                        
-                        # Start health monitoring
-                        asyncio.create_task(self.health_monitor())
-                        
-                        # Start message listener
-                        asyncio.create_task(self._listen_messages())
-                        
-                        # Start ping handler for Centrifugo
-                        asyncio.create_task(self._ping_handler())
-                        
-                        logger.info("Ramzinex WebSocket connected successfully")
-                        return True
-                    else:
-                        logger.error(f"Ramzinex: Unexpected connection response: {resp_data}")
-                        continue
-                        
-                except asyncio.TimeoutError:
-                    logger.error("Ramzinex: Connection response timeout")
-                    continue
-                except json.JSONDecodeError as e:
-                    logger.error(f"Ramzinex: Invalid connection response: {e}")
-                    continue
+                self.is_connected = True
+                self.reset_connection_state()
+                
+                # Build pair-symbol mapping after connection
+                await self._build_pair_symbol_mapping()
+                
+                # Start health monitoring
+                asyncio.create_task(self.health_monitor())
+                
+                logger.info("Ramzinex WebSocket connected successfully using centrifuge client")
+                return True
                 
             except Exception as e:
                 logger.error(f"Ramzinex connection attempt {attempt + 1} failed: {e}")
@@ -125,8 +104,8 @@ class RamzinexService(BaseExchangeService):
                     return False
 
     async def subscribe_to_pairs(self, pairs: List[str]):
-        """Subscribe to trading pairs using Centrifugo protocol"""
-        if not self.is_connected or not self.websocket:
+        """Subscribe to trading pairs using centrifuge client"""
+        if not self.is_connected or not self.client:
             logger.error("Ramzinex: Cannot subscribe - not connected")
             return False
         
@@ -138,33 +117,37 @@ class RamzinexService(BaseExchangeService):
         for pair_id in pairs:
             if pair_id not in self.subscribed_pairs:
                 try:
-                    self.subscription_id_counter += 1
-                    subscription_id = self.subscription_id_counter
+                    channel = f'orderbook:{pair_id}'
                     
-                    # Subscribe to orderbook channel with Centrifugo protocol
-                    subscribe_msg = {
-                        'subscribe': {
-                            'channel': f'orderbook:{pair_id}',
-                            'recover': True,        # Enable message recovery
-                            'delta': 'fossil'       # Enable delta compression 
-                        },
-                        'id': subscription_id
-                    }
+                    # Subscribe using centrifuge client
+                    subscription = self.client.new_subscription(channel)
                     
-                    logger.info(f"Ramzinex sending subscription for pair {pair_id}: {subscribe_msg}")
-                    await self.websocket.send(json.dumps(subscribe_msg))
+                    # Set up event handlers - must be async functions
+                    def make_publication_handler(pair_id):
+                        async def handler(ctx):
+                            await self._on_publication(ctx, pair_id)
+                        return handler
                     
-                    # Store mapping for later reference
-                    self.subscription_map[subscription_id] = pair_id
+                    subscription.events.on_publication = make_publication_handler(pair_id)
                     
-                    # Wait for subscription response - don't mark as successful yet
+                    # Subscribe
+                    await subscription.subscribe()
+                    
+                    # Mark as subscribed after successful subscription
+                    self.subscribed_pairs.add(pair_id)
+                    
+                    # Store subscription
+                    self.subscriptions[pair_id] = subscription
+                    
+                    logger.info(f"Ramzinex sent subscription for pair ID {pair_id} on channel {channel}")
+                    
+                    # Small delay between subscriptions
                     await asyncio.sleep(0.5)
-                    logger.info(f"Ramzinex sent subscription for pair ID {pair_id} with subscription ID {subscription_id}")
                     
                 except Exception as e:
                     logger.error(f"Ramzinex subscription error for pair {pair_id}: {e}")
         
-        # Wait for actual subscription confirmations
+        # Wait for subscription confirmations
         await asyncio.sleep(3)
         
         # Count actually confirmed subscriptions
@@ -172,162 +155,67 @@ class RamzinexService(BaseExchangeService):
         logger.info(f"Ramzinex: Successfully subscribed to {successful_subscriptions}/{len(pairs)} pairs")
         return successful_subscriptions > 0
 
-    async def _listen_messages(self):
-        """Listen for WebSocket messages with Centrifugo protocol handling"""
-        consecutive_errors = 0
-        max_consecutive_errors = 5
-        
-        while self.is_connected and self.websocket:
-            try:
-                # Centrifugo timeout is 25 seconds, so we use 30 seconds timeout
-                message = await asyncio.wait_for(
-                    self.websocket.recv(), 
-                    timeout=30
-                )
-                
-                consecutive_errors = 0
-                self.update_message_time()
-                
-                # Handle empty ping message from server
-                if message.strip() == '{}':
-                    await self._handle_server_ping()
-                    continue
-                
-                # Parse JSON message
-                try:
-                    data = json.loads(message)
-                except json.JSONDecodeError as e:
-                    logger.warning(f"Ramzinex: Invalid JSON received: {message[:100]}...")
-                    continue
-                
-                await self._process_message(data)
-                
-            except asyncio.TimeoutError:
-                logger.warning("Ramzinex: No message received for 30 seconds - connection may be dead")
-                self.mark_connection_dead("Message timeout")
-                break
-                
-            except websockets.exceptions.ConnectionClosed as e:
-                logger.warning(f"Ramzinex WebSocket connection closed: {e}")
-                self.mark_connection_dead(f"Connection closed: {e}")
-                break
-                
-            except Exception as e:
-                consecutive_errors += 1
-                logger.error(f"Ramzinex message processing error ({consecutive_errors}/{max_consecutive_errors}): {e}")
-                
-                if consecutive_errors >= max_consecutive_errors:
-                    logger.error("Ramzinex: Too many consecutive errors, marking connection as dead")
-                    self.mark_connection_dead(f"Too many errors: {e}")
-                    break
-                
-                await asyncio.sleep(1)
-
-    async def _process_message(self, data: Dict[str, Any]):
-        """Process different types of Centrifugo messages"""
+    # Event handlers for centrifuge client - must be async
+    async def _on_connect(self, event):
+        """Handle connection success"""
+        logger.info(f"Ramzinex connected: {event}")
+        self.update_message_time()
+    
+    async def _on_disconnect(self, event):
+        """Handle disconnection"""
+        logger.warning(f"Ramzinex disconnected: {event}")
+        self.mark_connection_dead(f"Client disconnected: {event}")
+    
+    async def _on_error(self, event):
+        """Handle connection errors"""
+        logger.error(f"Ramzinex connection error: {event}")
+        self.mark_connection_dead(f"Connection error: {event}")
+    
+    async def _on_subscribed(self, ctx, pair_id: str):
+        """Handle successful subscription"""
+        logger.info(f"Ramzinex subscription successful for pair {pair_id}")
+        self.subscribed_pairs.add(pair_id)
+        self.update_message_time()
+    
+    async def _on_subscription_error(self, ctx, pair_id: str):
+        """Handle subscription error"""
+        logger.error(f"Ramzinex subscription error for pair {pair_id}: {ctx}")
+    
+    async def _on_publication(self, ctx, pair_id: str):
+        """Handle published data with delta decompression"""
         try:
-            # Handle push messages (real-time data)
-            if 'push' in data and 'channel' in data['push']:
-                await self._process_push_data(data['push'])
+            self.update_message_time()
             
-            # Handle subscription responses
-            elif 'subscribe' in data:
-                await self._handle_subscription_response(data)
-            
-            # Handle connect responses (already handled in connect method)
-            elif 'connect' in data:
-                logger.debug(f"Ramzinex connect response: {data}")
-            
-            # Handle disconnect messages
-            elif 'disconnect' in data:
-                logger.warning(f"Ramzinex server disconnect: {data}")
-                self.mark_connection_dead(f"Server disconnect: {data}")
-            
-            # Handle error messages
-            elif 'error' in data:
-                logger.error(f"Ramzinex error: {data}")
-            
+            # The centrifuge client automatically handles delta decompression
+            # ctx.pub.data contains the decompressed data
+            if hasattr(ctx, 'pub') and hasattr(ctx.pub, 'data'):
+                data = ctx.pub.data
             else:
-                logger.debug(f"Ramzinex unhandled message: {data}")
+                logger.warning(f"Ramzinex: No data in publication context for {pair_id}: {ctx}")
+                return
+            
+            if isinstance(data, (str, bytes)):
+                # Parse JSON if it's a string
+                if isinstance(data, bytes):
+                    data = data.decode('utf-8')
                 
+                try:
+                    orderbook_data = json.loads(data)
+                except json.JSONDecodeError as e:
+                    logger.warning(f"Ramzinex: Invalid JSON in published data for {pair_id}: {e}")
+                    return
+            elif isinstance(data, dict):
+                # Already parsed
+                orderbook_data = data
+            else:
+                logger.debug(f"Ramzinex: Unknown data format for {pair_id}: {type(data)}")
+                return
+            
+            # Process the orderbook data
+            await self._process_orderbook_data(pair_id, orderbook_data)
+            
         except Exception as e:
-            logger.error(f"Ramzinex message processing error: {e}")
-
-    async def _handle_server_ping(self):
-        """Handle server ping (empty JSON object)"""
-        try:
-            # Respond with pong (empty JSON object)
-            await self.websocket.send('{}')
-            self.update_ping_time()
-            logger.debug("Ramzinex pong sent in response to server ping")
-        except Exception as e:
-            logger.error(f"Ramzinex ping response error: {e}")
-
-    async def _handle_subscription_response(self, data: Dict[str, Any]):
-        """Handle subscription response with potential data"""
-        try:
-            subscribe_data = data.get('subscribe', {})
-            sub_id = data.get('id')
-            
-            logger.info(f"Ramzinex subscription response received for ID: {sub_id}")
-            
-            # Mark subscription as successful
-            pair_id = self.subscription_map.get(sub_id)
-            if pair_id:
-                self.subscribed_pairs.add(pair_id)
-                logger.info(f"Ramzinex confirmed subscription for pair {pair_id}")
-            
-            # Check if subscription response contains publications with data
-            publications = subscribe_data.get('publications', [])
-            
-            for publication in publications:
-                if 'data' in publication:
-                    try:
-                        # Parse the data field which contains JSON
-                        pub_data_str = publication['data']
-                        pub_data = json.loads(pub_data_str)
-                        
-                        # Process initial data if available
-                        if pair_id:
-                            await self._process_orderbook_data(pair_id, pub_data)
-                        else:
-                            logger.warning(f"Ramzinex: Unknown subscription ID: {sub_id}")
-                            
-                    except Exception as e:
-                        logger.error(f"Ramzinex error parsing subscription data: {e}")
-                        
-        except Exception as e:
-            logger.error(f"Ramzinex subscription response handling error: {e}")
-
-    async def _process_push_data(self, push_data: Dict[str, Any]):
-        """Process push data from Centrifugo"""
-        try:
-            channel = push_data.get('channel', '')
-            pub_data = push_data.get('pub', {})
-            
-            # Extract pair ID from channel name (e.g., "orderbook:432")
-            if channel.startswith('orderbook:'):
-                pair_id = channel.replace('orderbook:', '')
-                
-                # Parse the data field (per Ramzinex docs: can be JSON string or direct object)
-                data_str = pub_data.get('data', '')
-                if isinstance(data_str, str):
-                    try:
-                        # Parse JSON string format (per docs example)
-                        orderbook_data = json.loads(data_str)
-                        await self._process_orderbook_data(pair_id, orderbook_data)
-                    except json.JSONDecodeError:
-                        logger.debug(f"Ramzinex push data not valid JSON: {data_str[:100]}...")
-                    except Exception as e:
-                        logger.error(f"Ramzinex push data processing error: {e}")
-                elif isinstance(data_str, dict):
-                    # Direct object format
-                    await self._process_orderbook_data(pair_id, data_str)
-                else:
-                    logger.debug(f"Ramzinex unknown data format: {type(data_str)}")
-                    
-        except Exception as e:
-            logger.error(f"Ramzinex push data processing error: {e}")
+            logger.error(f"Ramzinex publish event processing error for {pair_id}: {e}")
 
     async def _process_orderbook_data(self, pair_id: str, orderbook_data: Dict[str, Any]):
         """Process orderbook data from Ramzinex"""
@@ -376,44 +264,26 @@ class RamzinexService(BaseExchangeService):
         """Parse price data (handled in _process_orderbook_data)"""
         return None
 
-    async def _ping_handler(self):
-        """Monitor connection health - server sends ping every 25s, we must respond with pong"""
-        logger.info("Ramzinex ping handler started - monitoring server pings (25s timeout per docs)")
-        
-        while self.is_connected and self.websocket:
-            try:
-                await asyncio.sleep(self.PING_CHECK_INTERVAL)
-                
-                if self.is_connected:
-                    # Check if we received a ping recently (per Ramzinex docs: 25s timeout)
-                    current_time = time.time()
-                    if self.last_ping_time > 0:
-                        ping_age = current_time - self.last_ping_time
-                        if ping_age > self.CENTRIFUGO_PING_TIMEOUT:
-                            logger.warning(f"Ramzinex: No ping from server for {ping_age:.1f}s - connection dead per docs (25s limit)")
-                            self.mark_connection_dead("Server ping timeout per docs")
-                            break
-                        logger.debug(f"Ramzinex connection healthy - last ping {ping_age:.1f}s ago")
-                    else:
-                        logger.debug("Ramzinex connection healthy - waiting for first ping")
-                    
-            except Exception as e:
-                logger.error(f"Ramzinex ping handler error: {e}")
-                break
-    
     async def disconnect(self):
         """Disconnect from Ramzinex"""
         await super().disconnect()
         
-        if self.websocket:
+        # Unsubscribe from all channels
+        for pair_id, subscription in self.subscriptions.items():
             try:
-                await self.websocket.close()
+                await subscription.unsubscribe()
+            except Exception as e:
+                logger.warning(f"Error unsubscribing from {pair_id}: {e}")
+        
+        # Close centrifuge client
+        if self.client:
+            try:
+                await self.client.disconnect()
             except:
                 pass
         
-        self.websocket = None
+        self.client = None
         self.subscribed_pairs.clear()
-        self.subscription_map.clear()
+        self.subscriptions.clear()
         self.pair_symbol_map.clear()
-        self.connection_id = None
-        logger.info("Ramzinex WebSocket disconnected")
+        logger.info("Ramzinex centrifuge client disconnected")
