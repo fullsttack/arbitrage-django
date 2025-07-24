@@ -157,16 +157,18 @@ class RamzinexService(BaseExchangeService):
                     # Store mapping for later reference
                     self.subscription_map[subscription_id] = pair_id
                     
-                    # Wait for subscription response
+                    # Wait for subscription response - don't mark as successful yet
                     await asyncio.sleep(0.5)
-                    
-                    self.subscribed_pairs.add(pair_id)
-                    successful_subscriptions += 1
-                    logger.info(f"Ramzinex subscribed to pair ID {pair_id} with subscription ID {subscription_id}")
+                    logger.info(f"Ramzinex sent subscription for pair ID {pair_id} with subscription ID {subscription_id}")
                     
                 except Exception as e:
                     logger.error(f"Ramzinex subscription error for pair {pair_id}: {e}")
         
+        # Wait for actual subscription confirmations
+        await asyncio.sleep(3)
+        
+        # Count actually confirmed subscriptions
+        successful_subscriptions = len(self.subscribed_pairs)
         logger.info(f"Ramzinex: Successfully subscribed to {successful_subscriptions}/{len(pairs)} pairs")
         return successful_subscriptions > 0
 
@@ -269,6 +271,12 @@ class RamzinexService(BaseExchangeService):
             
             logger.info(f"Ramzinex subscription response received for ID: {sub_id}")
             
+            # Mark subscription as successful
+            pair_id = self.subscription_map.get(sub_id)
+            if pair_id:
+                self.subscribed_pairs.add(pair_id)
+                logger.info(f"Ramzinex confirmed subscription for pair {pair_id}")
+            
             # Check if subscription response contains publications with data
             publications = subscribe_data.get('publications', [])
             
@@ -279,8 +287,7 @@ class RamzinexService(BaseExchangeService):
                         pub_data_str = publication['data']
                         pub_data = json.loads(pub_data_str)
                         
-                        # Get pair_id from subscription mapping
-                        pair_id = self.subscription_map.get(sub_id)
+                        # Process initial data if available
                         if pair_id:
                             await self._process_orderbook_data(pair_id, pub_data)
                         else:

@@ -60,8 +60,8 @@ class BaseExchangeService(ABC):
             current_time = time.time()
             key = f"{self.exchange_name}_{symbol}"
             
-            # Only broadcast if more than 2 seconds has passed since last broadcast for this symbol
-            if current_time - self._last_broadcast_time.get(key, 0) > 2:
+            # Only broadcast if more than 5 seconds has passed since last broadcast for this symbol
+            if current_time - self._last_broadcast_time.get(key, 0) > 5:
                 price_data = {
                     'exchange': self.exchange_name,
                     'symbol': symbol,
@@ -82,10 +82,10 @@ class BaseExchangeService(ABC):
                     )
                     self._last_broadcast_time[key] = current_time
                 except Exception as e:
-                    # Channel is full, skip this broadcast and throttle more
+                    # Channel is full, skip this broadcast and throttle more aggressively
                     logger.debug(f"Skipped broadcast for {key}: {e}")
                     # Increase throttling when channel is full
-                    self._last_broadcast_time[key] = current_time + 5  # Skip next 5 seconds
+                    self._last_broadcast_time[key] = current_time + 10  # Skip next 10 seconds
         
         logger.debug(f"Saved and broadcast {self.exchange_name} {symbol}: bid={bid_price}, ask={ask_price}")
 
