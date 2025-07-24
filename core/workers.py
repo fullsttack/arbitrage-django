@@ -210,9 +210,9 @@ class HighPerformanceWorkersManager:
         
         service = self.services[exchange_name]
         consecutive_failures = 0
-        max_consecutive_failures = 10
-        base_retry_delay = 5
-        max_retry_delay = 300  # 5 minutes
+        max_consecutive_failures = 15  # More tolerance for connection issues
+        base_retry_delay = 10  # Start with longer delay
+        max_retry_delay = 600  # 10 minutes max
         
         logger.info(f"Starting {exchange_name} worker with {len(pairs)} pairs")
         

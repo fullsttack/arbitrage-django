@@ -32,12 +32,14 @@ class WallexService(BaseExchangeService):
                     except:
                         pass
                 
-                # Simplified connection parameters - only use supported ones
+                # Simplified connection parameters - disable auto-ping for Wallex
                 self.websocket = await websockets.connect(
                     self.websocket_url,
-                    ping_interval=20,  # Built-in ping every 20 seconds
-                    ping_timeout=10,   # Wait 10 seconds for pong
-                    close_timeout=10
+                    ping_interval=None,  # Disable auto-ping - Wallex doesn't respond well
+                    ping_timeout=None,   # Disable ping timeout
+                    close_timeout=15,
+                    max_size=2**20,      # 1MB max message size
+                    max_queue=32         # Smaller queue for better performance
                 )
                 
                 self.is_connected = True
@@ -51,6 +53,9 @@ class WallexService(BaseExchangeService):
                 
                 # Start connection health checker
                 asyncio.create_task(self._connection_health_checker())
+                
+                # Start manual ping handler for Wallex
+                asyncio.create_task(self._manual_ping_handler())
                 
                 logger.info("Wallex WebSocket connected successfully")
                 return True
@@ -257,12 +262,12 @@ class WallexService(BaseExchangeService):
             required_fields = ['bid_price', 'ask_price', 'bid_volume', 'ask_volume']
             
             if all(key in data for key in required_fields):
-                # Check if data is not too old (max 30 seconds)
+                # Check if data is not too old (max 60 seconds for more tolerance)
                 current_time = time.time()
                 bid_age = current_time - data.get('bid_time', 0)
                 ask_age = current_time - data.get('ask_time', 0)
                 
-                if bid_age <= 30 and ask_age <= 30:
+                if bid_age <= 60 and ask_age <= 60:
                     await self.save_price_data(
                         symbol,
                         data['bid_price'],
@@ -272,7 +277,10 @@ class WallexService(BaseExchangeService):
                     )
                     logger.debug(f"Wallex {symbol}: bid={data['bid_price']}({data['bid_volume']}), ask={data['ask_price']}({data['ask_volume']})")
                 else:
-                    logger.warning(f"Wallex {symbol}: Data too old - bid: {bid_age:.1f}s, ask: {ask_age:.1f}s")
+                    logger.debug(f"Wallex {symbol}: Data too old - bid: {bid_age:.1f}s, ask: {ask_age:.1f}s")
+                    # Clear old data to prevent spam
+                    if bid_age > 120 or ask_age > 120:
+                        del self.partial_data[symbol]
             
         except Exception as e:
             logger.error(f"Wallex partial data storage error for {symbol}: {e}")
@@ -307,6 +315,28 @@ class WallexService(BaseExchangeService):
                         
             except Exception as e:
                 logger.error(f"Wallex connection health checker error: {e}")
+                break
+
+    async def _manual_ping_handler(self):
+        """Manual ping handler for Wallex - send periodic connection checks"""
+        ping_interval = 120  # Send ping every 2 minutes
+        
+        while self.is_connected and self.websocket:
+            try:
+                await asyncio.sleep(ping_interval)
+                
+                if self.is_connected and self.websocket:
+                    # Send a simple ping frame
+                    try:
+                        await self.websocket.ping()
+                        logger.debug("Wallex manual ping sent")
+                        self.update_ping_time()
+                    except Exception as ping_error:
+                        logger.warning(f"Wallex manual ping failed: {ping_error}")
+                        # Don't mark as dead immediately, let health check handle it
+                    
+            except Exception as e:
+                logger.error(f"Wallex manual ping handler error: {e}")
                 break
 
     def parse_price_data(self, data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
