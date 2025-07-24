@@ -16,6 +16,7 @@ class WallexService(BaseExchangeService):
         self.websocket = None
         self.subscribed_pairs = set()
         self.partial_data = {}  # Store partial orderbook data
+        self.pending_subscriptions = {}  # Track pending subscriptions
         
     async def connect(self):
         """Connect to Wallex WebSocket with enhanced error handling"""
@@ -65,7 +66,7 @@ class WallexService(BaseExchangeService):
                     return False
 
     async def subscribe_to_pairs(self, pairs: List[str]):
-        """Subscribe to trading pairs"""
+        """Subscribe to trading pairs with response validation"""
         if not self.is_connected or not self.websocket:
             logger.error("Wallex: Cannot subscribe - not connected")
             return False
@@ -79,18 +80,30 @@ class WallexService(BaseExchangeService):
                     subscribe_buy = ["subscribe", {"channel": f"{symbol}@buyDepth"}]
                     subscribe_sell = ["subscribe", {"channel": f"{symbol}@sellDepth"}]
                     
+                    logger.info(f"Wallex subscribing to {symbol}...")
                     await self.websocket.send(json.dumps(subscribe_buy))
-                    await asyncio.sleep(0.1)  # Small delay between subscriptions
+                    await asyncio.sleep(0.2)  # Wait for potential response
                     await self.websocket.send(json.dumps(subscribe_sell))
                     
-                    self.subscribed_pairs.add(symbol)
-                    successful_subscriptions += 1
-                    logger.info(f"Wallex subscribed to {symbol}")
+                    # Track pending subscription
+                    self.pending_subscriptions[symbol] = time.time()
                     
-                    await asyncio.sleep(0.1)  # Small delay between pairs
+                    await asyncio.sleep(0.3)  # Wait for potential subscription data
                     
                 except Exception as e:
                     logger.error(f"Wallex subscription error for {symbol}: {e}")
+        
+        # Wait a bit and check for actual data reception
+        await asyncio.sleep(2)
+        
+        # Count actually working subscriptions (those receiving data)
+        for symbol in pairs:
+            if symbol in self.partial_data or any(symbol in channel for channel in self.subscribed_pairs):
+                successful_subscriptions += 1
+                self.subscribed_pairs.add(symbol)
+                logger.info(f"Wallex confirmed subscription for {symbol}")
+            else:
+                logger.warning(f"Wallex no data received for {symbol}")
         
         logger.info(f"Wallex: Successfully subscribed to {successful_subscriptions}/{len(pairs)} pairs")
         return successful_subscriptions > 0
@@ -105,7 +118,7 @@ class WallexService(BaseExchangeService):
                 # Add timeout to detect silent disconnections
                 message = await asyncio.wait_for(
                     self.websocket.recv(), 
-                    timeout=self.MESSAGE_TIMEOUT + 10
+                    timeout=self.MESSAGE_TIMEOUT + 30  # Give extra time for first messages
                 )
                 
                 consecutive_errors = 0
@@ -121,7 +134,7 @@ class WallexService(BaseExchangeService):
                 await self._process_message(data)
                 
             except asyncio.TimeoutError:
-                logger.warning(f"Wallex: No message received for {self.MESSAGE_TIMEOUT + 10} seconds - connection may be dead")
+                logger.warning(f"Wallex: No message received for {self.MESSAGE_TIMEOUT + 30} seconds - connection may be dead")
                 self.mark_connection_dead("Message timeout")
                 break
                 
@@ -179,6 +192,11 @@ class WallexService(BaseExchangeService):
             else:
                 logger.debug(f"Wallex: Unknown channel format: {channel_name}")
                 return
+            
+            # Mark subscription as successful when we receive data
+            if symbol in self.pending_subscriptions:
+                logger.info(f"Wallex: Confirmed subscription for {symbol} via data reception")
+                del self.pending_subscriptions[symbol]
             
             if not orders_data:
                 logger.debug(f"Wallex: Empty orders data for {channel_name}")
@@ -308,4 +326,5 @@ class WallexService(BaseExchangeService):
         self.websocket = None
         self.subscribed_pairs.clear()
         self.partial_data.clear()
+        self.pending_subscriptions.clear()
         logger.info("Wallex WebSocket disconnected")

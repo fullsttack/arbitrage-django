@@ -107,7 +107,7 @@ class LBankService(BaseExchangeService):
                 # Add timeout to detect silent disconnections
                 message = await asyncio.wait_for(
                     self.websocket.recv(), 
-                    timeout=self.MESSAGE_TIMEOUT + 10  # Give some extra time
+                    timeout=self.MESSAGE_TIMEOUT + 30  # Give extra time for market data
                 )
                 
                 # Reset error counter on successful message
@@ -124,7 +124,7 @@ class LBankService(BaseExchangeService):
                 await self._process_message(data)
                 
             except asyncio.TimeoutError:
-                logger.warning(f"LBank: No message received for {self.MESSAGE_TIMEOUT + 10} seconds - connection may be dead")
+                logger.warning(f"LBank: No message received for {self.MESSAGE_TIMEOUT + 30} seconds - connection may be dead")
                 self.mark_connection_dead("Message timeout")
                 break
                 

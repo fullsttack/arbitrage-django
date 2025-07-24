@@ -24,9 +24,9 @@ class BaseExchangeService(ABC):
         self.connection_start_time = 0
         
         # Health check settings
-        self.MESSAGE_TIMEOUT = 60  # No message for 60 seconds = dead connection
-        self.DATA_TIMEOUT = 120    # No price data for 120 seconds = problem
-        self.PING_TIMEOUT = 35     # Ping response timeout
+        self.MESSAGE_TIMEOUT = 180  # No message for 3 minutes = dead connection
+        self.DATA_TIMEOUT = 300     # No price data for 5 minutes = problem
+        self.PING_TIMEOUT = 60      # Ping response timeout
         
         # Throttling for broadcasts
         self._last_broadcast_time = {}
