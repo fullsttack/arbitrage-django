@@ -23,13 +23,32 @@ class WallexService(BaseExchangeService):
         self.pong_count = 0  # Track PONG responses (100 max)
         self.last_server_ping_time = 0  # Track last server ping
         
-        # Message count reset timer
-        self.last_message_reset = 0
-        self.MESSAGE_RESET_INTERVAL = 180  # Reset counts every 3 minutes (کاهش از 5)
-        self.PREEMPTIVE_RECONNECT_THRESHOLD = 200  # Reconnect before server throttling
+        # Enhanced connection management
+        self.last_data_receive_time = 0
+        self.connection_restart_count = 0
+        self.MAX_RESTARTS_PER_HOUR = 10  # محدودیت restart
+        self.restart_times = []  # Track restart times
+        
+        # Subscription confirmation tracking  
+        self.confirmed_subscriptions = set()
+        self.subscription_timeout = 30  # Wait 30s for subscription confirmation
+        
+        # Wallex-specific optimizations
+        self.USE_ALL_PRICE_CHANNEL = False  # Alternative approach
         
     async def connect(self):
-        """Connect to Wallex WebSocket with enhanced error handling"""
+        """Enhanced connection with IP throttling awareness"""
+        # Clean old restart times (older than 1 hour)
+        current_time = time.time()
+        self.restart_times = [t for t in self.restart_times if current_time - t < 3600]
+        
+        # Check restart rate limit
+        if len(self.restart_times) >= self.MAX_RESTARTS_PER_HOUR:
+            wait_time = 3600 - (current_time - self.restart_times[0])
+            logger.warning(f"Wallex: Too many restarts ({len(self.restart_times)}/hour), waiting {wait_time:.0f}s")
+            await asyncio.sleep(min(300, wait_time))  # Max 5 minute wait
+            return False
+        
         max_retries = 5
         for attempt in range(max_retries):
             try:
@@ -42,110 +61,142 @@ class WallexService(BaseExchangeService):
                     except:
                         pass
                 
-                # Reset counters for new connection
+                # Reset all counters and tracking
                 self.pong_count = 0
                 self.message_count_per_channel.clear()
                 self.last_server_ping_time = 0
-                self.last_message_reset = time.time()
+                self.last_data_receive_time = 0
+                self.confirmed_subscriptions.clear()
                 
-                # Simplified connection parameters - disable auto-ping for Wallex
+                # Add random delay to avoid IP rate limiting
+                if attempt > 0:
+                    delay = random.uniform(2, 8)  # 2-8 seconds
+                    logger.info(f"Wallex: Adding random delay {delay:.1f}s to avoid IP throttling")
+                    await asyncio.sleep(delay)
+                
+                # Enhanced connection parameters
                 self.websocket = await websockets.connect(
                     self.websocket_url,
-                    ping_interval=None,  # Disable auto-ping - Wallex handles manually
-                    ping_timeout=None,   # Disable ping timeout
-                    close_timeout=15,
-                    max_size=2**20,      # 1MB max message size
-                    max_queue=32         # Smaller queue for better performance
+                    ping_interval=None,  # Manual ping handling
+                    ping_timeout=None,   
+                    close_timeout=10,
+                    max_size=2**20,      
+                    max_queue=16,        # Smaller queue to prevent memory issues
+                    compression=None     # Disable compression for simplicity
                 )
                 
                 self.is_connected = True
                 self.reset_connection_state()
-                self.connection_start_time = time.time()  # Track for 30min limit
+                self.connection_start_time = time.time()
+                self.restart_times.append(current_time)
+                self.connection_restart_count += 1
                 
-                # Start health monitoring
+                # Start monitoring tasks
                 asyncio.create_task(self.health_monitor())
-                
-                # Start message listener
                 asyncio.create_task(self._listen_messages())
+                asyncio.create_task(self._enhanced_health_checker())
                 
-                # Start connection health checker
-                asyncio.create_task(self._connection_health_checker())
-                
-                logger.info("Wallex WebSocket connected successfully")
+                logger.info(f"Wallex WebSocket connected successfully (restart #{self.connection_restart_count})")
                 return True
                 
             except Exception as e:
                 logger.error(f"Wallex connection attempt {attempt + 1} failed: {e}")
                 if attempt < max_retries - 1:
-                    wait_time = min(30, 2 ** attempt)
-                    logger.info(f"Wallex retrying in {wait_time} seconds...")
+                    # Exponential backoff with jitter
+                    wait_time = min(60, (2 ** attempt) + random.uniform(0, 5))
+                    logger.info(f"Wallex retrying in {wait_time:.1f} seconds...")
                     await asyncio.sleep(wait_time)
                 else:
                     self.mark_connection_dead(f"Failed after {max_retries} attempts: {e}")
                     return False
 
     async def subscribe_to_pairs(self, pairs: List[str]):
-        """Subscribe to trading pairs with response validation"""
+        """Enhanced subscription with better tracking and fallback"""
         if not self.is_connected or not self.websocket:
             logger.error("Wallex: Cannot subscribe - not connected")
             return False
         
+        logger.info(f"Wallex: Starting subscription to {len(pairs)} pairs: {pairs}")
+        
+        # Option 1: Try individual subscriptions first
+        success_count = await self._subscribe_individual_pairs(pairs)
+        
+        # Option 2: Fallback to all@price if individual fails
+        if success_count == 0 and not self.USE_ALL_PRICE_CHANNEL:
+            logger.warning("Wallex: Individual subscriptions failed, trying all@price channel")
+            await self._subscribe_all_price_channel()
+            self.USE_ALL_PRICE_CHANNEL = True
+        
+        # Wait for confirmations
+        await asyncio.sleep(5)
+        
+        # Check actual confirmations
+        confirmed_count = len(self.confirmed_subscriptions)
+        logger.info(f"Wallex: {confirmed_count}/{len(pairs)} subscriptions confirmed")
+        
+        return confirmed_count > 0 or self.USE_ALL_PRICE_CHANNEL
+
+    async def _subscribe_individual_pairs(self, pairs: List[str]) -> int:
+        """Subscribe to individual trading pairs"""
         successful_subscriptions = 0
         
         for symbol in pairs:
             if symbol not in self.subscribed_pairs:
                 try:
-                    # Subscribe to orderbook updates (buyDepth and sellDepth)
+                    # Add delay between subscriptions to avoid rate limiting
+                    if successful_subscriptions > 0:
+                        await asyncio.sleep(1)  # 1 second between subscriptions
+                    
+                    # Subscribe to both buy and sell depth
                     subscribe_buy = ["subscribe", {"channel": f"{symbol}@buyDepth"}]
                     subscribe_sell = ["subscribe", {"channel": f"{symbol}@sellDepth"}]
                     
-                    logger.info(f"Wallex subscribing to {symbol}...")
+                    logger.info(f"Wallex subscribing to {symbol} (buy/sell depth)...")
+                    
                     await self.websocket.send(json.dumps(subscribe_buy))
-                    await asyncio.sleep(0.2)  # Wait for potential response
+                    await asyncio.sleep(0.5)  # Wait between buy and sell
                     await self.websocket.send(json.dumps(subscribe_sell))
                     
                     # Track pending subscription
                     self.pending_subscriptions[symbol] = time.time()
                     
-                    # Initialize message counters for channels
+                    # Initialize message counters
                     self.message_count_per_channel[f"{symbol}@buyDepth"] = 0
                     self.message_count_per_channel[f"{symbol}@sellDepth"] = 0
                     
-                    await asyncio.sleep(0.3)  # Wait for potential subscription data
+                    successful_subscriptions += 1
                     
                 except Exception as e:
                     logger.error(f"Wallex subscription error for {symbol}: {e}")
         
-        # Wait a bit and check for actual data reception
-        await asyncio.sleep(2)
-        
-        # Count actually working subscriptions (those receiving data)
-        for symbol in pairs:
-            if symbol in self.partial_data or any(symbol in channel for channel in self.subscribed_pairs):
-                successful_subscriptions += 1
-                self.subscribed_pairs.add(symbol)
-                logger.info(f"Wallex confirmed subscription for {symbol}")
-            else:
-                logger.warning(f"Wallex no data received for {symbol}")
-        
-        logger.info(f"Wallex: Successfully subscribed to {successful_subscriptions}/{len(pairs)} pairs")
-        return successful_subscriptions > 0
+        return successful_subscriptions
+
+    async def _subscribe_all_price_channel(self):
+        """Fallback: Subscribe to all@price channel for all symbols"""
+        try:
+            subscribe_msg = ["subscribe", {"channel": "all@price"}]
+            logger.info("Wallex: Subscribing to all@price channel as fallback")
+            await self.websocket.send(json.dumps(subscribe_msg))
+            self.USE_ALL_PRICE_CHANNEL = True
+        except Exception as e:
+            logger.error(f"Wallex all@price subscription error: {e}")
 
     async def _listen_messages(self):
-        """Listen for WebSocket messages with enhanced error handling"""
+        """Enhanced message listener with better error handling"""
         consecutive_errors = 0
-        max_consecutive_errors = 5
+        max_consecutive_errors = 3  # More strict
         
         while self.is_connected and self.websocket:
             try:
-                # Add timeout to detect silent disconnections
+                # Shorter timeout for faster detection of issues
                 message = await asyncio.wait_for(
                     self.websocket.recv(), 
-                    timeout=self.MESSAGE_TIMEOUT + 30  # Give extra time for first messages
+                    timeout=60  # 1 minute timeout
                 )
                 
                 consecutive_errors = 0
                 self.update_message_time()
+                self.last_data_receive_time = time.time()
                 
                 # Parse message
                 try:
@@ -157,9 +208,9 @@ class WallexService(BaseExchangeService):
                 await self._process_message(data)
                 
             except asyncio.TimeoutError:
-                logger.warning(f"Wallex: No message received for {self.MESSAGE_TIMEOUT + 30} seconds - connection may be dead")
-                self.mark_connection_dead("Message timeout")
-                break
+                logger.warning("Wallex: Message timeout (60s) - checking connection health")
+                if not await self._check_connection_health():
+                    break
                 
             except websockets.exceptions.ConnectionClosed as e:
                 logger.warning(f"Wallex WebSocket connection closed: {e}")
@@ -177,26 +228,59 @@ class WallexService(BaseExchangeService):
                 
                 await asyncio.sleep(1)
 
-    async def _process_message(self, data):
-        """Process messages from Wallex WebSocket with PING/PONG support"""
+    async def _check_connection_health(self) -> bool:
+        """Enhanced connection health check"""
+        current_time = time.time()
+        
+        # Check if we received any data recently
+        if self.last_data_receive_time > 0:
+            time_since_data = current_time - self.last_data_receive_time
+            if time_since_data > 120:  # 2 minutes without data
+                logger.warning(f"Wallex: No data received for {time_since_data:.1f}s - possible server throttling")
+                return False
+        
+        # Check WebSocket state
+        if hasattr(self.websocket, 'closed') and self.websocket.closed:
+            logger.warning("Wallex: WebSocket is closed")
+            return False
+        
+        # Send a ping to test connection
         try:
-            # Handle server PING - Wallex sends PING every 20 seconds
+            ping_id = f"health-check-{int(current_time)}"
+            ping_msg = {"ping": ping_id}
+            await self.websocket.send(json.dumps(ping_msg))
+            logger.debug("Wallex: Sent health check ping")
+        except Exception as e:
+            logger.error(f"Wallex: Failed to send health check ping: {e}")
+            return False
+        
+        return True
+
+    async def _process_message(self, data):
+        """Enhanced message processing with subscription tracking"""
+        try:
+            # Handle server PING
             if isinstance(data, dict) and 'ping' in data:
                 await self._handle_server_ping(data)
                 return
             
-            # Process depth data - Wallex format: [channel_name, data_array]
+            # Handle subscription confirmations
+            if isinstance(data, dict) and ('result' in data or 'success' in data):
+                logger.debug(f"Wallex subscription response: {data}")
+                return
+                
+            # Handle errors
+            if isinstance(data, dict) and 'error' in data:
+                logger.warning(f"Wallex error: {data}")
+                return
+            
+            # Process depth data - format: [channel_name, data_array]
             if isinstance(data, list) and len(data) == 2:
                 await self._process_depth_data(data)
-            
-            # Handle subscription confirmations
-            elif isinstance(data, dict):
-                if 'result' in data or 'success' in data:
-                    logger.debug(f"Wallex subscription response: {data}")
-                elif 'error' in data:
-                    logger.warning(f"Wallex error: {data}")
-                else:
-                    logger.debug(f"Wallex unhandled message: {data}")
+                
+            # Process all@price data
+            elif isinstance(data, list) and len(data) == 2 and data[0] == "all@price":
+                await self._process_all_price_data(data)
             
             else:
                 logger.debug(f"Wallex unhandled message format: {data}")
@@ -204,61 +288,43 @@ class WallexService(BaseExchangeService):
         except Exception as e:
             logger.error(f"Wallex message processing error: {e}")
 
-    async def _handle_server_ping(self, data: Dict[str, Any]):
-        """Handle server PING from Wallex according to documentation"""
+    async def _process_all_price_data(self, data: list):
+        """Process all@price channel data"""
         try:
-            ping_id = data.get('ping')
-            if ping_id:
-                # Check PONG limit (max 100 per connection)
-                if self.pong_count >= 100:
-                    logger.warning("Wallex: PONG limit reached (100), need to reconnect")
-                    self.mark_connection_dead("PONG limit reached")
-                    return
+            price_info = data[1]
+            symbol = price_info.get('symbol', '')
+            price = price_info.get('price', 0)
+            
+            if symbol and price:
+                # Convert to standard format for consistency
+                price_decimal = Decimal(str(price))
                 
-                # Send PONG response
-                pong_msg = {"pong": ping_id}
-                await self.websocket.send(json.dumps(pong_msg))
+                # For all@price, we only get the current price, not bid/ask separately
+                # Use price as both bid and ask with small spread
+                spread = price_decimal * Decimal('0.001')  # 0.1% spread assumption
+                bid_price = price_decimal - spread
+                ask_price = price_decimal + spread
                 
-                self.pong_count += 1
-                self.last_server_ping_time = time.time()
-                self.update_ping_time()
+                await self.save_price_data(
+                    symbol, 
+                    bid_price, 
+                    ask_price, 
+                    Decimal('1000'),  # Default volume
+                    Decimal('1000')
+                )
                 
-                logger.debug(f"Wallex responded to server ping {ping_id} (PONG #{self.pong_count}/100)")
-                
-                # According to docs: each PONG adds 30 seconds to connection time
-                # This is handled automatically by the server
-                
-            else:
-                logger.warning(f"Wallex: Could not extract ping ID from: {data}")
+                logger.debug(f"Wallex all@price {symbol}: {price}")
                 
         except Exception as e:
-            logger.error(f"Wallex PING handling error: {e}")
+            logger.error(f"Wallex all@price processing error: {e}")
 
     async def _process_depth_data(self, data: list):
-        """Process depth data from Wallex WebSocket with improved rate limiting"""
+        """Process individual depth data with subscription confirmation"""
         try:
-            channel_name = data[0]  # e.g., "USDTTMN@buyDepth" 
+            channel_name = data[0]  # e.g., "DOGEUSDT@buyDepth"
             orders_data = data[1]   # Array of order objects
             
-            # Initialize channel tracking if needed
-            if channel_name not in self.message_count_per_channel:
-                self.message_count_per_channel[channel_name] = 0
-            
-            # Increment message count
-            self.message_count_per_channel[channel_name] += 1
-            current_count = self.message_count_per_channel[channel_name]
-            
-            # بهبود throttling - حدود بالاتر و کمتر aggressive
-            if current_count > 100:  # شروع throttling از 100 (قبلاً 40)
-                if current_count % 20 == 0:  # Log every 20th message
-                    logger.warning(f"Wallex: Channel {channel_name} high traffic ({current_count} messages), throttling")
-                
-                # Drop فقط 50% از messages وقتی خیلی زیاد شد (قبلاً 80%)
-                if current_count > 300:  # حد بالاتر (قبلاً 50)
-                    if random.random() < 0.5:  # Drop 50% (قبلاً 80%)
-                        return
-            
-            # Extract symbol and type from channel name
+            # Extract symbol from channel
             if '@buyDepth' in channel_name:
                 symbol = channel_name.replace('@buyDepth', '')
                 order_type = 'buy'
@@ -269,208 +335,178 @@ class WallexService(BaseExchangeService):
                 logger.debug(f"Wallex: Unknown channel format: {channel_name}")
                 return
             
-            # Mark subscription as successful when we receive data
+            # Mark subscription as confirmed
+            if symbol not in self.confirmed_subscriptions:
+                self.confirmed_subscriptions.add(symbol)
+                logger.info(f"Wallex: Confirmed subscription for {symbol}")
+                
+            # Remove from pending
             if symbol in self.pending_subscriptions:
-                logger.info(f"Wallex: Confirmed subscription for {symbol} via data reception")
                 del self.pending_subscriptions[symbol]
             
-            if not orders_data:
-                logger.debug(f"Wallex: Empty orders data for {channel_name}")
+            # Count messages
+            if channel_name not in self.message_count_per_channel:
+                self.message_count_per_channel[channel_name] = 0
+            self.message_count_per_channel[channel_name] += 1
+            
+            # Process order data
+            if not orders_data or not isinstance(orders_data, list):
                 return
             
-            # Validate order data structure
-            if not isinstance(orders_data, list) or not orders_data:
-                logger.warning(f"Wallex: Invalid orders data format for {channel_name}: {orders_data}")
-                return
-            
-            # Store the latest price from this channel with throttling
+            # Store price data
             if order_type == 'buy' and orders_data:
-                # Best bid (highest buy price) is first in buy orders
                 best_order = orders_data[0]
                 if isinstance(best_order, dict) and 'price' in best_order and 'quantity' in best_order:
                     bid_price = Decimal(str(best_order['price']))
                     bid_volume = Decimal(str(best_order['quantity']))
-                    
-                    # Store bid data temporarily until we get ask data
                     await self._store_partial_data_optimized(symbol, bid_price=bid_price, bid_volume=bid_volume)
-                else:
-                    logger.warning(f"Wallex: Invalid buy order format: {best_order}")
-                
+                    
             elif order_type == 'sell' and orders_data:
-                # Best ask (lowest sell price) is first in sell orders
                 best_order = orders_data[0]
                 if isinstance(best_order, dict) and 'price' in best_order and 'quantity' in best_order:
                     ask_price = Decimal(str(best_order['price']))
                     ask_volume = Decimal(str(best_order['quantity']))
-                    
-                    # Store ask data temporarily until we get bid data
                     await self._store_partial_data_optimized(symbol, ask_price=ask_price, ask_volume=ask_volume)
-                else:
-                    logger.warning(f"Wallex: Invalid sell order format: {best_order}")
             
         except Exception as e:
             logger.error(f"Wallex depth data processing error: {e}")
-    
+
     async def _store_partial_data_optimized(self, symbol: str, bid_price=None, ask_price=None, bid_volume=None, ask_volume=None):
-        """Store partial order book data with optimized throttling"""
+        """Optimized partial data storage with reduced saves"""
         try:
             if symbol not in self.partial_data:
                 self.partial_data[symbol] = {}
             
             current_time = time.time()
+            data = self.partial_data[symbol]
             
-            # Update partial data
+            # Update data
             if bid_price is not None:
-                self.partial_data[symbol]['bid_price'] = bid_price
-                self.partial_data[symbol]['bid_volume'] = bid_volume
-                self.partial_data[symbol]['bid_time'] = current_time
+                data['bid_price'] = bid_price
+                data['bid_volume'] = bid_volume
+                data['bid_time'] = current_time
             
             if ask_price is not None:
-                self.partial_data[symbol]['ask_price'] = ask_price
-                self.partial_data[symbol]['ask_volume'] = ask_volume
-                self.partial_data[symbol]['ask_time'] = current_time
+                data['ask_price'] = ask_price
+                data['ask_volume'] = ask_volume
+                data['ask_time'] = current_time
             
-            # Check if we have both bid and ask data
-            data = self.partial_data[symbol]
+            # Save only when we have both bid and ask
             required_fields = ['bid_price', 'ask_price', 'bid_volume', 'ask_volume']
-            
             if all(key in data for key in required_fields):
-                # بهبود throttling - کمتر aggressive
                 last_save_time = data.get('last_save_time', 0)
-                last_saved_bid = data.get('last_saved_bid', 0)
-                last_saved_ask = data.get('last_saved_ask', 0)
                 
-                # Calculate change percentages
-                bid_change = abs(float(data['bid_price']) - last_saved_bid) / max(last_saved_bid, 0.0001) if last_saved_bid > 0 else 1
-                ask_change = abs(float(data['ask_price']) - last_saved_ask) / max(last_saved_ask, 0.0001) if last_saved_ask > 0 else 1
-                time_since_save = current_time - last_save_time
-                
-                # کم کردن threshold برای save کردن بیشتر داده‌ها
-                should_save = (
-                    bid_change > 0.0005 or   # 0.05% change in bid (قبلاً 0.1%)
-                    ask_change > 0.0005 or   # 0.05% change in ask (قبلاً 0.1%)
-                    time_since_save > 5      # 5 seconds since last save (قبلاً 10)
-                )
-                
-                if should_save:
-                    bid_age = current_time - data.get('bid_time', 0)
-                    ask_age = current_time - data.get('ask_time', 0)
+                # Save less frequently to reduce Redis load
+                if current_time - last_save_time > 3:  # Save every 3 seconds max
+                    await self.save_price_data(
+                        symbol,
+                        data['bid_price'],
+                        data['ask_price'],
+                        data['bid_volume'],
+                        data['ask_volume']
+                    )
                     
-                    if bid_age <= 60 and ask_age <= 60:
-                        await self.save_price_data(
-                            symbol,
-                            data['bid_price'],
-                            data['ask_price'],
-                            data['bid_volume'],
-                            data['ask_volume']
-                        )
-                        
-                        # Update tracking
-                        data['last_save_time'] = current_time
-                        data['last_saved_bid'] = float(data['bid_price'])
-                        data['last_saved_ask'] = float(data['ask_price'])
-                        
-                        logger.debug(f"Wallex {symbol}: bid={data['bid_price']}({data['bid_volume']}), ask={data['ask_price']}({data['ask_volume']}) [saved]")
-                    else:
-                        logger.debug(f"Wallex {symbol}: Data too old - bid: {bid_age:.1f}s, ask: {ask_age:.1f}s")
-                        # Clear old data
-                        if bid_age > 120 or ask_age > 120:
-                            del self.partial_data[symbol]
+                    data['last_save_time'] = current_time
+                    logger.debug(f"Wallex {symbol}: bid={data['bid_price']}, ask={data['ask_price']} [saved]")
             
         except Exception as e:
-            logger.error(f"Wallex optimized partial data storage error for {symbol}: {e}")
-    
-    async def _connection_health_checker(self):
-        """Improved connection health checker for Wallex with message count reset"""
+            logger.error(f"Wallex partial data storage error for {symbol}: {e}")
+
+    async def _handle_server_ping(self, data: Dict[str, Any]):
+        """Handle server PING with PONG limit awareness"""
+        try:
+            ping_id = data.get('ping')
+            if ping_id:
+                # Check PONG limit
+                if self.pong_count >= 95:  # Conservative limit
+                    logger.warning(f"Wallex: PONG limit approaching ({self.pong_count}/100), reconnecting preemptively")
+                    self.mark_connection_dead("PONG limit approaching")
+                    return
+                
+                # Send PONG response
+                pong_msg = {"pong": ping_id}
+                await self.websocket.send(json.dumps(pong_msg))
+                
+                self.pong_count += 1
+                self.last_server_ping_time = time.time()
+                self.update_ping_time()
+                
+                logger.debug(f"Wallex PONG sent ({self.pong_count}/100)")
+                
+        except Exception as e:
+            logger.error(f"Wallex PING handling error: {e}")
+
+    async def _enhanced_health_checker(self):
+        """Enhanced health checker with proactive reconnection"""
         while self.is_connected and self.websocket:
             try:
                 await asyncio.sleep(30)  # Check every 30 seconds
                 
-                if self.is_connected:
-                    current_time = time.time()
-                    
-                    # Check for server-side throttling and preemptive reconnect
-                    max_messages_any_channel = max(self.message_count_per_channel.values()) if self.message_count_per_channel else 0
-                    
-                    # اگر message count خیلی بالا رفت، قبل از server throttling reconnect کن
-                    if max_messages_any_channel > 200:
-                        logger.warning(f"Wallex: High message count ({max_messages_any_channel}), preemptive reconnect to avoid server throttling")
-                        self.mark_connection_dead("Preemptive reconnect - high message count")
+                if not self.is_connected:
+                    break
+                
+                current_time = time.time()
+                
+                # Check data flow
+                if self.last_data_receive_time > 0:
+                    time_since_data = current_time - self.last_data_receive_time
+                    if time_since_data > 90:  # 1.5 minutes without data
+                        logger.warning(f"Wallex: No data for {time_since_data:.1f}s - reconnecting proactively")
+                        self.mark_connection_dead("Proactive reconnect - no data")
                         break
-                    
-                    # Reset message counts every 3 minutes (کاهش از 5 به 3)
-                    if current_time - self.last_message_reset > 180:  # 3 minutes
-                        old_max = max(self.message_count_per_channel.values()) if self.message_count_per_channel else 0
-                        if old_max > 100:  # فقط اگر واقعاً traffic زیاد بوده
-                            logger.info(f"Wallex: Reset message counts (max was {old_max}) - monitoring for server throttling")
-                        self.message_count_per_channel.clear()
-                        self.last_message_reset = current_time
-                    
-                    # Clean up old partial data
-                    symbols_to_clean = []
-                    
-                    for symbol, data in self.partial_data.items():
-                        bid_time = data.get('bid_time', 0)
-                        ask_time = data.get('ask_time', 0)
-                        
-                        if current_time - max(bid_time, ask_time) > 60:  # Data older than 1 minute
-                            symbols_to_clean.append(symbol)
-                    
-                    for symbol in symbols_to_clean:
-                        del self.partial_data[symbol]
-                        logger.debug(f"Wallex: Cleaned old partial data for {symbol}")
-                    
-                    # Check WebSocket connection state
-                    if hasattr(self.websocket, 'closed') and self.websocket.closed:
-                        logger.warning("Wallex: WebSocket is closed but marked as connected")
-                        self.mark_connection_dead("WebSocket closed")
+                
+                # Check 25-minute limit (before 30-minute Wallex limit)
+                if self.connection_start_time > 0:
+                    connection_age = current_time - self.connection_start_time
+                    if connection_age > 1500:  # 25 minutes
+                        logger.info("Wallex: Approaching 30min limit, reconnecting...")
+                        self.mark_connection_dead("25min proactive reconnect")
                         break
-                    
-                    # Check 30-minute connection limit (per Wallex docs)
-                    if self.connection_start_time > 0:
-                        connection_age = current_time - self.connection_start_time
-                        if connection_age > 1500:  # 25 minutes (preemptive reconnect)
-                            logger.info("Wallex: Approaching 30min connection limit, reconnecting...")
-                            self.mark_connection_dead("30min connection limit approaching")
-                            break
-                    
-                    # Check PONG limit
-                    if self.pong_count >= 95:  # Warn before reaching limit
-                        logger.warning(f"Wallex: PONG count approaching limit ({self.pong_count}/100)")
-                    
-                    # بهبود - حد بالاتر برای message count
-                    max_messages_any_channel = max(self.message_count_per_channel.values()) if self.message_count_per_channel else 0
-                    if max_messages_any_channel > 500:  # افزایش از 200 به 500
-                        logger.warning(f"Wallex: Message count very high ({max_messages_any_channel}), forcing reconnect")
-                        self.mark_connection_dead("Message count limit exceeded")
-                        break
-                    elif max_messages_any_channel > 300:  # هشدار در 300
-                        logger.warning(f"Wallex: Message count high ({max_messages_any_channel}), monitoring...")
-                        
-                    if self.last_server_ping_time > 0:
-                        ping_age = current_time - self.last_server_ping_time
-                        if ping_age > 60:  # No ping for 60 seconds is suspicious
-                            logger.warning(f"Wallex: No server ping for {ping_age:.1f}s (expected every 20s)")
-                        
+                
+                # Check PONG count
+                if self.pong_count >= 90:  # Before hitting 100 limit
+                    logger.warning(f"Wallex: PONG count high ({self.pong_count}/100), reconnecting...")
+                    self.mark_connection_dead("High PONG count")
+                    break
+                
+                # Clean old partial data
+                self._cleanup_old_data(current_time)
+                
             except Exception as e:
-                logger.error(f"Wallex connection health checker error: {e}")
+                logger.error(f"Wallex enhanced health checker error: {e}")
                 break
 
+    def _cleanup_old_data(self, current_time: float):
+        """Clean up old partial data"""
+        symbols_to_clean = []
+        
+        for symbol, data in self.partial_data.items():
+            bid_time = data.get('bid_time', 0)
+            ask_time = data.get('ask_time', 0)
+            max_age = max(bid_time, ask_time)
+            
+            if current_time - max_age > 300:  # 5 minutes old
+                symbols_to_clean.append(symbol)
+        
+        for symbol in symbols_to_clean:
+            del self.partial_data[symbol]
+            logger.debug(f"Wallex: Cleaned old data for {symbol}")
+
     def parse_price_data(self, data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
-        """Parse price data (handled in _process_depth_data)"""
+        """Parse price data (handled in message processing)"""
         return None
 
     def reset_connection_state(self):
-        """Reset all connection tracking"""
+        """Reset connection state"""
         super().reset_connection_state()
         self.pong_count = 0
         self.message_count_per_channel.clear()
         self.last_server_ping_time = 0
-        self.last_message_reset = time.time()
-        # Don't clear partial_data here as it may contain useful info
+        self.last_data_receive_time = 0
+        self.confirmed_subscriptions.clear()
 
     async def disconnect(self):
-        """Disconnect from Wallex"""
+        """Clean disconnect"""
         await super().disconnect()
         
         if self.websocket:
@@ -484,8 +520,10 @@ class WallexService(BaseExchangeService):
         self.partial_data.clear()
         self.pending_subscriptions.clear()
         self.message_count_per_channel.clear()
+        self.confirmed_subscriptions.clear()
         self.connection_start_time = 0
         self.pong_count = 0
         self.last_server_ping_time = 0
-        self.last_message_reset = 0
-        logger.info("Wallex WebSocket disconnected")
+        self.last_data_receive_time = 0
+        
+        logger.info("Wallex WebSocket disconnected cleanly")
