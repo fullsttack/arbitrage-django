@@ -603,24 +603,6 @@
                 this.init();
             }
 
-            cleanupOldOpportunities() {
-                const currentTime = Date.now() / 1000;
-                const maxAge = 300; // 5 minutes
-                
-                this.allOpportunitiesData = this.allOpportunitiesData.filter(opp => {
-                    const oppTime = opp.last_seen || opp.timestamp || 0;
-                    const isValid = (currentTime - oppTime) <= maxAge;
-                    
-                    if (!isValid && opp.frontend_key) {
-                        this.opportunitiesMap.delete(opp.frontend_key);
-                    }
-                    
-                    return isValid;
-                });
-                
-                this.applyOpportunityFilters();
-            }
-
             init() {
                 this.setupTabs();
                 this.setupPagination();
@@ -631,15 +613,11 @@
                     this.setupWebSocket();
                     this.isInitialDataLoaded = true;
                 }).catch(error => {
-                    console.error('Failed to load initial data:', error);
                     this.setupWebSocket();
                 });
                 
                 // Auto-refresh stats every 30 seconds
                 setInterval(() => this.loadSystemStats(), 30000);
-                
-                // Cleanup old opportunities every 60 seconds
-                setInterval(() => this.cleanupOldOpportunities(), 60000);
                 
                 // Update performance metrics every minute
                 setInterval(() => this.updatePerformanceMetrics(), 60000);
