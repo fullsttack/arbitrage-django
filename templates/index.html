@@ -611,11 +611,8 @@
                     // Update table
                     this.updateOpportunitiesTable();
                     
-                    // Update stats count (use local data count)
-                    document.getElementById('stat-opportunities').textContent = this.opportunitiesData ? this.opportunitiesData.length : 0;
-                    
-                    // DON'T update best opportunity from local data - keep API value
-                    // this.updateBestOpportunityFromData(); // REMOVED
+                    // Update best opportunity
+                    this.updateBestOpportunityFromData();
                     
                     // Show notification for high profit opportunities
                     const highProfitOpps = trulyNewOpportunities.filter(opp => opp.profit_percentage > 1.5);
@@ -873,8 +870,7 @@
             }
 
             updateSystemStats(stats) {
-                // Use local count instead of Redis total to avoid confusion
-                document.getElementById('stat-opportunities').textContent = this.opportunitiesData ? this.opportunitiesData.length : 0;
+                document.getElementById('stat-opportunities').textContent = stats.opportunities_count || 0;
                 document.getElementById('stat-prices').textContent = stats.prices_count || 0;
                 document.getElementById('stat-memory').textContent = stats.redis_memory || 'N/A';
                 document.getElementById('stat-health').textContent = `${stats.redis_clients || 0} clients`;
