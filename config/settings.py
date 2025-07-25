@@ -136,7 +136,7 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-CSRF_TRUSTED_ORIGINS = ['https://pardak.ir']
+CSRF_TRUSTED_ORIGINS = ['https://pardak.ir','http://arbit.yaranejan.com','https://arbit.yaranejan.com','wss://arbit.yaranejan.com']
 CSRF_COOKIE_SECURE = True  # If using HTTPS
 SESSION_COOKIE_SECURE = True  # If using HTTPS
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
