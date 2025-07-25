@@ -96,6 +96,10 @@ CHANNEL_LAYERS = {
         'BACKEND': 'channels_redis.core.RedisChannelLayer',
         'CONFIG': {
             'hosts': [(REDIS_HOST, REDIS_PORT)],
+            'capacity': 5000,  # افزایش از 100 به 5000
+            'expiry': 60,      # پیام‌ها 60 ثانیه expire می‌شوند
+            'group_expiry': 86400,  # گروه‌ها 24 ساعت
+            'symmetric_encryption_keys': None,
         },
     },
 }

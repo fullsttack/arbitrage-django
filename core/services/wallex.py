@@ -1,6 +1,7 @@
 import asyncio
 import json
 import logging
+import random
 import websockets
 import time
 from decimal import Decimal
@@ -39,6 +40,7 @@ class WallexService(BaseExchangeService):
                 # Reset counters for new connection
                 self.pong_count = 0
                 self.message_count_per_channel.clear()
+                self.last_server_ping_time = 0
                 
                 # Simplified connection parameters - disable auto-ping for Wallex
                 self.websocket = await websockets.connect(
@@ -227,16 +229,28 @@ class WallexService(BaseExchangeService):
             logger.error(f"Wallex PING handling error: {e}")
 
     async def _process_depth_data(self, data: list):
-        """Process depth data from Wallex WebSocket"""
+        """Process depth data from Wallex WebSocket with rate limiting"""
         try:
             channel_name = data[0]  # e.g., "USDTTMN@buyDepth" 
             orders_data = data[1]   # Array of order objects
             
-            # Track message count per channel (max 50 per channel)
-            if channel_name in self.message_count_per_channel:
-                self.message_count_per_channel[channel_name] += 1
-                if self.message_count_per_channel[channel_name] > 45:  # Warn before limit
-                    logger.warning(f"Wallex: Channel {channel_name} approaching message limit ({self.message_count_per_channel[channel_name]}/50)")
+            # Initialize channel tracking if needed
+            if channel_name not in self.message_count_per_channel:
+                self.message_count_per_channel[channel_name] = 0
+            
+            # Rate limiting: too many messages from server
+            self.message_count_per_channel[channel_name] += 1
+            current_count = self.message_count_per_channel[channel_name]
+            
+            # If approaching dangerous levels, start dropping messages
+            if current_count > 40:  # Start throttling at 40
+                if current_count % 10 == 0:  # Log every 10th message
+                    logger.warning(f"Wallex: Channel {channel_name} high traffic ({current_count} messages), throttling")
+                
+                # Drop 80% of messages when over limit to reduce load
+                if current_count > 50:
+                    if random.random() < 0.8:  # Drop 80% of messages
+                        return
             
             # Extract symbol and type from channel name
             if '@buyDepth' in channel_name:
@@ -263,7 +277,7 @@ class WallexService(BaseExchangeService):
                 logger.warning(f"Wallex: Invalid orders data format for {channel_name}: {orders_data}")
                 return
             
-            # Store the latest price from this channel
+            # Store the latest price from this channel with throttling
             if order_type == 'buy' and orders_data:
                 # Best bid (highest buy price) is first in buy orders
                 best_order = orders_data[0]
@@ -272,7 +286,7 @@ class WallexService(BaseExchangeService):
                     bid_volume = Decimal(str(best_order['quantity']))
                     
                     # Store bid data temporarily until we get ask data
-                    await self._store_partial_data(symbol, bid_price=bid_price, bid_volume=bid_volume)
+                    await self._store_partial_data_throttled(symbol, bid_price=bid_price, bid_volume=bid_volume)
                 else:
                     logger.warning(f"Wallex: Invalid buy order format: {best_order}")
                 
@@ -284,58 +298,82 @@ class WallexService(BaseExchangeService):
                     ask_volume = Decimal(str(best_order['quantity']))
                     
                     # Store ask data temporarily until we get bid data
-                    await self._store_partial_data(symbol, ask_price=ask_price, ask_volume=ask_volume)
+                    await self._store_partial_data_throttled(symbol, ask_price=ask_price, ask_volume=ask_volume)
                 else:
                     logger.warning(f"Wallex: Invalid sell order format: {best_order}")
             
         except Exception as e:
             logger.error(f"Wallex depth data processing error: {e}")
     
-    async def _store_partial_data(self, symbol: str, bid_price=None, ask_price=None, bid_volume=None, ask_volume=None):
-        """Store partial order book data and save when both bid and ask are available"""
+    async def _store_partial_data_throttled(self, symbol: str, bid_price=None, ask_price=None, bid_volume=None, ask_volume=None):
+        """Store partial order book data with aggressive throttling"""
         try:
             if symbol not in self.partial_data:
                 self.partial_data[symbol] = {}
+            
+            current_time = time.time()
             
             # Update partial data
             if bid_price is not None:
                 self.partial_data[symbol]['bid_price'] = bid_price
                 self.partial_data[symbol]['bid_volume'] = bid_volume
-                self.partial_data[symbol]['bid_time'] = time.time()
+                self.partial_data[symbol]['bid_time'] = current_time
             
             if ask_price is not None:
                 self.partial_data[symbol]['ask_price'] = ask_price
                 self.partial_data[symbol]['ask_volume'] = ask_volume
-                self.partial_data[symbol]['ask_time'] = time.time()
+                self.partial_data[symbol]['ask_time'] = current_time
             
             # Check if we have both bid and ask data
             data = self.partial_data[symbol]
             required_fields = ['bid_price', 'ask_price', 'bid_volume', 'ask_volume']
             
             if all(key in data for key in required_fields):
-                # Check if data is not too old (max 60 seconds for more tolerance)
-                current_time = time.time()
-                bid_age = current_time - data.get('bid_time', 0)
-                ask_age = current_time - data.get('ask_time', 0)
+                # Aggressive throttling: only save if significant change or time passed
+                last_save_time = data.get('last_save_time', 0)
+                last_saved_bid = data.get('last_saved_bid', 0)
+                last_saved_ask = data.get('last_saved_ask', 0)
                 
-                if bid_age <= 60 and ask_age <= 60:
-                    await self.save_price_data(
-                        symbol,
-                        data['bid_price'],
-                        data['ask_price'],
-                        data['bid_volume'],
-                        data['ask_volume']
-                    )
-                    logger.debug(f"Wallex {symbol}: bid={data['bid_price']}({data['bid_volume']}), ask={data['ask_price']}({data['ask_volume']})")
-                else:
-                    logger.debug(f"Wallex {symbol}: Data too old - bid: {bid_age:.1f}s, ask: {ask_age:.1f}s")
-                    # Clear old data to prevent spam
-                    if bid_age > 120 or ask_age > 120:
-                        del self.partial_data[symbol]
+                # Calculate change percentages
+                bid_change = abs(float(data['bid_price']) - last_saved_bid) / max(last_saved_bid, 0.0001) if last_saved_bid > 0 else 1
+                ask_change = abs(float(data['ask_price']) - last_saved_ask) / max(last_saved_ask, 0.0001) if last_saved_ask > 0 else 1
+                time_since_save = current_time - last_save_time
+                
+                # Only save if significant change (>0.1%) OR 10+ seconds passed
+                should_save = (
+                    bid_change > 0.001 or   # 0.1% change in bid
+                    ask_change > 0.001 or   # 0.1% change in ask  
+                    time_since_save > 10    # 10 seconds since last save
+                )
+                
+                if should_save:
+                    bid_age = current_time - data.get('bid_time', 0)
+                    ask_age = current_time - data.get('ask_time', 0)
+                    
+                    if bid_age <= 60 and ask_age <= 60:
+                        await self.save_price_data(
+                            symbol,
+                            data['bid_price'],
+                            data['ask_price'],
+                            data['bid_volume'],
+                            data['ask_volume']
+                        )
+                        
+                        # Update tracking
+                        data['last_save_time'] = current_time
+                        data['last_saved_bid'] = float(data['bid_price'])
+                        data['last_saved_ask'] = float(data['ask_price'])
+                        
+                        logger.debug(f"Wallex {symbol}: bid={data['bid_price']}({data['bid_volume']}), ask={data['ask_price']}({data['ask_volume']}) [saved]")
+                    else:
+                        logger.debug(f"Wallex {symbol}: Data too old - bid: {bid_age:.1f}s, ask: {ask_age:.1f}s")
+                        # Clear old data
+                        if bid_age > 120 or ask_age > 120:
+                            del self.partial_data[symbol]
             
         except Exception as e:
-            logger.error(f"Wallex partial data storage error for {symbol}: {e}")
-
+            logger.error(f"Wallex throttled partial data storage error for {symbol}: {e}")
+    
     async def _connection_health_checker(self):
         """Additional connection health checker for Wallex with 30-min limit"""
         while self.is_connected and self.websocket:
@@ -377,7 +415,12 @@ class WallexService(BaseExchangeService):
                     if self.pong_count >= 95:  # Warn before reaching limit
                         logger.warning(f"Wallex: PONG count approaching limit ({self.pong_count}/100)")
                     
-                    # Check server ping health (should receive ping every 20 seconds)
+                    # Check message count limits and force reconnect if needed
+                    max_messages_any_channel = max(self.message_count_per_channel.values()) if self.message_count_per_channel else 0
+                    if max_messages_any_channel > 200:  # If any channel has >200 messages
+                        logger.warning(f"Wallex: Message count too high ({max_messages_any_channel}), forcing reconnect")
+                        self.mark_connection_dead("Message count limit exceeded")
+                        break
                     if self.last_server_ping_time > 0:
                         ping_age = current_time - self.last_server_ping_time
                         if ping_age > 60:  # No ping for 60 seconds is suspicious
@@ -390,6 +433,14 @@ class WallexService(BaseExchangeService):
     def parse_price_data(self, data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         """Parse price data (handled in _process_depth_data)"""
         return None
+
+    def reset_connection_state(self):
+        """Reset all connection tracking"""
+        super().reset_connection_state()
+        self.pong_count = 0
+        self.message_count_per_channel.clear()
+        self.last_server_ping_time = 0
+        # Don't clear partial_data here as it may contain useful info
 
     async def disconnect(self):
         """Disconnect from Wallex"""
