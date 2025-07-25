@@ -2,6 +2,7 @@ import json
 import asyncio
 import logging
 import time
+import hashlib
 from typing import Dict, List, Optional, Any
 from decimal import Decimal
 import redis.asyncio as redis
@@ -28,6 +29,25 @@ class RedisManager:
             )
             self.is_connected = True
             logger.info("Redis connected successfully")
+    
+    def _create_opportunity_composite_key(self, opportunity: Dict[str, Any]) -> str:
+        """Create unique composite key based on opportunity characteristics"""
+        key_parts = [
+            opportunity.get('buy_exchange', ''),
+            opportunity.get('sell_exchange', ''),
+            opportunity.get('symbol', ''),
+            f"{opportunity.get('buy_price', 0):.10f}",
+            f"{opportunity.get('sell_price', 0):.10f}",
+            f"{opportunity.get('buy_volume', 0):.8f}",
+            f"{opportunity.get('sell_volume', 0):.8f}"
+        ]
+        
+        # Create composite string
+        composite_string = "|".join(key_parts)
+        
+        # Create hash for shorter key
+        hash_object = hashlib.sha256(composite_string.encode())
+        return hash_object.hexdigest()[:16]  # 16 character hash
     
     async def save_price_data(self, exchange: str, symbol: str, bid_price: float, ask_price: float, 
                              bid_volume: float = 0, ask_volume: float = 0):
@@ -84,39 +104,67 @@ class RedisManager:
         return prices
     
     async def save_arbitrage_opportunity(self, opportunity: Dict[str, Any]):
-        """Save or update arbitrage opportunity to Redis (avoid duplicates)"""
-        timestamp = time.time()  # Use actual unix timestamp
+        """Save arbitrage opportunity with duplicate detection"""
+        timestamp = time.time()
         
-        # Simple storage without deduplication - save all opportunities
-        symbol = opportunity.get('symbol')
-        buy_exchange = opportunity.get('buy_exchange')
-        sell_exchange = opportunity.get('sell_exchange')
+        # Create composite key for duplicate detection
+        composite_key = self._create_opportunity_composite_key(opportunity)
         
-        # Create unique key with timestamp
+        # Check if this exact opportunity already exists
+        existing_key = f"opportunity:active:{composite_key}"
+        existing_data = await self.redis_client.get(existing_key)
+        
+        if existing_data:
+            # Opportunity already exists - update metadata only
+            try:
+                existing_opportunity = json.loads(existing_data)
+                existing_opportunity['last_seen'] = timestamp
+                existing_opportunity['seen_count'] = existing_opportunity.get('seen_count', 1) + 1
+                
+                # Update the existing opportunity
+                await self.redis_client.set(existing_key, json.dumps(existing_opportunity))
+                
+                # Update timestamp in sorted set for ordering
+                await self.redis_client.zadd("opportunities:latest", {existing_key: timestamp})
+                
+                logger.debug(f"Updated existing opportunity: {opportunity.get('symbol')} - seen {existing_opportunity['seen_count']} times")
+                return "UPDATED", existing_opportunity['id']
+                
+            except (json.JSONDecodeError, KeyError) as e:
+                logger.warning(f"Error updating existing opportunity: {e}, creating new one")
+                # Fall through to create new opportunity
+        
+        # Create new opportunity
+        # Create unique ID with timestamp for historical tracking
         timestamp_ms = int(timestamp * 1000)
-        unique_id = f"{buy_exchange}_{sell_exchange}_{symbol}_{timestamp_ms}"
+        unique_id = f"{opportunity.get('buy_exchange')}_{opportunity.get('sell_exchange')}_{opportunity.get('symbol')}_{timestamp_ms}"
         
-        opportunity['timestamp'] = timestamp
         opportunity['id'] = unique_id
-        opportunity['last_updated'] = timestamp
+        opportunity['composite_key'] = composite_key
+        opportunity['timestamp'] = timestamp
+        opportunity['created_at'] = timestamp
+        opportunity['last_seen'] = timestamp
+        opportunity['seen_count'] = 1
         
-        # Use timestamp-based key for complete uniqueness  
-        key = f"opportunity:{unique_id}"
+        # Save as active opportunity (for duplicate detection)
+        await self.redis_client.set(existing_key, json.dumps(opportunity))
         
-        logger.debug(f"Saving opportunity: {symbol} - {opportunity.get('profit_percentage', 0):.2f}% profit")
+        # Also save with unique ID for historical tracking
+        historical_key = f"opportunity:{unique_id}"
+        await self.redis_client.set(historical_key, json.dumps(opportunity))
         
-        # Save opportunity (no TTL - keep until 24 hours cleanup)
-        await self.redis_client.set(key, json.dumps(opportunity))
+        # Add to sorted set for easy retrieval
+        await self.redis_client.zadd("opportunities:latest", {existing_key: timestamp})
         
-        # Add/update in sorted set for easy retrieval
-        await self.redis_client.zadd("opportunities:latest", {key: timestamp})
-        
-        # Keep only latest 10000 opportunities to see more data
+        # Keep only latest 10000 active opportunities for performance
         await self.redis_client.zremrangebyrank("opportunities:latest", 0, -10001)
+        
+        logger.debug(f"Created new opportunity: {opportunity.get('symbol')} - {opportunity.get('profit_percentage', 0):.2f}% profit")
+        return "CREATED", unique_id
     
     async def get_latest_opportunities(self, limit: int = 50) -> List[Dict[str, Any]]:
         """Get latest arbitrage opportunities"""
-        # Get latest opportunity keys
+        # Get latest opportunity keys from sorted set
         keys = await self.redis_client.zrevrange("opportunities:latest", 0, limit-1)
         
         opportunities = []
@@ -124,14 +172,15 @@ class RedisManager:
             data = await self.redis_client.get(key)
             if data:
                 try:
-                    opportunities.append(json.loads(data))
+                    opportunity = json.loads(data)
+                    opportunities.append(opportunity)
                 except:
                     continue
         
         return opportunities
     
     async def get_opportunities_count(self) -> int:
-        """Get total count of current opportunities"""
+        """Get total count of current active opportunities"""
         return await self.redis_client.zcard("opportunities:latest")
     
     async def get_active_prices_count(self) -> int:
@@ -140,10 +189,10 @@ class RedisManager:
         return len(keys)
     
     async def get_highest_profit_opportunity(self) -> Optional[Dict[str, Any]]:
-        """Get the opportunity with the highest profit percentage from ALL opportunities"""
+        """Get the opportunity with the highest profit percentage from active opportunities"""
         try:
-            # Get all opportunity keys directly - don't rely on sorted set limit
-            opportunity_keys = await self.redis_client.keys("opportunity:*")
+            # Get all active opportunity keys
+            opportunity_keys = await self.redis_client.zrange("opportunities:latest", 0, -1)
             
             if not opportunity_keys:
                 return None
@@ -151,7 +200,7 @@ class RedisManager:
             highest_profit_opp = None
             highest_profit = -float('inf')
             
-            # Check all opportunities to find the true maximum
+            # Check all active opportunities to find the true maximum
             for key in opportunity_keys:
                 data = await self.redis_client.get(key)
                 if data:
@@ -188,8 +237,8 @@ class RedisManager:
             return {}
     
     async def cleanup_old_data(self):
-        """Clean up old price data and opportunities"""
-        current_time = time.time()  # Use actual unix timestamp
+        """Clean up old price data and opportunities (keep opportunities for 1 month)"""
+        current_time = time.time()
         
         # Clean old prices (older than 1 hour - keep last prices available)
         price_keys = await self.redis_client.keys("prices:*")
@@ -209,19 +258,65 @@ class RedisManager:
                     await self.redis_client.delete(key)
                     cleaned_prices += 1
         
-        # Clean old opportunities (older than 24 hours)
-        old_opportunities = await self.redis_client.zrangebyscore(
-            "opportunities:latest", 0, current_time - 86400
+        # Clean old opportunities (older than 1 month = 30 days = 2,592,000 seconds)
+        one_month_ago = current_time - 2592000
+        
+        # Clean from active opportunities sorted set
+        old_active_opportunities = await self.redis_client.zrangebyscore(
+            "opportunities:latest", 0, one_month_ago
         )
         
-        if old_opportunities:
+        if old_active_opportunities:
             # Remove from sorted set
-            await self.redis_client.zrem("opportunities:latest", *old_opportunities)
-            # Remove individual keys
-            await self.redis_client.delete(*old_opportunities)
+            await self.redis_client.zrem("opportunities:latest", *old_active_opportunities)
+            # Remove individual active opportunity keys
+            await self.redis_client.delete(*old_active_opportunities)
         
-        if cleaned_prices > 0 or old_opportunities:
-            logger.info(f"Cleaned {cleaned_prices} old prices, {len(old_opportunities)} old opportunities")
+        # Clean historical opportunity records (older than 1 month)
+        historical_keys = await self.redis_client.keys("opportunity:*")
+        cleaned_historical = 0
+        
+        # Process in batches to avoid blocking Redis
+        batch_size = 1000
+        for i in range(0, len(historical_keys), batch_size):
+            batch_keys = historical_keys[i:i+batch_size]
+            
+            # Check each historical opportunity
+            pipeline = self.redis_client.pipeline()
+            for key in batch_keys:
+                pipeline.get(key)
+            
+            batch_data = await pipeline.execute()
+            
+            # Delete old historical opportunities
+            keys_to_delete = []
+            for key, data in zip(batch_keys, batch_data):
+                if data:
+                    try:
+                        opp_data = json.loads(data)
+                        # Check if it's historical (not active) and old
+                        if (key.startswith("opportunity:") and 
+                            not key.startswith("opportunity:active:") and
+                            current_time - opp_data.get('timestamp', current_time) > 2592000):
+                            keys_to_delete.append(key)
+                    except:
+                        # Delete corrupted data
+                        keys_to_delete.append(key)
+                else:
+                    # Delete empty keys
+                    keys_to_delete.append(key)
+            
+            if keys_to_delete:
+                await self.redis_client.delete(*keys_to_delete)
+                cleaned_historical += len(keys_to_delete)
+        
+        if cleaned_prices > 0 or old_active_opportunities or cleaned_historical > 0:
+            logger.info(
+                f"Cleanup completed - "
+                f"Prices: {cleaned_prices}, "
+                f"Active opportunities: {len(old_active_opportunities)}, "
+                f"Historical opportunities: {cleaned_historical}"
+            )
     
     async def clear_all_data(self):
         """Clear all price and opportunity data (for testing)"""

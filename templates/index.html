@@ -25,66 +25,66 @@
     </script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        .notification-enter {
+        /* Toast Animations */
+        .toast-enter {
             transform: translateX(100%);
             opacity: 0;
         }
-        .notification-enter-active {
+        .toast-enter-active {
             transform: translateX(0);
             opacity: 1;
             transition: all 0.3s ease-out;
         }
-        .notification-exit {
+        .toast-exit {
             transform: translateX(0);
             opacity: 1;
         }
-        .notification-exit-active {
+        .toast-exit-active {
             transform: translateX(100%);
             opacity: 0;
             transition: all 0.3s ease-in;
         }
-        .pulse-green {
-            animation: pulse-green 2s infinite;
-        }
-        @keyframes pulse-green {
-            0%, 100% { background-color: rgb(34, 197, 94); }
-            50% { background-color: rgb(22, 163, 74); }
-        }
-        .pulse-red {
-            animation: pulse-red 2s infinite;
-        }
-        @keyframes pulse-red {
-            0%, 100% { background-color: rgb(239, 68, 68); }
-            50% { background-color: rgb(220, 38, 38); }
-        }
+
         /* Update Flash Effects */
         .flash-update {
             animation: flash-update 1s ease-out;
+            background-color: rgba(34, 197, 94, 0.2) !important;
         }
         @keyframes flash-update {
-            0% { background-color: rgb(34, 197, 94, 0.3); }
-            50% { background-color: rgb(34, 197, 94, 0.6); }
-            100% { background-color: transparent; }
+            0% { background-color: rgba(34, 197, 94, 0.4); }
+            50% { background-color: rgba(34, 197, 94, 0.6); }
+            100% { background-color: rgba(34, 197, 94, 0.1); }
         }
+
         .flash-new {
             animation: flash-new 1.5s ease-out;
         }
         @keyframes flash-new {
-            0% { background-color: rgb(59, 130, 246, 0.4); transform: scale(1.02); }
-            50% { background-color: rgb(59, 130, 246, 0.7); transform: scale(1.01); }
+            0% { background-color: rgba(59, 130, 246, 0.4); transform: scale(1.02); }
+            50% { background-color: rgba(59, 130, 246, 0.7); transform: scale(1.01); }
             100% { background-color: transparent; transform: scale(1); }
         }
+
         .flash-profit {
             animation: flash-profit 2s ease-out;
         }
         @keyframes flash-profit {
-            0% { background-color: rgb(245, 158, 11, 0.3); border-left: 3px solid rgb(245, 158, 11); }
-            50% { background-color: rgb(245, 158, 11, 0.6); border-left: 3px solid rgb(245, 158, 11); }
+            0% { background-color: rgba(245, 158, 11, 0.3); border-left: 3px solid rgb(245, 158, 11); }
+            50% { background-color: rgba(245, 158, 11, 0.6); border-left: 3px solid rgb(245, 158, 11); }
             100% { background-color: transparent; border-left: 3px solid transparent; }
+        }
+
+        /* Pulse for high profit */
+        .pulse-profit {
+            animation: pulse-profit 2s infinite;
+        }
+        @keyframes pulse-profit {
+            0%, 100% { background-color: rgba(34, 197, 94, 0.2); }
+            50% { background-color: rgba(34, 197, 94, 0.4); }
         }
     </style>
 </head>
-<body class=" bg-black text-white min-h-screen font-sans">
+<body class="bg-black text-white min-h-screen font-sans">
     <!-- Header -->
     <header class="bg-gray-900 border-b border-gray-800">
         <div class="w-full mx-auto px-4 sm:px-6 lg:px-8">
@@ -98,16 +98,13 @@
                         <div id="status-indicator" class="w-3 h-3 rounded-full bg-red-500 mr-2"></div>
                         <span id="status-text" class="text-sm">Connecting...</span>
                     </div>
-                    <button id="refresh-data" class="bg-primary-600 hover:bg-primary-700 px-4 py-2 rounded-lg text-sm transition-colors">
-                        <i class="fas fa-sync-alt mr-2"></i>Refresh
-                    </button>
                 </div>
             </div>
         </div>
     </header>
 
-    <!-- Notifications Container -->
-    <div id="notifications-container" class="fixed top-4 right-4 z-50 space-y-2"></div>
+    <!-- Toast Notifications Container -->
+    <div id="toast-container" class="fixed top-20 right-4 z-50 space-y-2"></div>
 
     <!-- Stats Overview -->
     <section class="container mx-auto w-full px-4 sm:px-6 lg:px-8 py-8">
@@ -272,22 +269,19 @@
                             <thead>
                                 <tr class="border-b border-gray-800">
                                     <th class="text-left py-3 px-4 text-gray-400">Symbol</th>
-                                    <th class="text-left py-3 px-4 text-gray-400">Currency</th>
                                     <th class="text-left py-3 px-4 text-gray-400">Buy Exchange</th>
                                     <th class="text-left py-3 px-4 text-gray-400">Sell Exchange</th>
                                     <th class="text-right py-3 px-4 text-gray-400">Buy Price</th>
                                     <th class="text-right py-3 px-4 text-gray-400">Buy Volume</th>
                                     <th class="text-right py-3 px-4 text-gray-400">Sell Price</th>
                                     <th class="text-right py-3 px-4 text-gray-400">Sell Volume</th>
-                                    <th class="text-right py-3 px-4 text-gray-400">Trade Volume</th>
                                     <th class="text-right py-3 px-4 text-gray-400">Profit %</th>
-                                    <th class="text-right py-3 px-4 text-gray-400">Profit Amount</th>
-                                    <th class="text-right py-3 px-4 text-gray-400">Time</th>
+                                    <th class="text-right py-3 px-4 text-gray-400">Last Seen</th>
                                 </tr>
                             </thead>
                             <tbody id="opportunities-table-body" class="divide-y divide-gray-800">
                                 <tr>
-                                    <td colspan="12" class="text-center py-8 text-gray-500">
+                                    <td colspan="9" class="text-center py-8 text-gray-500">
                                         <i class="fas fa-search text-2xl mb-2"></i>
                                         <div>Scanning for opportunities...</div>
                                     </td>
@@ -368,7 +362,7 @@
     </section>
 
     <script>
-        // Add CSRF token to all AJAX requests
+        // CSRF Token Helper
         function getCSRFToken() {
             const name = 'csrftoken';
             let cookieValue = null;
@@ -384,15 +378,6 @@
             }
             return cookieValue;
         }
-        
-        // Set CSRF token in cookie if not present
-        if (!getCSRFToken()) {
-            // Try to get from meta tag
-            const csrfMetaTag = document.querySelector('meta[name="csrf-token"]');
-            if (csrfMetaTag) {
-                document.cookie = `csrftoken=${csrfMetaTag.getAttribute('content')}; path=/`;
-            }
-        }
 
         class ArbitrageDashboard {
             constructor() {
@@ -402,15 +387,13 @@
                 this.maxReconnectAttempts = 10;
                 this.pricesData = new Map();
                 this.opportunitiesData = [];
-                this.lastNotificationTime = 0;
-                this.currencyNames = {}; // Store currency names mapping
-                this.lastUpdateTimes = new Map(); // Track last update times for animation
-                this.bestOpportunity = null; // Track best opportunity
+                this.currencyNames = {};
+                this.bestOpportunity = null;
+                this.lastUpdateTimes = new Map();
                 
-                // Pagination for opportunities
+                // Pagination
                 this.currentPage = 1;
                 this.itemsPerPage = 20;
-                this.opportunitiesData = []; // Initialize as empty array
                 
                 this.init();
             }
@@ -418,11 +401,10 @@
             init() {
                 this.setupTabs();
                 this.setupWebSocket();
-                this.setupRefreshButton();
                 this.setupPagination();
                 this.loadInitialData();
                 
-                // Auto-refresh every 30 seconds
+                // Auto-refresh stats every 30 seconds
                 setInterval(() => this.loadSystemStats(), 30000);
             }
 
@@ -498,7 +480,7 @@
                     }, this.reconnectInterval);
                 } else {
                     console.error('Max reconnection attempts reached');
-                    this.showNotification('Connection lost. Please refresh the page.', 'error');
+                    this.showToast('Connection lost. Please refresh the page.', 'error');
                 }
             }
 
@@ -511,15 +493,93 @@
                         this.updateSinglePrice(data.data);
                         break;
                     case 'initial_opportunities':
-                        this.updateOpportunitiesTable(data.data);
+                        this.opportunitiesData = data.data || [];
+                        this.updateOpportunitiesTable();
+                        this.updateBestOpportunityFromData();
                         break;
                     case 'opportunities_update':
-                        this.updateOpportunities(data.data);
+                        this.handleNewOpportunities(data.data);
                         break;
                     case 'redis_stats':
                         this.updateSystemStats(data.data);
                         break;
                 }
+            }
+
+            handleNewOpportunities(newOpportunities) {
+                if (!Array.isArray(newOpportunities) || newOpportunities.length === 0) {
+                    return;
+                }
+
+                // Add new opportunities to existing data
+                this.opportunitiesData = [...newOpportunities, ...this.opportunitiesData].slice(0, 500);
+                
+                // Update table
+                this.updateOpportunitiesTable();
+                
+                // Update best opportunity
+                this.updateBestOpportunityFromData();
+                
+                // Show notification for high profit opportunities
+                const highProfitOpps = newOpportunities.filter(opp => opp.profit_percentage > 1.5);
+                if (highProfitOpps.length > 0) {
+                    const bestNew = highProfitOpps.reduce((best, current) => 
+                        current.profit_percentage > best.profit_percentage ? current : best
+                    );
+                    
+                    const baseSymbol = bestNew.base_currency || this.extractBaseSymbol(bestNew.symbol);
+                    const currencyName = bestNew.currency_name || this.currencyNames[baseSymbol] || baseSymbol;
+                    
+                    this.showToast(
+                        `🚀 New ${currencyName} opportunity: ${bestNew.profit_percentage.toFixed(2)}% profit (${bestNew.buy_exchange} → ${bestNew.sell_exchange})`,
+                        'success'
+                    );
+                }
+            }
+
+            updateBestOpportunityFromData() {
+                if (!this.opportunitiesData || this.opportunitiesData.length === 0) {
+                    this.updateBestOpportunityDisplay(null);
+                    return;
+                }
+
+                // Find highest profit opportunity from current data
+                const bestOpp = this.opportunitiesData.reduce((best, current) => {
+                    const currentProfit = current.profit_percentage || 0;
+                    const bestProfit = best ? (best.profit_percentage || 0) : 0;
+                    return currentProfit > bestProfit ? current : best;
+                }, null);
+
+                this.updateBestOpportunityDisplay(bestOpp);
+            }
+
+            updateBestOpportunityDisplay(bestOpp) {
+                if (!bestOpp) {
+                    document.getElementById('stat-best-profit').textContent = '-';
+                    document.getElementById('stat-best-pair').textContent = '-';
+                    this.bestOpportunity = null;
+                    return;
+                }
+                
+                // Update display
+                document.getElementById('stat-best-profit').textContent = `${bestOpp.profit_percentage.toFixed(2)}%`;
+                
+                const baseSymbol = bestOpp.base_currency || this.extractBaseSymbol(bestOpp.symbol);
+                const currencyName = bestOpp.currency_name || this.currencyNames[baseSymbol] || baseSymbol;
+                
+                document.getElementById('stat-best-pair').textContent = 
+                    `${currencyName} (${bestOpp.buy_exchange} → ${bestOpp.sell_exchange})`;
+                
+                // Add animation if it's a new best
+                if (!this.bestOpportunity || bestOpp.profit_percentage > this.bestOpportunity.profit_percentage + 0.01) {
+                    const profitElement = document.getElementById('stat-best-profit');
+                    profitElement.classList.add('flash-profit');
+                    setTimeout(() => {
+                        profitElement.classList.remove('flash-profit');
+                    }, 2000);
+                }
+                
+                this.bestOpportunity = bestOpp;
             }
 
             updateConnectionStatus(connected) {
@@ -550,14 +610,13 @@
                     return;
                 }
 
-                // Store prices data and detect updates
+                // Store prices and detect updates
                 const currentTime = Date.now();
                 prices.forEach(price => {
                     const key = `${price.exchange}_${price.symbol}`;
                     const previousPrice = this.pricesData.get(key);
                     this.pricesData.set(key, price);
                     
-                    // Mark as updated if price changed
                     if (previousPrice && 
                         (previousPrice.bid_price !== price.bid_price || 
                          previousPrice.ask_price !== price.ask_price)) {
@@ -565,19 +624,17 @@
                     }
                 });
 
-                // Render table with animations
+                // Render table
                 tbody.innerHTML = prices.map(price => {
                     const spread = ((price.ask_price - price.bid_price) / price.bid_price * 100).toFixed(2);
                     const timeAgo = this.getTimeAgo(price.timestamp);
                     const key = `${price.exchange}_${price.symbol}`;
                     
-                    // Get currency name
                     const baseSymbol = this.extractBaseSymbol(price.symbol);
                     const currencyName = price.currency_name || this.currencyNames[baseSymbol] || baseSymbol;
                     
-                    // Check if recently updated for animation
                     const lastUpdate = this.lastUpdateTimes.get(key) || 0;
-                    const isRecentlyUpdated = (currentTime - lastUpdate) < 2000; // 2 seconds
+                    const isRecentlyUpdated = (currentTime - lastUpdate) < 2000;
                     const animationClass = isRecentlyUpdated ? 'flash-update' : '';
                     
                     return `
@@ -599,7 +656,7 @@
                     `;
                 }).join('');
 
-                // Remove animation classes after animation completes
+                // Remove animation after completion
                 setTimeout(() => {
                     const animatedRows = tbody.querySelectorAll('.flash-update');
                     animatedRows.forEach(row => row.classList.remove('flash-update'));
@@ -615,26 +672,25 @@
                 const previousPrice = this.pricesData.get(key);
                 this.pricesData.set(key, priceData);
                 
-                // Mark as updated if price changed
                 if (previousPrice && 
                     (previousPrice.bid_price !== priceData.bid_price || 
                      previousPrice.ask_price !== priceData.ask_price)) {
                     this.lastUpdateTimes.set(key, Date.now());
                 }
                 
-                // If we're on the prices tab, update the table
+                // Auto-update table if on prices tab
                 if (!document.getElementById('content-prices').classList.contains('hidden')) {
                     this.updatePricesTable(Array.from(this.pricesData.values()));
                 }
             }
 
-            updateOpportunitiesTable(opportunities) {
+            updateOpportunitiesTable() {
                 const tbody = document.getElementById('opportunities-table-body');
                 
-                if (!opportunities || opportunities.length === 0) {
+                if (!this.opportunitiesData || this.opportunitiesData.length === 0) {
                     tbody.innerHTML = `
                         <tr>
-                            <td colspan="12" class="text-center py-8 text-gray-500">
+                            <td colspan="9" class="text-center py-8 text-gray-500">
                                 <i class="fas fa-search text-2xl mb-2"></i>
                                 <div>No opportunities found</div>
                             </td>
@@ -644,21 +700,20 @@
                     return;
                 }
 
-                // Calculate pagination
-                const totalPages = Math.ceil(opportunities.length / this.itemsPerPage);
+                // Pagination
+                const totalPages = Math.ceil(this.opportunitiesData.length / this.itemsPerPage);
                 const startIndex = (this.currentPage - 1) * this.itemsPerPage;
                 const endIndex = startIndex + this.itemsPerPage;
-                const paginatedOpportunities = opportunities.slice(startIndex, endIndex);
+                const paginatedData = this.opportunitiesData.slice(startIndex, endIndex);
 
-                tbody.innerHTML = paginatedOpportunities.map(opp => {
-                    const profitClass = opp.profit_percentage > 2 ? 'text-green-400 pulse-green' : 
+                tbody.innerHTML = paginatedData.map(opp => {
+                    const profitClass = opp.profit_percentage > 2 ? 'text-green-400 pulse-profit' : 
                                       opp.profit_percentage > 1 ? 'text-green-400' : 'text-yellow-400';
-                    const timeAgo = this.getTimeAgo(opp.timestamp);
+                    const timeAgo = this.getTimeAgo(opp.last_seen || opp.timestamp);
                     
                     return `
                         <tr class="hover:bg-gray-800 transition-colors">
                             <td class="py-3 px-4 font-medium">${opp.symbol || opp.base_currency + '/' + opp.quote_currency}</td>
-                            <td class="py-3 px-4 text-gray-300">${opp.currency_name || opp.base_currency || 'N/A'}</td>
                             <td class="py-3 px-4">
                                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                                     ${opp.buy_exchange}
@@ -673,12 +728,8 @@
                             <td class="py-3 px-4 text-right text-blue-400">${(opp.buy_volume || 0).toFixed(2)}</td>
                             <td class="py-3 px-4 text-right text-red-400">${opp.sell_price.toFixed(4)}</td>
                             <td class="py-3 px-4 text-right text-orange-400">${(opp.sell_volume || 0).toFixed(2)}</td>
-                            <td class="py-3 px-4 text-right text-purple-400 font-semibold">${(opp.trade_volume || opp.volume || 0).toFixed(2)}</td>
                             <td class="py-3 px-4 text-right font-bold ${profitClass}">
                                 ${opp.profit_percentage.toFixed(2)}%
-                            </td>
-                            <td class="py-3 px-4 text-right font-bold text-green-400">
-                                ${opp.profit_amount.toFixed(2)}
                             </td>
                             <td class="py-3 px-4 text-right text-gray-400">${timeAgo}</td>
                         </tr>
@@ -686,51 +737,15 @@
                 }).join('');
 
                 // Update counts and pagination
-                document.getElementById('opportunities-count').textContent = `${opportunities.length} opportunities`;
+                document.getElementById('opportunities-count').textContent = `${this.opportunitiesData.length} opportunities`;
                 document.getElementById('opportunities-last-update').textContent = `Last update: ${new Date().toLocaleTimeString()}`;
-                this.updatePaginationControls(opportunities.length);
-                
-                // Don't update best opportunity here - it comes from API now
-            }
-
-
-            updateBestOpportunity(bestOpp) {
-                // Handle empty or null data
-                if (!bestOpp) {
-                    document.getElementById('stat-best-profit').textContent = '-';
-                    document.getElementById('stat-best-pair').textContent = '-';
-                    this.bestOpportunity = null;
-                    return;
-                }
-                
-                // Update best opportunity display with API data (from all opportunities, not just displayed ones)
-                document.getElementById('stat-best-profit').textContent = `${bestOpp.profit_percentage.toFixed(2)}%`;
-                
-                // Get currency name
-                const baseSymbol = bestOpp.base_currency || this.extractBaseSymbol(bestOpp.symbol);
-                const currencyName = bestOpp.currency_name || this.currencyNames[baseSymbol] || baseSymbol;
-                
-                document.getElementById('stat-best-pair').textContent = 
-                    `${currencyName} (${bestOpp.buy_exchange} → ${bestOpp.sell_exchange})`;
-                
-                // Add animation if it's a new best - use strict comparison to prevent constant animation
-                if (!this.bestOpportunity || bestOpp.profit_percentage > this.bestOpportunity.profit_percentage + 0.001) {
-                    const profitElement = document.getElementById('stat-best-profit');
-                    profitElement.classList.add('flash-profit');
-                    setTimeout(() => {
-                        profitElement.classList.remove('flash-profit');
-                    }, 2000);
-                }
-                
-                this.bestOpportunity = bestOpp;
+                this.updatePaginationControls(this.opportunitiesData.length);
             }
 
             updatePaginationControls(totalItems) {
-                // Ensure totalItems is a valid number
                 const validTotalItems = Math.max(0, totalItems || 0);
                 const totalPages = Math.max(1, Math.ceil(validTotalItems / this.itemsPerPage));
                 
-                // Ensure current page is within valid range
                 if (this.currentPage > totalPages) {
                     this.currentPage = totalPages;
                 }
@@ -738,10 +753,8 @@
                     this.currentPage = 1;
                 }
                 
-                // Update page info
                 document.getElementById('page-info').textContent = `Page ${this.currentPage} of ${totalPages}`;
                 
-                // Update button states
                 const prevBtn = document.getElementById('prev-page');
                 const nextBtn = document.getElementById('next-page');
                 
@@ -749,58 +762,11 @@
                     prevBtn.disabled = this.currentPage <= 1;
                     nextBtn.disabled = this.currentPage >= totalPages || validTotalItems === 0;
                     
-                    if (prevBtn.disabled) {
-                        prevBtn.classList.add('opacity-50', 'cursor-not-allowed');
-                    } else {
-                        prevBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-                    }
-                    
-                    if (nextBtn.disabled) {
-                        nextBtn.classList.add('opacity-50', 'cursor-not-allowed');
-                    } else {
-                        nextBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-                    }
+                    prevBtn.classList.toggle('opacity-50', prevBtn.disabled);
+                    prevBtn.classList.toggle('cursor-not-allowed', prevBtn.disabled);
+                    nextBtn.classList.toggle('opacity-50', nextBtn.disabled);
+                    nextBtn.classList.toggle('cursor-not-allowed', nextBtn.disabled);
                 }
-            }
-
-            updateOpportunities(newOpportunities) {
-                // Validate input
-                if (!Array.isArray(newOpportunities)) {
-                    return;
-                }
-                
-                // Show notifications for new profitable opportunities
-                const now = Date.now();
-                if (now - this.lastNotificationTime > 3000) { // Throttle notifications
-                    const profitableOpps = newOpportunities.filter(opp => opp.profit_percentage > 1);
-                    if (profitableOpps.length > 0) {
-                        const bestOpp = profitableOpps.reduce((best, current) => 
-                            current.profit_percentage > best.profit_percentage ? current : best
-                        );
-                        
-                        // Get currency name for notification
-                        const baseSymbol = bestOpp.base_currency || this.extractBaseSymbol(bestOpp.symbol);
-                        const currencyName = bestOpp.currency_name || this.currencyNames[baseSymbol] || baseSymbol;
-                        
-                        this.showNotification(
-                            `🚀 New ${currencyName} opportunity: ${bestOpp.profit_percentage.toFixed(2)}% profit (${bestOpp.buy_exchange} → ${bestOpp.sell_exchange})!`,
-                            'success'
-                        );
-                        
-                        this.lastNotificationTime = now;
-                    }
-                }
-
-                // Update opportunities data (keep more for pagination)
-                // Ensure this.opportunitiesData is always an array
-                const existingData = Array.isArray(this.opportunitiesData) ? this.opportunitiesData : [];
-                this.opportunitiesData = [...newOpportunities, ...existingData]
-                    .slice(0, 500); // Keep more for pagination
-
-                // Always update the table regardless of which tab is active
-                this.updateOpportunitiesTable(this.opportunitiesData);
-                
-                // DO NOT update best opportunity here - it comes from API only
             }
 
             updateSystemStats(stats) {
@@ -819,54 +785,56 @@
                 document.getElementById('monitoring-last-update').textContent = `Last update: ${new Date().toLocaleTimeString()}`;
             }
 
-            showNotification(message, type = 'info') {
-                const container = document.getElementById('notifications-container');
-                const notification = document.createElement('div');
+            showToast(message, type = 'info') {
+                const container = document.getElementById('toast-container');
+                const toast = document.createElement('div');
                 
                 const bgColor = type === 'success' ? 'bg-green-600' : 
                                type === 'error' ? 'bg-red-600' : 'bg-blue-600';
                 
-                notification.className = `${bgColor} text-white px-6 py-4 rounded-lg shadow-lg flex items-center space-x-3 notification-enter`;
-                notification.innerHTML = `
-                    <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
-                    <span>${message}</span>
-                    <button class="ml-4 text-white hover:text-gray-200">
+                const icon = type === 'success' ? 'check-circle' : 
+                           type === 'error' ? 'exclamation-circle' : 'info-circle';
+                
+                toast.className = `${bgColor} text-white px-6 py-4 rounded-lg shadow-lg flex items-center space-x-3 toast-enter max-w-md`;
+                toast.innerHTML = `
+                    <i class="fas fa-${icon} flex-shrink-0"></i>
+                    <span class="flex-1">${message}</span>
+                    <button class="text-white hover:text-gray-200 flex-shrink-0">
                         <i class="fas fa-times"></i>
                     </button>
                 `;
                 
-                container.appendChild(notification);
+                container.appendChild(toast);
                 
                 // Trigger animation
                 setTimeout(() => {
-                    notification.classList.remove('notification-enter');
-                    notification.classList.add('notification-enter-active');
+                    toast.classList.remove('toast-enter');
+                    toast.classList.add('toast-enter-active');
                 }, 10);
                 
-                // Auto remove after 5 seconds
+                // Auto remove
                 setTimeout(() => {
-                    this.removeNotification(notification);
+                    this.removeToast(toast);
                 }, 5000);
                 
-                // Remove on click
-                notification.querySelector('button').addEventListener('click', () => {
-                    this.removeNotification(notification);
+                // Manual remove
+                toast.querySelector('button').addEventListener('click', () => {
+                    this.removeToast(toast);
                 });
             }
 
-            removeNotification(notification) {
-                notification.classList.remove('notification-enter-active');
-                notification.classList.add('notification-exit-active');
+            removeToast(toast) {
+                toast.classList.remove('toast-enter-active');
+                toast.classList.add('toast-exit-active');
                 
                 setTimeout(() => {
-                    if (notification.parentNode) {
-                        notification.parentNode.removeChild(notification);
+                    if (toast.parentNode) {
+                        toast.parentNode.removeChild(toast);
                     }
                 }, 300);
             }
 
             setupPagination() {
-                // Setup pagination controls for opportunities
                 const prevBtn = document.getElementById('prev-page');
                 const nextBtn = document.getElementById('next-page');
                 const itemsSelect = document.getElementById('items-per-page');
@@ -875,30 +843,26 @@
                     prevBtn.addEventListener('click', () => {
                         if (this.currentPage > 1) {
                             this.currentPage--;
-                            this.updateOpportunitiesTable(this.opportunitiesData || []);
+                            this.updateOpportunitiesTable();
                         }
                     });
                 }
                 
                 if (nextBtn) {
                     nextBtn.addEventListener('click', () => {
-                        const dataLength = (this.opportunitiesData || []).length;
-                        const totalPages = Math.ceil(dataLength / this.itemsPerPage);
-                        if (this.currentPage < totalPages && dataLength > 0) {
+                        const totalPages = Math.ceil(this.opportunitiesData.length / this.itemsPerPage);
+                        if (this.currentPage < totalPages) {
                             this.currentPage++;
-                            this.updateOpportunitiesTable(this.opportunitiesData || []);
+                            this.updateOpportunitiesTable();
                         }
                     });
                 }
                 
                 if (itemsSelect) {
                     itemsSelect.addEventListener('change', (e) => {
-                        const newItemsPerPage = parseInt(e.target.value);
-                        if (!isNaN(newItemsPerPage) && newItemsPerPage > 0) {
-                            this.itemsPerPage = newItemsPerPage;
-                            this.currentPage = 1; // Reset to first page
-                            this.updateOpportunitiesTable(this.opportunitiesData || []);
-                        }
+                        this.itemsPerPage = parseInt(e.target.value);
+                        this.currentPage = 1;
+                        this.updateOpportunitiesTable();
                     });
                 }
             }
@@ -907,15 +871,14 @@
                 document.getElementById('refresh-data').addEventListener('click', () => {
                     this.loadInitialData();
                     this.loadSystemStats();
-                    this.showNotification('Data refreshed successfully', 'success');
+                    this.showToast('Data refreshed successfully', 'success');
                 });
             }
 
             async loadInitialData() {
                 try {
-                    const csrfToken = getCSRFToken();
                     const headers = {
-                        'X-CSRFToken': csrfToken,
+                        'X-CSRFToken': getCSRFToken(),
                         'Content-Type': 'application/json',
                     };
                     
@@ -928,7 +891,6 @@
                     if (pricesResponse.ok) {
                         const pricesData = await pricesResponse.json();
                         if (pricesData.success) {
-                            // Store currency names mapping
                             if (pricesData.currency_names) {
                                 this.currencyNames = pricesData.currency_names;
                             }
@@ -945,32 +907,28 @@
                     if (oppsResponse.ok) {
                         const oppsData = await oppsResponse.json();
                         if (oppsData.success) {
-                            // Update currency names if available
                             if (oppsData.currency_names) {
                                 this.currencyNames = { ...this.currencyNames, ...oppsData.currency_names };
                             }
-                            this.updateOpportunitiesTable(oppsData.data);
+                            this.opportunitiesData = oppsData.data || [];
+                            this.updateOpportunitiesTable();
                             
-                            // Update best opportunity from API (not from displayed data)
+                            // Update best opportunity from API
                             if (oppsData.best_opportunity) {
-                                this.updateBestOpportunity(oppsData.best_opportunity);
-                            } else {
-                                // Clear best opportunity if no data
-                                this.updateBestOpportunity(null);
+                                this.updateBestOpportunityDisplay(oppsData.best_opportunity);
                             }
                         }
                     }
                 } catch (error) {
                     console.error('Failed to load initial data:', error);
-                    this.showNotification('Failed to load initial data', 'error');
+                    this.showToast('Failed to load initial data', 'error');
                 }
             }
 
             async loadSystemStats() {
                 try {
-                    const csrfToken = getCSRFToken();
                     const headers = {
-                        'X-CSRFToken': csrfToken,
+                        'X-CSRFToken': getCSRFToken(),
                         'Content-Type': 'application/json',
                     };
                     
@@ -1014,22 +972,15 @@
                 try {
                     const symbolUpper = symbolFormat.toUpperCase();
                     
-                    // Format: XRP/USDT
                     if (symbolUpper.includes('/')) {
                         return symbolUpper.split('/')[0];
                     }
-                    
-                    // Format: xrp_usdt
                     if (symbolUpper.includes('_')) {
                         return symbolUpper.split('_')[0];
                     }
-                    
-                    // Format: XRPUSDT - assume USDT as quote
                     if (symbolUpper.endsWith('USDT')) {
                         return symbolUpper.slice(0, -4);
                     }
-                    
-                    // Format: XRPTMN - assume TMN as quote  
                     if (symbolUpper.endsWith('TMN')) {
                         return symbolUpper.slice(0, -3);
                     }
@@ -1041,7 +992,7 @@
             }
         }
 
-        // Initialize dashboard when page loads
+        // Initialize dashboard
         document.addEventListener('DOMContentLoaded', () => {
             new ArbitrageDashboard();
         });
