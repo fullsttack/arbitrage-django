@@ -82,22 +82,80 @@
             0%, 100% { background-color: rgba(34, 197, 94, 0.2); }
             50% { background-color: rgba(34, 197, 94, 0.4); }
         }
+
+        /* Sortable columns */
+        .sortable {
+            cursor: pointer;
+            user-select: none;
+            position: relative;
+        }
+        .sortable:hover {
+            color: #0ea5e9;
+        }
+        .sortable.sorted-asc::after {
+            content: " ↑";
+            color: #0ea5e9;
+        }
+        .sortable.sorted-desc::after {
+            content: " ↓";
+            color: #0ea5e9;
+        }
+
+        /* Custom scrollbar */
+        .custom-scrollbar::-webkit-scrollbar {
+            height: 8px;
+            width: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #374151;
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #6b7280;
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #9ca3af;
+        }
+
+        /* Loading spinner */
+        .spinner {
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* Responsive table */
+        @media (max-width: 768px) {
+            .table-container {
+                font-size: 0.875rem;
+            }
+            .table-container th,
+            .table-container td {
+                padding: 0.5rem 0.25rem;
+            }
+        }
     </style>
 </head>
 <body class="bg-black text-white min-h-screen font-sans">
     <!-- Header -->
-    <header class="bg-gray-900 border-b border-gray-800">
+    <header class="bg-gray-900 border-b border-gray-800 sticky top-0 z-40">
         <div class="w-full mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center py-6">
                 <div class="flex items-center">
                     <i class="fas fa-chart-line text-primary-500 text-2xl mr-3"></i>
-                    <h1 class="text-2xl font-bold">Dashboard</h1>
+                    <h1 class="text-2xl font-bold">Arbitrage Dashboard</h1>
                 </div>
                 <div class="flex items-center space-x-4">
                     <div id="connection-status" class="flex items-center">
                         <div id="status-indicator" class="w-3 h-3 rounded-full bg-red-500 mr-2"></div>
                         <span id="status-text" class="text-sm">Connecting...</span>
                     </div>
+                    <button id="refresh-btn" class="bg-primary-600 hover:bg-primary-700 px-3 py-1 rounded text-sm transition-colors">
+                        <i class="fas fa-sync-alt mr-1"></i>Refresh
+                    </button>
                 </div>
             </div>
         </div>
@@ -129,6 +187,7 @@
                     <div>
                         <p class="text-gray-400 text-sm">Total Opportunities</p>
                         <p id="stat-opportunities" class="text-2xl font-bold text-green-500">-</p>
+                        <p id="stat-opportunities-shown" class="text-xs text-gray-500 mt-1">-</p>
                     </div>
                     <div class="bg-green-500 bg-opacity-20 p-3 rounded-lg">
                         <i class="fas fa-coins text-green-500 text-xl"></i>
@@ -142,6 +201,7 @@
                     <div>
                         <p class="text-gray-400 text-sm">Active Prices</p>
                         <p id="stat-prices" class="text-2xl font-bold text-blue-500">-</p>
+                        <p id="stat-exchanges" class="text-xs text-gray-500 mt-1">-</p>
                     </div>
                     <div class="bg-blue-500 bg-opacity-20 p-3 rounded-lg">
                         <i class="fas fa-chart-bar text-blue-500 text-xl"></i>
@@ -155,6 +215,7 @@
                     <div>
                         <p class="text-gray-400 text-sm">Redis Memory</p>
                         <p id="stat-memory" class="text-2xl font-bold text-yellow-500">-</p>
+                        <p id="stat-redis-ops" class="text-xs text-gray-500 mt-1">-</p>
                     </div>
                     <div class="bg-yellow-500 bg-opacity-20 p-3 rounded-lg">
                         <i class="fas fa-memory text-yellow-500 text-xl"></i>
@@ -168,6 +229,7 @@
                     <div>
                         <p class="text-gray-400 text-sm">System Health</p>
                         <p id="stat-health" class="text-2xl font-bold text-purple-500">-</p>
+                        <p id="stat-uptime" class="text-xs text-gray-500 mt-1">-</p>
                     </div>
                     <div class="bg-purple-500 bg-opacity-20 p-3 rounded-lg">
                         <i class="fas fa-heartbeat text-purple-500 text-xl"></i>
@@ -196,32 +258,64 @@
             <div class="p-6">
                 <!-- Prices Tab -->
                 <div id="content-prices" class="tab-content">
-                    <div class="flex justify-between items-center mb-6">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                         <h2 class="text-xl font-semibold">Live Price Feed</h2>
-                        <div class="flex items-center space-x-4">
-                            <span id="prices-count" class="text-sm text-gray-400">0 active prices</span>
-                            <span id="prices-last-update" class="text-sm text-gray-400">Last update: -</span>
+                        
+                        <!-- Filters -->
+                        <div class="flex flex-wrap items-center gap-3">
+                            <div class="flex items-center space-x-2">
+                                <label class="text-sm text-gray-400">Exchange:</label>
+                                <select id="exchange-filter" class="bg-gray-700 border border-gray-600 rounded px-3 py-1 text-sm min-w-[100px]">
+                                    <option value="all">All Exchanges</option>
+                                </select>
+                            </div>
+                            
+                            <div class="flex items-center space-x-2">
+                                <label class="text-sm text-gray-400">Currency:</label>
+                                <select id="currency-filter" class="bg-gray-700 border border-gray-600 rounded px-3 py-1 text-sm min-w-[100px]">
+                                    <option value="all">All Currencies</option>
+                                </select>
+                            </div>
+                            
+                            <div class="flex items-center space-x-2">
+                                <label class="text-sm text-gray-400">Search:</label>
+                                <input id="symbol-search" type="text" placeholder="Symbol..." 
+                                       class="bg-gray-700 border border-gray-600 rounded px-3 py-1 text-sm w-32">
+                            </div>
+                            
+                            <button id="clear-filters" class="bg-gray-600 hover:bg-gray-500 px-3 py-1 rounded text-sm">
+                                <i class="fas fa-times mr-1"></i>Clear
+                            </button>
                         </div>
                     </div>
                     
-                    <div class="overflow-x-auto">
+                    <div class="flex justify-between items-center mb-4">
+                        <div class="flex items-center space-x-4">
+                            <span id="prices-count" class="text-sm text-gray-400">0 active prices</span>
+                            <span id="prices-filtered-count" class="text-sm text-blue-400 hidden">0 shown</span>
+                        </div>
+                        <span id="prices-last-update" class="text-sm text-gray-400">Last update: -</span>
+                    </div>
+                    
+                    <div class="overflow-x-auto custom-scrollbar table-container">
                         <table class="w-full text-sm">
                             <thead>
                                 <tr class="border-b border-gray-800">
-                                    <th class="text-left py-3 px-4 text-gray-400">Exchange</th>
-                                    <th class="text-left py-3 px-4 text-gray-400">Symbol</th>
-                                    <th class="text-left py-3 px-4 text-gray-400">Currency</th>
-                                    <th class="text-right py-3 px-4 text-gray-400">Bid Price</th>
-                                    <th class="text-right py-3 px-4 text-gray-400">Ask Price</th>
-                                    <th class="text-right py-3 px-4 text-gray-400">Spread</th>
-                                    <th class="text-right py-3 px-4 text-gray-400">Bid Volume</th>
-                                    <th class="text-right py-3 px-4 text-gray-400">Ask Volume</th>
-                                    <th class="text-right py-3 px-4 text-gray-400">Last Update</th>
+                                    <th class="text-left py-3 px-4 text-gray-400 w-12">#</th>
+                                    <th class="text-left py-3 px-4 text-gray-400 sortable" data-sort="exchange">Exchange</th>
+                                    <th class="text-left py-3 px-4 text-gray-400 sortable" data-sort="symbol">Symbol</th>
+                                    <th class="text-left py-3 px-4 text-gray-400 sortable" data-sort="currency">Currency</th>
+                                    <th class="text-right py-3 px-4 text-gray-400 sortable" data-sort="bid_price">Bid Price</th>
+                                    <th class="text-right py-3 px-4 text-gray-400 sortable" data-sort="ask_price">Ask Price</th>
+                                    <th class="text-right py-3 px-4 text-gray-400 sortable" data-sort="spread">Spread %</th>
+                                    <th class="text-right py-3 px-4 text-gray-400 sortable" data-sort="bid_volume">Bid Volume</th>
+                                    <th class="text-right py-3 px-4 text-gray-400 sortable" data-sort="ask_volume">Ask Volume</th>
+                                    <th class="text-right py-3 px-4 text-gray-400 sortable" data-sort="timestamp">Last Update</th>
                                 </tr>
                             </thead>
                             <tbody id="prices-table-body" class="divide-y divide-gray-800">
                                 <tr>
-                                    <td colspan="9" class="text-center py-8 text-gray-500">
+                                    <td colspan="10" class="text-center py-8 text-gray-500">
                                         <i class="fas fa-spinner fa-spin text-2xl mb-2"></i>
                                         <div>Loading price data...</div>
                                     </td>
@@ -233,23 +327,51 @@
 
                 <!-- Opportunities Tab -->
                 <div id="content-opportunities" class="tab-content hidden">
-                    <div class="flex justify-between items-center mb-6">
-                        <h2 class="text-xl font-semibold">Opportunities</h2>
-                        <div class="flex items-center space-x-4">
-                            <span id="opportunities-count" class="text-sm text-gray-400">0 opportunities</span>
-                            <span id="opportunities-last-update" class="text-sm text-gray-400">Last update: -</span>
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                        <h2 class="text-xl font-semibold">Arbitrage Opportunities</h2>
+                        
+                        <!-- Opportunity Filters -->
+                        <div class="flex flex-wrap items-center gap-3">
+                            <div class="flex items-center space-x-2">
+                                <label class="text-sm text-gray-400">Min Profit %:</label>
+                                <input id="min-profit-filter" type="number" step="0.1" min="0" placeholder="0.5" 
+                                       class="bg-gray-700 border border-gray-600 rounded px-3 py-1 text-sm w-20">
+                            </div>
+                            
+                            <div class="flex items-center space-x-2">
+                                <label class="text-sm text-gray-400">Sort by:</label>
+                                <select id="opportunities-sort" class="bg-gray-700 border border-gray-600 rounded px-3 py-1 text-sm">
+                                    <option value="time_desc">Newest First</option>
+                                    <option value="time_asc">Oldest First</option>
+                                    <option value="profit_desc">Highest Profit</option>
+                                    <option value="profit_asc">Lowest Profit</option>
+                                    <option value="exchange">Exchange</option>
+                                </select>
+                            </div>
+                            
+                            <button id="export-opportunities" class="bg-green-600 hover:bg-green-700 px-3 py-1 rounded text-sm">
+                                <i class="fas fa-download mr-1"></i>Export
+                            </button>
                         </div>
                     </div>
                     
+                    <div class="flex justify-between items-center mb-4">
+                        <div class="flex items-center space-x-4">
+                            <span id="opportunities-count" class="text-sm text-gray-400">0 opportunities</span>
+                            <span id="opportunities-filtered-count" class="text-sm text-blue-400 hidden">0 shown</span>
+                        </div>
+                        <span id="opportunities-last-update" class="text-sm text-gray-400">Last update: -</span>
+                    </div>
+                    
                     <!-- Pagination Controls -->
-                    <div id="opportunities-pagination" class="flex justify-between items-center mb-4">
+                    <div id="opportunities-pagination" class="flex flex-col sm:flex-row justify-between items-center gap-4 mb-4">
                         <div class="flex items-center space-x-2">
                             <button id="prev-page" class="bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded text-sm disabled:opacity-50 disabled:cursor-not-allowed">
-                                Previous
+                                <i class="fas fa-chevron-left mr-1"></i>Previous
                             </button>
-                            <span id="page-info" class="text-sm text-gray-400">Page 1 of 1</span>
+                            <span id="page-info" class="text-sm text-gray-400 px-4">Page 1 of 1</span>
                             <button id="next-page" class="bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded text-sm disabled:opacity-50 disabled:cursor-not-allowed">
-                                Next
+                                Next<i class="fas fa-chevron-right ml-1"></i>
                             </button>
                         </div>
                         <div class="flex items-center space-x-2">
@@ -264,10 +386,11 @@
                         </div>
                     </div>
                     
-                    <div class="overflow-x-auto">
+                    <div class="overflow-x-auto custom-scrollbar table-container">
                         <table class="w-full text-sm">
                             <thead>
                                 <tr class="border-b border-gray-800">
+                                    <th class="text-left py-3 px-4 text-gray-400 w-12">#</th>
                                     <th class="text-left py-3 px-4 text-gray-400">Symbol</th>
                                     <th class="text-left py-3 px-4 text-gray-400">Buy Exchange</th>
                                     <th class="text-left py-3 px-4 text-gray-400">Sell Exchange</th>
@@ -276,12 +399,13 @@
                                     <th class="text-right py-3 px-4 text-gray-400">Sell Price</th>
                                     <th class="text-right py-3 px-4 text-gray-400">Sell Volume</th>
                                     <th class="text-right py-3 px-4 text-gray-400">Profit %</th>
+                                    <th class="text-right py-3 px-4 text-gray-400">Trade Volume</th>
                                     <th class="text-right py-3 px-4 text-gray-400">Last Seen</th>
                                 </tr>
                             </thead>
                             <tbody id="opportunities-table-body" class="divide-y divide-gray-800">
                                 <tr>
-                                    <td colspan="9" class="text-center py-8 text-gray-500">
+                                    <td colspan="11" class="text-center py-8 text-gray-500">
                                         <i class="fas fa-search text-2xl mb-2"></i>
                                         <div>Scanning for opportunities...</div>
                                     </td>
@@ -297,13 +421,18 @@
                         <h2 class="text-xl font-semibold">System Monitoring</h2>
                         <div class="flex items-center space-x-4">
                             <span id="monitoring-last-update" class="text-sm text-gray-400">Last update: -</span>
+                            <button id="refresh-monitoring" class="bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded text-sm">
+                                <i class="fas fa-sync-alt mr-1"></i>Refresh
+                            </button>
                         </div>
                     </div>
                     
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         <!-- Exchange Status -->
                         <div class="bg-gray-800 rounded-lg p-6">
-                            <h3 class="text-lg font-semibold mb-4">Exchange Connections</h3>
+                            <h3 class="text-lg font-semibold mb-4">
+                                <i class="fas fa-exchange-alt mr-2"></i>Exchange Connections
+                            </h3>
                             <div id="exchange-status" class="space-y-3">
                                 <div class="flex items-center justify-between p-3 bg-gray-700 rounded-lg">
                                     <div class="flex items-center">
@@ -331,7 +460,9 @@
 
                         <!-- Redis Statistics -->
                         <div class="bg-gray-800 rounded-lg p-6">
-                            <h3 class="text-lg font-semibold mb-4">Redis Statistics</h3>
+                            <h3 class="text-lg font-semibold mb-4">
+                                <i class="fas fa-database mr-2"></i>Redis Statistics
+                            </h3>
                             <div class="space-y-3">
                                 <div class="flex justify-between">
                                     <span class="text-gray-400">Memory Used:</span>
@@ -352,6 +483,56 @@
                                 <div class="flex justify-between">
                                     <span class="text-gray-400">Uptime:</span>
                                     <span id="redis-uptime">-</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Performance Metrics -->
+                        <div class="bg-gray-800 rounded-lg p-6">
+                            <h3 class="text-lg font-semibold mb-4">
+                                <i class="fas fa-chart-line mr-2"></i>Performance Metrics
+                            </h3>
+                            <div class="space-y-3">
+                                <div class="flex justify-between">
+                                    <span class="text-gray-400">Price Updates/min:</span>
+                                    <span id="price-updates-rate">-</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-400">Opportunity Rate/min:</span>
+                                    <span id="opportunity-rate">-</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-400">Avg Response Time:</span>
+                                    <span id="avg-response-time">-</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-400">WebSocket Status:</span>
+                                    <span id="websocket-status">-</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Market Summary -->
+                        <div class="bg-gray-800 rounded-lg p-6">
+                            <h3 class="text-lg font-semibold mb-4">
+                                <i class="fas fa-chart-pie mr-2"></i>Market Summary
+                            </h3>
+                            <div class="space-y-3">
+                                <div class="flex justify-between">
+                                    <span class="text-gray-400">Active Symbols:</span>
+                                    <span id="active-symbols">-</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-400">Avg Spread:</span>
+                                    <span id="avg-spread">-</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-400">Best Profit Today:</span>
+                                    <span id="best-profit-today">-</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-400">Total Volume:</span>
+                                    <span id="total-volume">-</span>
                                 </div>
                             </div>
                         </div>
@@ -386,17 +567,38 @@
                 this.reconnectAttempts = 0;
                 this.maxReconnectAttempts = 10;
                 this.pricesData = new Map();
+                this.allPricesData = new Map(); // For filtering
                 this.opportunitiesData = [];
-                this.opportunitiesMap = new Map(); // For duplicate detection
+                this.allOpportunitiesData = []; // For filtering and sorting
+                this.opportunitiesMap = new Map();
                 this.currencyNames = {};
                 this.bestOpportunity = null;
                 this.lastUpdateTimes = new Map();
-                this.totalOpportunitiesCount = 0; // تعداد کل از Redis
-                this.isInitialDataLoaded = false; // پرچم بارگذاری اولیه
+                this.totalOpportunitiesCount = 0;
+                this.isInitialDataLoaded = false;
                 
                 // Pagination
                 this.currentPage = 1;
                 this.itemsPerPage = 20;
+                
+                // Filters and Sorting
+                this.priceFilters = {
+                    exchange: 'all',
+                    currency: 'all',
+                    search: ''
+                };
+                this.priceSort = { column: null, direction: 'asc' };
+                this.opportunityFilters = {
+                    minProfit: 0,
+                    sort: 'time_desc'
+                };
+                
+                // Performance tracking
+                this.performanceMetrics = {
+                    priceUpdates: 0,
+                    opportunityUpdates: 0,
+                    lastMinute: Date.now()
+                };
                 
                 this.init();
             }
@@ -405,8 +607,7 @@
                 const currentTime = Date.now() / 1000;
                 const maxAge = 300; // 5 minutes
                 
-                // Remove opportunities older than 5 minutes
-                this.opportunitiesData = this.opportunitiesData.filter(opp => {
+                this.allOpportunitiesData = this.allOpportunitiesData.filter(opp => {
                     const oppTime = opp.last_seen || opp.timestamp || 0;
                     const isValid = (currentTime - oppTime) <= maxAge;
                     
@@ -416,20 +617,21 @@
                     
                     return isValid;
                 });
+                
+                this.applyOpportunityFilters();
             }
 
             init() {
                 this.setupTabs();
                 this.setupPagination();
+                this.setupFilters();
+                this.setupEventListeners();
                 
-                // بارگذاری اولیه داده‌ها از API قبل از WebSocket
                 this.loadInitialData().then(() => {
-                    // پس از بارگذاری موفق، WebSocket را راه‌اندازی کن
                     this.setupWebSocket();
                     this.isInitialDataLoaded = true;
                 }).catch(error => {
                     console.error('Failed to load initial data:', error);
-                    // حتی در صورت خطا، WebSocket را راه‌اندازی کن
                     this.setupWebSocket();
                 });
                 
@@ -438,6 +640,334 @@
                 
                 // Cleanup old opportunities every 60 seconds
                 setInterval(() => this.cleanupOldOpportunities(), 60000);
+                
+                // Update performance metrics every minute
+                setInterval(() => this.updatePerformanceMetrics(), 60000);
+            }
+
+            setupEventListeners() {
+                // Refresh button
+                document.getElementById('refresh-btn')?.addEventListener('click', () => {
+                    this.loadInitialData();
+                });
+                
+                // Export opportunities
+                document.getElementById('export-opportunities')?.addEventListener('click', () => {
+                    this.exportOpportunities();
+                });
+                
+                // Refresh monitoring
+                document.getElementById('refresh-monitoring')?.addEventListener('click', () => {
+                    this.loadSystemStats();
+                });
+            }
+
+            setupFilters() {
+                // Price filters
+                const exchangeFilter = document.getElementById('exchange-filter');
+                const currencyFilter = document.getElementById('currency-filter');
+                const symbolSearch = document.getElementById('symbol-search');
+                const clearFilters = document.getElementById('clear-filters');
+                
+                exchangeFilter?.addEventListener('change', (e) => {
+                    this.priceFilters.exchange = e.target.value;
+                    this.applyPriceFilters();
+                });
+                
+                currencyFilter?.addEventListener('change', (e) => {
+                    this.priceFilters.currency = e.target.value;
+                    this.applyPriceFilters();
+                });
+                
+                symbolSearch?.addEventListener('input', (e) => {
+                    this.priceFilters.search = e.target.value.toLowerCase();
+                    this.applyPriceFilters();
+                });
+                
+                clearFilters?.addEventListener('click', () => {
+                    this.clearPriceFilters();
+                });
+                
+                // Opportunity filters
+                const minProfitFilter = document.getElementById('min-profit-filter');
+                const opportunitiesSort = document.getElementById('opportunities-sort');
+                
+                minProfitFilter?.addEventListener('input', (e) => {
+                    this.opportunityFilters.minProfit = parseFloat(e.target.value) || 0;
+                    this.applyOpportunityFilters();
+                });
+                
+                opportunitiesSort?.addEventListener('change', (e) => {
+                    this.opportunityFilters.sort = e.target.value;
+                    this.applyOpportunityFilters();
+                });
+                
+                // Price table sorting
+                document.querySelectorAll('#content-prices .sortable').forEach(header => {
+                    header.addEventListener('click', () => {
+                        this.sortPrices(header.dataset.sort);
+                    });
+                });
+            }
+
+            populateFilterDropdowns() {
+                // Populate exchange filter
+                const exchanges = [...new Set(Array.from(this.allPricesData.values()).map(p => p.exchange))];
+                const exchangeFilter = document.getElementById('exchange-filter');
+                if (exchangeFilter) {
+                    exchangeFilter.innerHTML = '<option value="all">All Exchanges</option>';
+                    exchanges.forEach(exchange => {
+                        exchangeFilter.innerHTML += `<option value="${exchange}">${exchange.charAt(0).toUpperCase() + exchange.slice(1)}</option>`;
+                    });
+                }
+                
+                // Populate currency filter
+                const currencies = [...new Set(Array.from(this.allPricesData.values()).map(p => this.extractBaseSymbol(p.symbol)))];
+                const currencyFilter = document.getElementById('currency-filter');
+                if (currencyFilter) {
+                    currencyFilter.innerHTML = '<option value="all">All Currencies</option>';
+                    currencies.forEach(currency => {
+                        const currencyName = this.currencyNames[currency] || currency;
+                        currencyFilter.innerHTML += `<option value="${currency}">${currencyName}</option>`;
+                    });
+                }
+            }
+
+            applyPriceFilters() {
+                let filteredPrices = Array.from(this.allPricesData.values());
+                
+                // Apply exchange filter
+                if (this.priceFilters.exchange !== 'all') {
+                    filteredPrices = filteredPrices.filter(p => p.exchange === this.priceFilters.exchange);
+                }
+                
+                // Apply currency filter
+                if (this.priceFilters.currency !== 'all') {
+                    filteredPrices = filteredPrices.filter(p => this.extractBaseSymbol(p.symbol) === this.priceFilters.currency);
+                }
+                
+                // Apply search filter
+                if (this.priceFilters.search) {
+                    filteredPrices = filteredPrices.filter(p => 
+                        p.symbol.toLowerCase().includes(this.priceFilters.search) ||
+                        p.exchange.toLowerCase().includes(this.priceFilters.search)
+                    );
+                }
+                
+                // Convert back to Map
+                this.pricesData = new Map();
+                filteredPrices.forEach(price => {
+                    const key = `${price.exchange}_${price.symbol}`;
+                    this.pricesData.set(key, price);
+                });
+                
+                this.updatePricesTable(filteredPrices);
+                
+                // Update filter count
+                const filteredCount = document.getElementById('prices-filtered-count');
+                if (filteredPrices.length !== this.allPricesData.size) {
+                    filteredCount.textContent = `${filteredPrices.length} shown`;
+                    filteredCount.classList.remove('hidden');
+                } else {
+                    filteredCount.classList.add('hidden');
+                }
+            }
+
+            applyOpportunityFilters() {
+                let filteredOpportunities = [...this.allOpportunitiesData];
+                
+                // Apply minimum profit filter
+                if (this.opportunityFilters.minProfit > 0) {
+                    filteredOpportunities = filteredOpportunities.filter(opp => 
+                        opp.profit_percentage >= this.opportunityFilters.minProfit
+                    );
+                }
+                
+                // Apply sorting
+                this.sortOpportunities(filteredOpportunities);
+                
+                this.opportunitiesData = filteredOpportunities;
+                this.currentPage = 1; // Reset to first page
+                this.updateOpportunitiesTable();
+                
+                // Update filter count
+                const filteredCount = document.getElementById('opportunities-filtered-count');
+                if (filteredOpportunities.length !== this.allOpportunitiesData.length) {
+                    filteredCount.textContent = `${filteredOpportunities.length} shown`;
+                    filteredCount.classList.remove('hidden');
+                } else {
+                    filteredCount.classList.add('hidden');
+                }
+            }
+
+            sortOpportunities(opportunities) {
+                switch (this.opportunityFilters.sort) {
+                    case 'time_desc':
+                        opportunities.sort((a, b) => (b.last_seen || b.timestamp || 0) - (a.last_seen || a.timestamp || 0));
+                        break;
+                    case 'time_asc':
+                        opportunities.sort((a, b) => (a.last_seen || a.timestamp || 0) - (b.last_seen || b.timestamp || 0));
+                        break;
+                    case 'profit_desc':
+                        opportunities.sort((a, b) => b.profit_percentage - a.profit_percentage);
+                        break;
+                    case 'profit_asc':
+                        opportunities.sort((a, b) => a.profit_percentage - b.profit_percentage);
+                        break;
+                    case 'exchange':
+                        opportunities.sort((a, b) => {
+                            const aExchange = `${a.buy_exchange}_${a.sell_exchange}`;
+                            const bExchange = `${b.buy_exchange}_${b.sell_exchange}`;
+                            return aExchange.localeCompare(bExchange);
+                        });
+                        break;
+                }
+            }
+
+            sortPrices(column) {
+                if (this.priceSort.column === column) {
+                    this.priceSort.direction = this.priceSort.direction === 'asc' ? 'desc' : 'asc';
+                } else {
+                    this.priceSort.column = column;
+                    this.priceSort.direction = 'asc';
+                }
+                
+                // Update header indicators
+                document.querySelectorAll('#content-prices .sortable').forEach(header => {
+                    header.classList.remove('sorted-asc', 'sorted-desc');
+                    if (header.dataset.sort === column) {
+                        header.classList.add(`sorted-${this.priceSort.direction}`);
+                    }
+                });
+                
+                // Sort the filtered data
+                const sortedPrices = Array.from(this.pricesData.values()).sort((a, b) => {
+                    let aVal, bVal;
+                    
+                    switch (column) {
+                        case 'exchange':
+                            aVal = a.exchange;
+                            bVal = b.exchange;
+                            break;
+                        case 'symbol':
+                            aVal = a.symbol;
+                            bVal = b.symbol;
+                            break;
+                        case 'currency':
+                            aVal = this.extractBaseSymbol(a.symbol);
+                            bVal = this.extractBaseSymbol(b.symbol);
+                            break;
+                        case 'bid_price':
+                            aVal = a.bid_price;
+                            bVal = b.bid_price;
+                            break;
+                        case 'ask_price':
+                            aVal = a.ask_price;
+                            bVal = b.ask_price;
+                            break;
+                        case 'spread':
+                            aVal = ((a.ask_price - a.bid_price) / a.bid_price) * 100;
+                            bVal = ((b.ask_price - b.bid_price) / b.bid_price) * 100;
+                            break;
+                        case 'bid_volume':
+                            aVal = a.bid_volume;
+                            bVal = b.bid_volume;
+                            break;
+                        case 'ask_volume':
+                            aVal = a.ask_volume;
+                            bVal = b.ask_volume;
+                            break;
+                        case 'timestamp':
+                            aVal = a.timestamp;
+                            bVal = b.timestamp;
+                            break;
+                        default:
+                            return 0;
+                    }
+                    
+                    if (typeof aVal === 'string') {
+                        return this.priceSort.direction === 'asc' ? 
+                            aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+                    } else {
+                        return this.priceSort.direction === 'asc' ? aVal - bVal : bVal - aVal;
+                    }
+                });
+                
+                this.updatePricesTable(sortedPrices);
+            }
+
+            clearPriceFilters() {
+                this.priceFilters = { exchange: 'all', currency: 'all', search: '' };
+                
+                document.getElementById('exchange-filter').value = 'all';
+                document.getElementById('currency-filter').value = 'all';
+                document.getElementById('symbol-search').value = '';
+                
+                this.pricesData = new Map(this.allPricesData);
+                this.updatePricesTable(Array.from(this.allPricesData.values()));
+                
+                document.getElementById('prices-filtered-count').classList.add('hidden');
+            }
+
+            exportOpportunities() {
+                const dataToExport = this.opportunitiesData.map((opp, index) => ({
+                    '#': index + 1,
+                    'Symbol': opp.symbol || `${opp.base_currency}/${opp.quote_currency}`,
+                    'Buy Exchange': opp.buy_exchange,
+                    'Sell Exchange': opp.sell_exchange,
+                    'Buy Price': opp.buy_price,
+                    'Sell Price': opp.sell_price,
+                    'Profit %': opp.profit_percentage.toFixed(2),
+                    'Trade Volume': opp.trade_volume || 0,
+                    'Last Seen': new Date((opp.last_seen || opp.timestamp) * 1000).toLocaleString()
+                }));
+                
+                const csv = this.arrayToCSV(dataToExport);
+                const blob = new Blob([csv], { type: 'text/csv' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `arbitrage_opportunities_${new Date().toISOString().split('T')[0]}.csv`;
+                a.click();
+                window.URL.revokeObjectURL(url);
+                
+                this.showToast('Opportunities exported successfully!', 'success');
+            }
+
+            arrayToCSV(data) {
+                if (!data.length) return '';
+                
+                const headers = Object.keys(data[0]);
+                const csvHeaders = headers.join(',');
+                const csvRows = data.map(row => 
+                    headers.map(header => {
+                        const value = row[header];
+                        return typeof value === 'string' && value.includes(',') ? `"${value}"` : value;
+                    }).join(',')
+                );
+                
+                return [csvHeaders, ...csvRows].join('\n');
+            }
+
+            updatePerformanceMetrics() {
+                const now = Date.now();
+                const timeDiff = (now - this.performanceMetrics.lastMinute) / 60000; // Convert to minutes
+                
+                if (timeDiff >= 1) {
+                    // Calculate rates per minute
+                    const priceRate = Math.round(this.performanceMetrics.priceUpdates / timeDiff);
+                    const opportunityRate = Math.round(this.performanceMetrics.opportunityUpdates / timeDiff);
+                    
+                    // Update display
+                    document.getElementById('price-updates-rate').textContent = priceRate;
+                    document.getElementById('opportunity-rate').textContent = opportunityRate;
+                    document.getElementById('websocket-status').textContent = this.websocket?.readyState === 1 ? 'Connected' : 'Disconnected';
+                    
+                    // Reset counters
+                    this.performanceMetrics.priceUpdates = 0;
+                    this.performanceMetrics.opportunityUpdates = 0;
+                    this.performanceMetrics.lastMinute = now;
+                }
             }
 
             setupTabs() {
@@ -448,7 +978,6 @@
                     button.addEventListener('click', () => {
                         const tabId = button.id.replace('tab-', '');
                         
-                        // Update button states
                         tabButtons.forEach(btn => {
                             btn.classList.remove('active', 'border-primary-500', 'text-primary-500');
                             btn.classList.add('border-transparent', 'text-gray-400');
@@ -457,7 +986,6 @@
                         button.classList.add('active', 'border-primary-500', 'text-primary-500');
                         button.classList.remove('border-transparent', 'text-gray-400');
                         
-                        // Update content visibility
                         tabContents.forEach(content => {
                             content.classList.add('hidden');
                         });
@@ -521,13 +1049,13 @@
                 
                 switch (data.type) {
                     case 'initial_prices':
-                        this.updatePricesTable(data.data);
+                        this.updateAllPricesData(data.data);
                         break;
                     case 'price_update':
                         this.updateSinglePrice(data.data);
+                        this.performanceMetrics.priceUpdates++;
                         break;
                     case 'initial_opportunities':
-                        // فقط اگر داده‌های اولیه از API لود نشده باشد
                         if (!this.isInitialDataLoaded) {
                             console.log('Loading initial opportunities from WebSocket:', data.data?.length || 0);
                             this.handleInitialOpportunities(data.data);
@@ -538,9 +1066,9 @@
                     case 'opportunities_update':
                         console.log('Opportunities update received:', data.data?.length || 0);
                         this.handleNewOpportunities(data.data);
+                        this.performanceMetrics.opportunityUpdates += data.data?.length || 0;
                         break;
                     case 'best_opportunity_update':
-                        // به‌روزرسانی بهترین فرصت از WebSocket
                         console.log('Best opportunity update from WebSocket');
                         this.updateBestOpportunityDisplay(data.data);
                         break;
@@ -550,21 +1078,35 @@
                 }
             }
 
+            updateAllPricesData(prices) {
+                if (!prices || !Array.isArray(prices)) return;
+                
+                // Store all prices
+                this.allPricesData.clear();
+                prices.forEach(price => {
+                    const key = `${price.exchange}_${price.symbol}`;
+                    this.allPricesData.set(key, price);
+                });
+                
+                // Populate filter dropdowns
+                this.populateFilterDropdowns();
+                
+                // Apply current filters
+                this.applyPriceFilters();
+            }
+
             handleInitialOpportunities(opportunities) {
-                // پاک کردن داده‌های قبلی
-                this.opportunitiesData = [];
+                this.allOpportunitiesData = [];
                 this.opportunitiesMap.clear();
                 
-                // اضافه کردن فرصت‌های اولیه
                 if (opportunities && Array.isArray(opportunities)) {
-                    opportunities.forEach(opp => this.addOrUpdateOpportunity(opp));
+                    opportunities.forEach(opp => this.addOrUpdateOpportunity(opp, false));
                 }
                 
-                this.updateOpportunitiesTable();
+                this.applyOpportunityFilters();
             }
 
             createOpportunityKey(opp) {
-                // Create composite key similar to backend
                 const keyParts = [
                     opp.buy_exchange || '',
                     opp.sell_exchange || '',
@@ -577,30 +1119,28 @@
                 return keyParts.join('|');
             }
 
-            addOrUpdateOpportunity(opportunity) {
+            addOrUpdateOpportunity(opportunity, addToFront = true) {
                 const key = this.createOpportunityKey(opportunity);
                 const existing = this.opportunitiesMap.get(key);
                 
                 if (existing) {
-                    // Update existing opportunity
                     existing.last_seen = opportunity.last_seen || opportunity.timestamp;
                     existing.seen_count = (existing.seen_count || 1) + 1;
                     console.debug(`Updated existing opportunity: ${opportunity.symbol} (${key.substring(0, 20)}...)`);
-                    return false; // Not new
+                    return false;
                 } else {
-                    // Add new opportunity
                     opportunity.frontend_key = key;
                     opportunity.seen_count = 1;
                     this.opportunitiesMap.set(key, opportunity);
                     
-                    // Add to array (at beginning for newest first)
-                    this.opportunitiesData.unshift(opportunity);
-                    
-                    // حذف محدودیت - بگذار همه فرصت‌ها نگهداری شوند تا با Redis هماهنگ باشد
-                    // Redis حداکثر 10000 فرصت نگهداری میکند و ما تا 1000 نمایش میدهیم
+                    if (addToFront) {
+                        this.allOpportunitiesData.unshift(opportunity);
+                    } else {
+                        this.allOpportunitiesData.push(opportunity);
+                    }
                     
                     console.debug(`Added new opportunity: ${opportunity.symbol} - ${opportunity.profit_percentage.toFixed(2)}%`);
-                    return true; // Is new
+                    return true;
                 }
             }
 
@@ -614,9 +1154,8 @@
                 let hasNewOpportunities = false;
                 const trulyNewOpportunities = [];
 
-                // Process each opportunity
                 newOpportunities.forEach(opp => {
-                    const isNew = this.addOrUpdateOpportunity(opp);
+                    const isNew = this.addOrUpdateOpportunity(opp, true);
                     if (isNew) {
                         hasNewOpportunities = true;
                         trulyNewOpportunities.push(opp);
@@ -625,12 +1164,9 @@
                 
                 console.log(`Found ${trulyNewOpportunities.length} truly new opportunities`);
                 
-                // Only update UI if we have truly new opportunities
                 if (hasNewOpportunities) {
-                    // Update table
-                    this.updateOpportunitiesTable();
+                    this.applyOpportunityFilters();
                     
-                    // Show notification for high profit opportunities
                     const highProfitOpps = trulyNewOpportunities.filter(opp => opp.profit_percentage > 1.5);
                     if (highProfitOpps.length > 0) {
                         const bestNew = highProfitOpps.reduce((best, current) => 
@@ -658,7 +1194,6 @@
                     return;
                 }
                 
-                // Update display
                 document.getElementById('stat-best-profit').textContent = `${bestOpp.profit_percentage.toFixed(2)}%`;
                 
                 const baseSymbol = bestOpp.base_currency || this.extractBaseSymbol(bestOpp.symbol);
@@ -667,7 +1202,6 @@
                 document.getElementById('stat-best-pair').textContent = 
                     `${currencyName} (${bestOpp.buy_exchange} → ${bestOpp.sell_exchange})`;
                 
-                // Add animation if it's a new best
                 if (!this.bestOpportunity || bestOpp.profit_percentage > this.bestOpportunity.profit_percentage + 0.01) {
                     const profitElement = document.getElementById('stat-best-profit');
                     profitElement.classList.add('flash-profit');
@@ -698,7 +1232,7 @@
                 if (!prices || prices.length === 0) {
                     tbody.innerHTML = `
                         <tr>
-                            <td colspan="9" class="text-center py-8 text-gray-500">
+                            <td colspan="10" class="text-center py-8 text-gray-500">
                                 <i class="fas fa-exclamation-triangle text-2xl mb-2"></i>
                                 <div>No price data available</div>
                             </td>
@@ -707,22 +1241,8 @@
                     return;
                 }
 
-                // Store prices and detect updates
                 const currentTime = Date.now();
-                prices.forEach(price => {
-                    const key = `${price.exchange}_${price.symbol}`;
-                    const previousPrice = this.pricesData.get(key);
-                    this.pricesData.set(key, price);
-                    
-                    if (previousPrice && 
-                        (previousPrice.bid_price !== price.bid_price || 
-                         previousPrice.ask_price !== price.ask_price)) {
-                        this.lastUpdateTimes.set(key, currentTime);
-                    }
-                });
-
-                // Render table
-                tbody.innerHTML = prices.map(price => {
+                tbody.innerHTML = prices.map((price, index) => {
                     const spread = ((price.ask_price - price.bid_price) / price.bid_price * 100).toFixed(2);
                     const timeAgo = this.getTimeAgo(price.timestamp);
                     const key = `${price.exchange}_${price.symbol}`;
@@ -736,6 +1256,7 @@
                     
                     return `
                         <tr class="hover:bg-gray-800 transition-colors ${animationClass}" data-key="${key}">
+                            <td class="py-3 px-4 text-gray-500 text-sm">${index + 1}</td>
                             <td class="py-3 px-4">
                                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                                     ${price.exchange}
@@ -745,7 +1266,7 @@
                             <td class="py-3 px-4 text-gray-300">${currencyName}</td>
                             <td class="py-3 px-4 text-right text-green-400">${price.bid_price.toFixed(4)}</td>
                             <td class="py-3 px-4 text-right text-red-400">${price.ask_price.toFixed(4)}</td>
-                            <td class="py-3 px-4 text-right">${spread}%</td>
+                            <td class="py-3 px-4 text-right ${parseFloat(spread) > 1 ? 'text-yellow-400' : 'text-gray-300'}">${spread}%</td>
                             <td class="py-3 px-4 text-right text-blue-400">${price.bid_volume.toFixed(2)}</td>
                             <td class="py-3 px-4 text-right text-orange-400">${price.ask_volume.toFixed(2)}</td>
                             <td class="py-3 px-4 text-right text-gray-400">${timeAgo}</td>
@@ -753,21 +1274,23 @@
                     `;
                 }).join('');
 
-                // Remove animation after completion
                 setTimeout(() => {
                     const animatedRows = tbody.querySelectorAll('.flash-update');
                     animatedRows.forEach(row => row.classList.remove('flash-update'));
                 }, 1000);
 
-                // Update counts
-                document.getElementById('prices-count').textContent = `${prices.length} active prices`;
+                document.getElementById('prices-count').textContent = `${this.allPricesData.size} active prices`;
                 document.getElementById('prices-last-update').textContent = `Last update: ${new Date().toLocaleTimeString()}`;
+                
+                // Update stats
+                const exchanges = [...new Set(Array.from(this.allPricesData.values()).map(p => p.exchange))];
+                document.getElementById('stat-exchanges').textContent = `${exchanges.length} exchanges`;
             }
 
             updateSinglePrice(priceData) {
                 const key = `${priceData.exchange}_${priceData.symbol}`;
-                const previousPrice = this.pricesData.get(key);
-                this.pricesData.set(key, priceData);
+                const previousPrice = this.allPricesData.get(key);
+                this.allPricesData.set(key, priceData);
                 
                 if (previousPrice && 
                     (previousPrice.bid_price !== priceData.bid_price || 
@@ -775,9 +1298,8 @@
                     this.lastUpdateTimes.set(key, Date.now());
                 }
                 
-                // Auto-update table if on prices tab
                 if (!document.getElementById('content-prices').classList.contains('hidden')) {
-                    this.updatePricesTable(Array.from(this.pricesData.values()));
+                    this.applyPriceFilters();
                 }
             }
 
@@ -787,7 +1309,7 @@
                 if (!this.opportunitiesData || this.opportunitiesData.length === 0) {
                     tbody.innerHTML = `
                         <tr>
-                            <td colspan="9" class="text-center py-8 text-gray-500">
+                            <td colspan="11" class="text-center py-8 text-gray-500">
                                 <i class="fas fa-search text-2xl mb-2"></i>
                                 <div>No opportunities found</div>
                             </td>
@@ -797,19 +1319,20 @@
                     return;
                 }
 
-                // Pagination
                 const totalPages = Math.ceil(this.opportunitiesData.length / this.itemsPerPage);
                 const startIndex = (this.currentPage - 1) * this.itemsPerPage;
                 const endIndex = startIndex + this.itemsPerPage;
                 const paginatedData = this.opportunitiesData.slice(startIndex, endIndex);
 
-                tbody.innerHTML = paginatedData.map(opp => {
+                tbody.innerHTML = paginatedData.map((opp, index) => {
+                    const globalIndex = startIndex + index + 1;
                     const profitClass = opp.profit_percentage > 2 ? 'text-green-400 pulse-profit' : 
                                       opp.profit_percentage > 1 ? 'text-green-400' : 'text-yellow-400';
                     const timeAgo = this.getTimeAgo(opp.last_seen || opp.timestamp);
                     
                     return `
                         <tr class="hover:bg-gray-800 transition-colors">
+                            <td class="py-3 px-4 text-gray-500 text-sm">${globalIndex}</td>
                             <td class="py-3 px-4 font-medium">${opp.symbol || opp.base_currency + '/' + opp.quote_currency}</td>
                             <td class="py-3 px-4">
                                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
@@ -828,15 +1351,18 @@
                             <td class="py-3 px-4 text-right font-bold ${profitClass}">
                                 ${opp.profit_percentage.toFixed(2)}%
                             </td>
+                            <td class="py-3 px-4 text-right text-purple-400">${(opp.trade_volume || 0).toFixed(2)}</td>
                             <td class="py-3 px-4 text-right text-gray-400">${timeAgo}</td>
                         </tr>
                     `;
                 }).join('');
 
-                // Update counts and pagination - استفاده از تعداد محلی فرصت‌ها (نه کل Redis)
-                document.getElementById('opportunities-count').textContent = `${this.opportunitiesData.length} opportunities shown`;
+                document.getElementById('opportunities-count').textContent = `${this.allOpportunitiesData.length} opportunities`;
                 document.getElementById('opportunities-last-update').textContent = `Last update: ${new Date().toLocaleTimeString()}`;
                 this.updatePaginationControls(this.opportunitiesData.length);
+                
+                // Update stats
+                document.getElementById('stat-opportunities-shown').textContent = `${this.opportunitiesData.length} shown`;
             }
 
             updatePaginationControls(totalItems) {
@@ -867,13 +1393,11 @@
             }
 
             updateSystemStats(stats) {
-                // استفاده از تعداد کل از Redis برای باکس بالا
                 document.getElementById('stat-opportunities').textContent = stats.opportunities_count || 0;
                 document.getElementById('stat-prices').textContent = stats.prices_count || 0;
                 document.getElementById('stat-memory').textContent = stats.redis_memory || 'N/A';
                 document.getElementById('stat-health').textContent = `${stats.redis_clients || 0} clients`;
                 
-                // ذخیره تعداد کل
                 this.totalOpportunitiesCount = stats.opportunities_count || 0;
                 
                 // Update monitoring tab
@@ -883,7 +1407,38 @@
                 document.getElementById('redis-hit-rate').textContent = stats.redis_hit_rate || 'N/A';
                 document.getElementById('redis-uptime').textContent = this.formatUptime(stats.uptime || 0);
                 
+                // Update additional stats
+                document.getElementById('stat-redis-ops').textContent = `${stats.redis_ops_per_sec || 0} ops/sec`;
+                document.getElementById('stat-uptime').textContent = this.formatUptime(stats.uptime || 0);
+                
+                // Calculate market summary
+                this.updateMarketSummary();
+                
                 document.getElementById('monitoring-last-update').textContent = `Last update: ${new Date().toLocaleTimeString()}`;
+            }
+
+            updateMarketSummary() {
+                const prices = Array.from(this.allPricesData.values());
+                const symbols = [...new Set(prices.map(p => this.extractBaseSymbol(p.symbol)))];
+                
+                let totalSpread = 0;
+                let spreadCount = 0;
+                let totalVolume = 0;
+                
+                prices.forEach(price => {
+                    const spread = ((price.ask_price - price.bid_price) / price.bid_price) * 100;
+                    totalSpread += spread;
+                    spreadCount++;
+                    totalVolume += (price.bid_volume + price.ask_volume);
+                });
+                
+                const avgSpread = spreadCount > 0 ? (totalSpread / spreadCount).toFixed(2) : 0;
+                const bestProfitToday = this.bestOpportunity ? this.bestOpportunity.profit_percentage.toFixed(2) : 0;
+                
+                document.getElementById('active-symbols').textContent = symbols.length;
+                document.getElementById('avg-spread').textContent = `${avgSpread}%`;
+                document.getElementById('best-profit-today').textContent = `${bestProfitToday}%`;
+                document.getElementById('total-volume').textContent = totalVolume.toFixed(0);
             }
 
             showToast(message, type = 'info') {
@@ -907,18 +1462,15 @@
                 
                 container.appendChild(toast);
                 
-                // Trigger animation
                 setTimeout(() => {
                     toast.classList.remove('toast-enter');
                     toast.classList.add('toast-enter-active');
                 }, 10);
                 
-                // Auto remove
                 setTimeout(() => {
                     this.removeToast(toast);
                 }, 5000);
                 
-                // Manual remove
                 toast.querySelector('button').addEventListener('click', () => {
                     this.removeToast(toast);
                 });
@@ -977,12 +1529,11 @@
                     
                     console.log('Loading initial data from API...');
                     
-                    // Load opportunities first
-                    const oppsResponse = await fetch('/api/opportunities/', {
-                        method: 'GET',
-                        headers: headers,
-                        credentials: 'same-origin'
-                    });
+                    const [oppsResponse, pricesResponse] = await Promise.all([
+                        fetch('/api/opportunities/', { method: 'GET', headers: headers, credentials: 'same-origin' }),
+                        fetch('/api/prices/', { method: 'GET', headers: headers, credentials: 'same-origin' })
+                    ]);
+                    
                     if (oppsResponse.ok) {
                         const oppsData = await oppsResponse.json();
                         if (oppsData.success) {
@@ -992,43 +1543,33 @@
                                 this.currencyNames = { ...this.currencyNames, ...oppsData.currency_names };
                             }
                             
-                            // Clear and reload opportunities with duplicate detection
-                            this.opportunitiesData = [];
+                            this.allOpportunitiesData = [];
                             this.opportunitiesMap.clear();
                             
                             if (oppsData.data && Array.isArray(oppsData.data)) {
-                                oppsData.data.forEach(opp => this.addOrUpdateOpportunity(opp));
+                                oppsData.data.forEach(opp => this.addOrUpdateOpportunity(opp, false));
                             }
                             
-                            this.updateOpportunitiesTable();
+                            this.applyOpportunityFilters();
                             
-                            // Update best opportunity from API
                             if (oppsData.best_opportunity) {
                                 this.updateBestOpportunityDisplay(oppsData.best_opportunity);
                             }
                             
-                            // ذخیره تعداد کل
                             this.totalOpportunitiesCount = oppsData.total_count || 0;
                         }
                     }
                     
-                    // Load prices
-                    const pricesResponse = await fetch('/api/prices/', {
-                        method: 'GET',
-                        headers: headers,
-                        credentials: 'same-origin'
-                    });
                     if (pricesResponse.ok) {
                         const pricesData = await pricesResponse.json();
                         if (pricesData.success) {
                             if (pricesData.currency_names) {
                                 this.currencyNames = { ...this.currencyNames, ...pricesData.currency_names };
                             }
-                            this.updatePricesTable(pricesData.data);
+                            this.updateAllPricesData(pricesData.data);
                         }
                     }
                     
-                    // Load system stats
                     await this.loadSystemStats();
                     
                     console.log('Initial data loaded successfully from API');
@@ -1036,7 +1577,7 @@
                 } catch (error) {
                     console.error('Failed to load initial data:', error);
                     this.showToast('Failed to load initial data', 'error');
-                    throw error; // Re-throw to handle in init()
+                    throw error;
                 }
             }
 
@@ -1057,7 +1598,6 @@
                         if (data.success) {
                             this.updateSystemStats(data.data);
                             
-                            // اگر بهترین فرصت در stats وجود داشت، آن را نمایش بده
                             if (data.data.best_opportunity) {
                                 this.updateBestOpportunityDisplay(data.data.best_opportunity);
                             }
