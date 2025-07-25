@@ -1003,7 +1003,6 @@
                     this.websocket = new WebSocket(wsUrl);
                     
                     this.websocket.onopen = () => {
-                        console.log('WebSocket connected');
                         this.updateConnectionStatus(true);
                         this.reconnectAttempts = 0;
                     };
@@ -1014,18 +1013,15 @@
                     };
                     
                     this.websocket.onclose = () => {
-                        console.log('WebSocket disconnected');
                         this.updateConnectionStatus(false);
                         this.attemptReconnect();
                     };
                     
                     this.websocket.onerror = (error) => {
-                        console.error('WebSocket error:', error);
                         this.updateConnectionStatus(false);
                     };
                     
                 } catch (error) {
-                    console.error('Failed to create WebSocket:', error);
                     this.updateConnectionStatus(false);
                 }
             }
@@ -1033,20 +1029,16 @@
             attemptReconnect() {
                 if (this.reconnectAttempts < this.maxReconnectAttempts) {
                     this.reconnectAttempts++;
-                    console.log(`Attempting to reconnect (${this.reconnectAttempts}/${this.maxReconnectAttempts})...`);
                     
                     setTimeout(() => {
                         this.setupWebSocket();
                     }, this.reconnectInterval);
                 } else {
-                    console.error('Max reconnection attempts reached');
                     this.showToast('Connection lost. Please refresh the page.', 'error');
                 }
             }
 
             handleWebSocketMessage(data) {
-                console.log('WebSocket message received:', data.type, data.data?.length || 'no data');
-                
                 switch (data.type) {
                     case 'initial_prices':
                         this.updateAllPricesData(data.data);
@@ -1057,19 +1049,14 @@
                         break;
                     case 'initial_opportunities':
                         if (!this.isInitialDataLoaded) {
-                            console.log('Loading initial opportunities from WebSocket:', data.data?.length || 0);
                             this.handleInitialOpportunities(data.data);
-                        } else {
-                            console.log('Skipping WebSocket initial opportunities (API data already loaded)');
                         }
                         break;
                     case 'opportunities_update':
-                        console.log('Opportunities update received:', data.data?.length || 0);
                         this.handleNewOpportunities(data.data);
                         this.performanceMetrics.opportunityUpdates += data.data?.length || 0;
                         break;
                     case 'best_opportunity_update':
-                        console.log('Best opportunity update from WebSocket');
                         this.updateBestOpportunityDisplay(data.data);
                         break;
                     case 'redis_stats':
@@ -1126,7 +1113,6 @@
                 if (existing) {
                     existing.last_seen = opportunity.last_seen || opportunity.timestamp;
                     existing.seen_count = (existing.seen_count || 1) + 1;
-                    console.debug(`Updated existing opportunity: ${opportunity.symbol} (${key.substring(0, 20)}...)`);
                     return false;
                 } else {
                     opportunity.frontend_key = key;
@@ -1139,7 +1125,6 @@
                         this.allOpportunitiesData.push(opportunity);
                     }
                     
-                    console.debug(`Added new opportunity: ${opportunity.symbol} - ${opportunity.profit_percentage.toFixed(2)}%`);
                     return true;
                 }
             }
@@ -1149,8 +1134,6 @@
                     return;
                 }
 
-                console.log(`Processing ${newOpportunities.length} opportunities from WebSocket`);
-                
                 let hasNewOpportunities = false;
                 const trulyNewOpportunities = [];
 
@@ -1161,8 +1144,6 @@
                         trulyNewOpportunities.push(opp);
                     }
                 });
-                
-                console.log(`Found ${trulyNewOpportunities.length} truly new opportunities`);
                 
                 if (hasNewOpportunities) {
                     this.applyOpportunityFilters();
@@ -1181,8 +1162,6 @@
                             'success'
                         );
                     }
-                } else {
-                    console.log('No new opportunities to display (all were duplicates)');
                 }
             }
 
@@ -1527,8 +1506,6 @@
                         'Content-Type': 'application/json',
                     };
                     
-                    console.log('Loading initial data from API...');
-                    
                     const [oppsResponse, pricesResponse] = await Promise.all([
                         fetch('/api/opportunities/', { method: 'GET', headers: headers, credentials: 'same-origin' }),
                         fetch('/api/prices/', { method: 'GET', headers: headers, credentials: 'same-origin' })
@@ -1537,8 +1514,6 @@
                     if (oppsResponse.ok) {
                         const oppsData = await oppsResponse.json();
                         if (oppsData.success) {
-                            console.log(`Loaded ${oppsData.data?.length || 0} opportunities from API`);
-                            
                             if (oppsData.currency_names) {
                                 this.currencyNames = { ...this.currencyNames, ...oppsData.currency_names };
                             }
@@ -1572,10 +1547,7 @@
                     
                     await this.loadSystemStats();
                     
-                    console.log('Initial data loaded successfully from API');
-                    
                 } catch (error) {
-                    console.error('Failed to load initial data:', error);
                     this.showToast('Failed to load initial data', 'error');
                     throw error;
                 }
@@ -1604,7 +1576,7 @@
                         }
                     }
                 } catch (error) {
-                    console.error('Failed to load system stats:', error);
+                    // Silently handle stats loading errors
                 }
             }
 
