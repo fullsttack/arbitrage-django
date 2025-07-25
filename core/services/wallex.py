@@ -19,6 +19,8 @@ class WallexService(BaseExchangeService):
         self.pending_subscriptions = {}  # Track pending subscriptions
         self.connection_start_time = 0  # Track connection time for 30min limit
         self.message_count_per_channel = {}  # Track message count per channel (50 max)
+        self.pong_count = 0  # Track PONG responses (100 max)
+        self.last_server_ping_time = 0  # Track last server ping
         
     async def connect(self):
         """Connect to Wallex WebSocket with enhanced error handling"""
@@ -34,10 +36,14 @@ class WallexService(BaseExchangeService):
                     except:
                         pass
                 
+                # Reset counters for new connection
+                self.pong_count = 0
+                self.message_count_per_channel.clear()
+                
                 # Simplified connection parameters - disable auto-ping for Wallex
                 self.websocket = await websockets.connect(
                     self.websocket_url,
-                    ping_interval=None,  # Disable auto-ping - Wallex doesn't respond well
+                    ping_interval=None,  # Disable auto-ping - Wallex handles manually
                     ping_timeout=None,   # Disable ping timeout
                     close_timeout=15,
                     max_size=2**20,      # 1MB max message size
@@ -56,9 +62,6 @@ class WallexService(BaseExchangeService):
                 
                 # Start connection health checker
                 asyncio.create_task(self._connection_health_checker())
-                
-                # Start manual ping handler for Wallex
-                asyncio.create_task(self._manual_ping_handler())
                 
                 logger.info("Wallex WebSocket connected successfully")
                 return True
@@ -95,6 +98,10 @@ class WallexService(BaseExchangeService):
                     
                     # Track pending subscription
                     self.pending_subscriptions[symbol] = time.time()
+                    
+                    # Initialize message counters for channels
+                    self.message_count_per_channel[f"{symbol}@buyDepth"] = 0
+                    self.message_count_per_channel[f"{symbol}@sellDepth"] = 0
                     
                     await asyncio.sleep(0.3)  # Wait for potential subscription data
                     
@@ -163,8 +170,13 @@ class WallexService(BaseExchangeService):
                 await asyncio.sleep(1)
 
     async def _process_message(self, data):
-        """Process messages from Wallex WebSocket"""
+        """Process messages from Wallex WebSocket with PING/PONG support"""
         try:
+            # Handle server PING - Wallex sends PING every 20 seconds
+            if isinstance(data, dict) and 'ping' in data:
+                await self._handle_server_ping(data)
+                return
+            
             # Process depth data - Wallex format: [channel_name, data_array]
             if isinstance(data, list) and len(data) == 2:
                 await self._process_depth_data(data)
@@ -184,11 +196,47 @@ class WallexService(BaseExchangeService):
         except Exception as e:
             logger.error(f"Wallex message processing error: {e}")
 
+    async def _handle_server_ping(self, data: Dict[str, Any]):
+        """Handle server PING from Wallex according to documentation"""
+        try:
+            ping_id = data.get('ping')
+            if ping_id:
+                # Check PONG limit (max 100 per connection)
+                if self.pong_count >= 100:
+                    logger.warning("Wallex: PONG limit reached (100), need to reconnect")
+                    self.mark_connection_dead("PONG limit reached")
+                    return
+                
+                # Send PONG response
+                pong_msg = {"pong": ping_id}
+                await self.websocket.send(json.dumps(pong_msg))
+                
+                self.pong_count += 1
+                self.last_server_ping_time = time.time()
+                self.update_ping_time()
+                
+                logger.debug(f"Wallex responded to server ping {ping_id} (PONG #{self.pong_count}/100)")
+                
+                # According to docs: each PONG adds 30 seconds to connection time
+                # This is handled automatically by the server
+                
+            else:
+                logger.warning(f"Wallex: Could not extract ping ID from: {data}")
+                
+        except Exception as e:
+            logger.error(f"Wallex PING handling error: {e}")
+
     async def _process_depth_data(self, data: list):
         """Process depth data from Wallex WebSocket"""
         try:
             channel_name = data[0]  # e.g., "USDTTMN@buyDepth" 
             orders_data = data[1]   # Array of order objects
+            
+            # Track message count per channel (max 50 per channel)
+            if channel_name in self.message_count_per_channel:
+                self.message_count_per_channel[channel_name] += 1
+                if self.message_count_per_channel[channel_name] > 45:  # Warn before limit
+                    logger.warning(f"Wallex: Channel {channel_name} approaching message limit ({self.message_count_per_channel[channel_name]}/50)")
             
             # Extract symbol and type from channel name
             if '@buyDepth' in channel_name:
@@ -289,14 +337,15 @@ class WallexService(BaseExchangeService):
             logger.error(f"Wallex partial data storage error for {symbol}: {e}")
 
     async def _connection_health_checker(self):
-        """Additional connection health checker for Wallex"""
+        """Additional connection health checker for Wallex with 30-min limit"""
         while self.is_connected and self.websocket:
             try:
                 await asyncio.sleep(30)  # Check every 30 seconds
                 
                 if self.is_connected:
-                    # Clean up old partial data
                     current_time = time.time()
+                    
+                    # Clean up old partial data
                     symbols_to_clean = []
                     
                     for symbol, data in self.partial_data.items():
@@ -319,36 +368,23 @@ class WallexService(BaseExchangeService):
                     # Check 30-minute connection limit (per Wallex docs)
                     if self.connection_start_time > 0:
                         connection_age = current_time - self.connection_start_time
-                        if connection_age > 1800:  # 30 minutes
+                        if connection_age > 1500:  # 25 minutes (preemptive reconnect)
                             logger.info("Wallex: Approaching 30min connection limit, reconnecting...")
-                            self.mark_connection_dead("30min connection limit")
+                            self.mark_connection_dead("30min connection limit approaching")
                             break
+                    
+                    # Check PONG limit
+                    if self.pong_count >= 95:  # Warn before reaching limit
+                        logger.warning(f"Wallex: PONG count approaching limit ({self.pong_count}/100)")
+                    
+                    # Check server ping health (should receive ping every 20 seconds)
+                    if self.last_server_ping_time > 0:
+                        ping_age = current_time - self.last_server_ping_time
+                        if ping_age > 60:  # No ping for 60 seconds is suspicious
+                            logger.warning(f"Wallex: No server ping for {ping_age:.1f}s (expected every 20s)")
                         
             except Exception as e:
                 logger.error(f"Wallex connection health checker error: {e}")
-                break
-
-    async def _manual_ping_handler(self):
-        """Manual ping handler for Wallex - respond to server pings every 20s"""
-        ping_interval = 25  # Check for server pings every 25 seconds
-        
-        while self.is_connected and self.websocket:
-            try:
-                await asyncio.sleep(ping_interval)
-                
-                if self.is_connected and self.websocket:
-                    # Wallex docs: Server sends PING every 20s, we should respond with PONG
-                    # This is just a health check - server handles actual ping/pong
-                    try:
-                        await self.websocket.ping()
-                        logger.debug("Wallex ping health check sent")
-                        self.update_ping_time()
-                    except Exception as ping_error:
-                        logger.warning(f"Wallex ping health check failed: {ping_error}")
-                        # Don't mark as dead immediately, let health check handle it
-                    
-            except Exception as e:
-                logger.error(f"Wallex manual ping handler error: {e}")
                 break
 
     def parse_price_data(self, data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
@@ -371,4 +407,6 @@ class WallexService(BaseExchangeService):
         self.pending_subscriptions.clear()
         self.message_count_per_channel.clear()
         self.connection_start_time = 0
+        self.pong_count = 0
+        self.last_server_ping_time = 0
         logger.info("Wallex WebSocket disconnected")

@@ -387,6 +387,7 @@
                 this.maxReconnectAttempts = 10;
                 this.pricesData = new Map();
                 this.opportunitiesData = [];
+                this.opportunitiesMap = new Map(); // For duplicate detection
                 this.currencyNames = {};
                 this.bestOpportunity = null;
                 this.lastUpdateTimes = new Map();
@@ -398,6 +399,23 @@
                 this.init();
             }
 
+            cleanupOldOpportunities() {
+                const currentTime = Date.now() / 1000;
+                const maxAge = 300; // 5 minutes
+                
+                // Remove opportunities older than 5 minutes
+                this.opportunitiesData = this.opportunitiesData.filter(opp => {
+                    const oppTime = opp.last_seen || opp.timestamp || 0;
+                    const isValid = (currentTime - oppTime) <= maxAge;
+                    
+                    if (!isValid && opp.frontend_key) {
+                        this.opportunitiesMap.delete(opp.frontend_key);
+                    }
+                    
+                    return isValid;
+                });
+            }
+
             init() {
                 this.setupTabs();
                 this.setupWebSocket();
@@ -406,6 +424,9 @@
                 
                 // Auto-refresh stats every 30 seconds
                 setInterval(() => this.loadSystemStats(), 30000);
+                
+                // Cleanup old opportunities every 60 seconds
+                setInterval(() => this.cleanupOldOpportunities(), 60000);
             }
 
             setupTabs() {
@@ -485,6 +506,8 @@
             }
 
             handleWebSocketMessage(data) {
+                console.log('WebSocket message received:', data.type, data.data?.length || 'no data');
+                
                 switch (data.type) {
                     case 'initial_prices':
                         this.updatePricesTable(data.data);
@@ -493,11 +516,21 @@
                         this.updateSinglePrice(data.data);
                         break;
                     case 'initial_opportunities':
-                        this.opportunitiesData = data.data || [];
+                        console.log('Loading initial opportunities:', data.data?.length || 0);
+                        // Clear existing data for fresh start
+                        this.opportunitiesData = [];
+                        this.opportunitiesMap.clear();
+                        
+                        // Add initial opportunities with duplicate detection
+                        if (data.data && Array.isArray(data.data)) {
+                            data.data.forEach(opp => this.addOrUpdateOpportunity(opp));
+                        }
+                        
                         this.updateOpportunitiesTable();
                         this.updateBestOpportunityFromData();
                         break;
                     case 'opportunities_update':
+                        console.log('Opportunities update received:', data.data?.length || 0);
                         this.handleNewOpportunities(data.data);
                         break;
                     case 'redis_stats':
@@ -506,34 +539,98 @@
                 }
             }
 
+            createOpportunityKey(opp) {
+                // Create composite key similar to backend
+                const keyParts = [
+                    opp.buy_exchange || '',
+                    opp.sell_exchange || '',
+                    opp.symbol || (opp.base_currency + '/' + opp.quote_currency),
+                    (opp.buy_price || 0).toFixed(10),
+                    (opp.sell_price || 0).toFixed(10),
+                    (opp.buy_volume || 0).toFixed(8),
+                    (opp.sell_volume || 0).toFixed(8)
+                ];
+                return keyParts.join('|');
+            }
+
+            addOrUpdateOpportunity(opportunity) {
+                const key = this.createOpportunityKey(opportunity);
+                const existing = this.opportunitiesMap.get(key);
+                
+                if (existing) {
+                    // Update existing opportunity
+                    existing.last_seen = opportunity.last_seen || opportunity.timestamp;
+                    existing.seen_count = (existing.seen_count || 1) + 1;
+                    console.debug(`Updated existing opportunity: ${opportunity.symbol} (${key.substring(0, 20)}...)`);
+                    return false; // Not new
+                } else {
+                    // Add new opportunity
+                    opportunity.frontend_key = key;
+                    opportunity.seen_count = 1;
+                    this.opportunitiesMap.set(key, opportunity);
+                    
+                    // Add to array (at beginning for newest first)
+                    this.opportunitiesData.unshift(opportunity);
+                    
+                    // Keep only latest 500
+                    if (this.opportunitiesData.length > 500) {
+                        const removed = this.opportunitiesData.pop();
+                        if (removed.frontend_key) {
+                            this.opportunitiesMap.delete(removed.frontend_key);
+                        }
+                    }
+                    
+                    console.debug(`Added new opportunity: ${opportunity.symbol} - ${opportunity.profit_percentage.toFixed(2)}%`);
+                    return true; // Is new
+                }
+            }
+
             handleNewOpportunities(newOpportunities) {
                 if (!Array.isArray(newOpportunities) || newOpportunities.length === 0) {
                     return;
                 }
 
-                // Add new opportunities to existing data
-                this.opportunitiesData = [...newOpportunities, ...this.opportunitiesData].slice(0, 500);
+                console.log(`Processing ${newOpportunities.length} opportunities from WebSocket`);
                 
-                // Update table
-                this.updateOpportunitiesTable();
+                let hasNewOpportunities = false;
+                const trulyNewOpportunities = [];
+
+                // Process each opportunity
+                newOpportunities.forEach(opp => {
+                    const isNew = this.addOrUpdateOpportunity(opp);
+                    if (isNew) {
+                        hasNewOpportunities = true;
+                        trulyNewOpportunities.push(opp);
+                    }
+                });
                 
-                // Update best opportunity
-                this.updateBestOpportunityFromData();
+                console.log(`Found ${trulyNewOpportunities.length} truly new opportunities`);
                 
-                // Show notification for high profit opportunities
-                const highProfitOpps = newOpportunities.filter(opp => opp.profit_percentage > 1.5);
-                if (highProfitOpps.length > 0) {
-                    const bestNew = highProfitOpps.reduce((best, current) => 
-                        current.profit_percentage > best.profit_percentage ? current : best
-                    );
+                // Only update UI if we have truly new opportunities
+                if (hasNewOpportunities) {
+                    // Update table
+                    this.updateOpportunitiesTable();
                     
-                    const baseSymbol = bestNew.base_currency || this.extractBaseSymbol(bestNew.symbol);
-                    const currencyName = bestNew.currency_name || this.currencyNames[baseSymbol] || baseSymbol;
+                    // Update best opportunity
+                    this.updateBestOpportunityFromData();
                     
-                    this.showToast(
-                        `🚀 New ${currencyName} opportunity: ${bestNew.profit_percentage.toFixed(2)}% profit (${bestNew.buy_exchange} → ${bestNew.sell_exchange})`,
-                        'success'
-                    );
+                    // Show notification for high profit opportunities
+                    const highProfitOpps = trulyNewOpportunities.filter(opp => opp.profit_percentage > 1.5);
+                    if (highProfitOpps.length > 0) {
+                        const bestNew = highProfitOpps.reduce((best, current) => 
+                            current.profit_percentage > best.profit_percentage ? current : best
+                        );
+                        
+                        const baseSymbol = bestNew.base_currency || this.extractBaseSymbol(bestNew.symbol);
+                        const currencyName = bestNew.currency_name || this.currencyNames[baseSymbol] || baseSymbol;
+                        
+                        this.showToast(
+                            `🚀 New ${currencyName} opportunity: ${bestNew.profit_percentage.toFixed(2)}% profit (${bestNew.buy_exchange} → ${bestNew.sell_exchange})`,
+                            'success'
+                        );
+                    }
+                } else {
+                    console.log('No new opportunities to display (all were duplicates)');
                 }
             }
 
@@ -711,9 +808,12 @@
                                       opp.profit_percentage > 1 ? 'text-green-400' : 'text-yellow-400';
                     const timeAgo = this.getTimeAgo(opp.last_seen || opp.timestamp);
                     
+                    // Debug: add seen count for duplicate detection verification
+                    const seenCount = opp.seen_count > 1 ? ` (${opp.seen_count}x)` : '';
+                    
                     return `
                         <tr class="hover:bg-gray-800 transition-colors">
-                            <td class="py-3 px-4 font-medium">${opp.symbol || opp.base_currency + '/' + opp.quote_currency}</td>
+                            <td class="py-3 px-4 font-medium">${opp.symbol || opp.base_currency + '/' + opp.quote_currency}${seenCount}</td>
                             <td class="py-3 px-4">
                                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                                     ${opp.buy_exchange}
@@ -910,7 +1010,15 @@
                             if (oppsData.currency_names) {
                                 this.currencyNames = { ...this.currencyNames, ...oppsData.currency_names };
                             }
-                            this.opportunitiesData = oppsData.data || [];
+                            
+                            // Clear and reload opportunities with duplicate detection
+                            this.opportunitiesData = [];
+                            this.opportunitiesMap.clear();
+                            
+                            if (oppsData.data && Array.isArray(oppsData.data)) {
+                                oppsData.data.forEach(opp => this.addOrUpdateOpportunity(opp));
+                            }
+                            
                             this.updateOpportunitiesTable();
                             
                             // Update best opportunity from API
