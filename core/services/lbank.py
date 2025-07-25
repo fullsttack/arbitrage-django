@@ -18,8 +18,14 @@ class LBankService(BaseExchangeService):
         self.pending_subscriptions = {}  # Track pending subscriptions
         self.ping_counter = 1
         
+        # Enhanced ping/pong tracking
+        self.last_ping_sent_time = 0
+        self.last_pong_received_time = 0
+        self.server_ping_received_time = 0
+        self.client_ping_interval = 30  # Send client ping every 30s
+        
     async def connect(self):
-        """Connect to LBank WebSocket with enhanced error handling"""
+        """Connect to LBank WebSocket with enhanced ping/pong handling"""
         max_retries = 5
         for attempt in range(max_retries):
             try:
@@ -32,25 +38,32 @@ class LBankService(BaseExchangeService):
                     except:
                         pass
                 
-                # Simplified connection parameters - only use supported ones
+                # Reset ping/pong tracking
+                self.last_ping_sent_time = 0
+                self.last_pong_received_time = 0
+                self.server_ping_received_time = 0
+                self.ping_counter = 1
+                
+                # Simplified connection parameters
                 self.websocket = await websockets.connect(
                     self.websocket_url,
                     ping_interval=None,  # Handle ping manually
                     ping_timeout=None,
-                    close_timeout=10
+                    close_timeout=10,
+                    max_size=2**20
                 )
                 
                 self.is_connected = True
                 self.reset_connection_state()
                 
-                # Start health monitoring
+                # Start enhanced health monitoring
                 asyncio.create_task(self.health_monitor())
                 
                 # Start message listener
                 asyncio.create_task(self._listen_messages())
                 
-                # Start ping handler for LBank
-                asyncio.create_task(self._ping_handler())
+                # Start enhanced ping handler
+                asyncio.create_task(self._enhanced_ping_handler())
                 
                 logger.info("LBank WebSocket connected successfully")
                 return True
@@ -81,7 +94,7 @@ class LBankService(BaseExchangeService):
                         "action": "subscribe",
                         "subscribe": "depth",
                         "pair": symbol,
-                        "depth": "100"  # Official docs use "100", not "5"
+                        "depth": "100"  # Official docs use "100"
                     }
                     
                     logger.info(f"LBank subscribing to {symbol}...")
@@ -118,10 +131,10 @@ class LBankService(BaseExchangeService):
         
         while self.is_connected and self.websocket:
             try:
-                # Add timeout to detect silent disconnections
+                # Shorter timeout for better responsiveness
                 message = await asyncio.wait_for(
                     self.websocket.recv(), 
-                    timeout=self.MESSAGE_TIMEOUT + 30  # Give extra time for market data
+                    timeout=70  # 70 seconds (more than 60s ping requirement)
                 )
                 
                 # Reset error counter on successful message
@@ -138,9 +151,11 @@ class LBankService(BaseExchangeService):
                 await self._process_message(data)
                 
             except asyncio.TimeoutError:
-                logger.warning(f"LBank: No message received for {self.MESSAGE_TIMEOUT + 30} seconds - connection may be dead")
-                self.mark_connection_dead("Message timeout")
-                break
+                logger.warning(f"LBank: No message received for 70 seconds")
+                # Don't immediately disconnect, check ping/pong status
+                if not await self._check_ping_pong_health():
+                    self.mark_connection_dead("Ping/Pong timeout")
+                    break
                 
             except websockets.exceptions.ConnectionClosed as e:
                 logger.warning(f"LBank WebSocket connection closed: {e}")
@@ -159,25 +174,40 @@ class LBankService(BaseExchangeService):
                 # Brief pause before continuing
                 await asyncio.sleep(1)
 
+    async def _check_ping_pong_health(self) -> bool:
+        """Check ping/pong health according to LBank requirements"""
+        current_time = time.time()
+        
+        # Check if we received server ping recently
+        if self.server_ping_received_time > 0:
+            time_since_server_ping = current_time - self.server_ping_received_time
+            if time_since_server_ping > 70:  # More than 70s without server ping
+                logger.warning(f"LBank: No server ping for {time_since_server_ping:.1f}s")
+                return False
+        
+        # Check if our pong responses are being received
+        if self.last_pong_received_time > 0:
+            time_since_pong = current_time - self.last_pong_received_time
+            if time_since_pong > 90:  # 90s without any pong confirmation
+                logger.warning(f"LBank: No pong confirmation for {time_since_pong:.1f}s")
+                return False
+        
+        return True
+
     async def _process_message(self, data: Dict[str, Any]):
-        """Process different types of messages from LBank"""
+        """Process different types of messages from LBank with enhanced ping handling"""
         try:
             # Handle depth data
             if data.get('type') == 'depth' and 'depth' in data:
                 await self._process_depth_data(data)
             
-            # Handle pong responses
+            # Enhanced server ping handling - multiple formats
+            elif data.get('action') == 'ping' or 'ping' in data:
+                await self._handle_server_ping(data)
+            
+            # Handle pong responses to our client pings
             elif data.get('action') == 'pong':
-                self.update_ping_time()
-                logger.debug(f"LBank pong received: {data.get('pong', 'unknown')}")
-            
-            # Handle server ping - Multiple formats possible
-            elif data.get('action') == 'ping':
-                await self._handle_server_ping(data)
-            
-            # Handle other ping formats
-            elif 'ping' in data and data.get('action') != 'pong':
-                await self._handle_server_ping(data)
+                await self._handle_pong_response(data)
             
             # Handle subscription confirmations
             elif 'subscribe' in data or 'subscribed' in data:
@@ -200,33 +230,48 @@ class LBankService(BaseExchangeService):
             logger.error(f"LBank message processing error: {e}")
 
     async def _handle_server_ping(self, data: Dict[str, Any]):
-        """Handle server ping in multiple possible formats"""
+        """Enhanced server ping handling according to LBank documentation"""
         try:
+            current_time = time.time()
+            self.server_ping_received_time = current_time
+            
             ping_id = None
             
-            # Format 1: {"action": "ping", "ping": "id"}
+            # LBank ping format: {"action": "ping", "ping": "uuid"}
             if data.get('action') == 'ping' and 'ping' in data:
                 ping_id = data['ping']
             
-            # Format 2: {"ping": "id"}
-            elif 'ping' in data and len(data) == 1:
-                ping_id = data['ping']
-            
-            # Format 3: {"ping": "id", "action": "ping"}
-            elif 'ping' in data:
+            # Alternative format: {"ping": "uuid"}
+            elif 'ping' in data and 'action' not in data:
                 ping_id = data['ping']
             
             if ping_id:
-                # Respond with pong
-                pong_msg = {"action": "pong", "pong": ping_id}
+                # Respond with pong immediately according to LBank docs
+                pong_msg = {
+                    "action": "pong", 
+                    "pong": ping_id
+                }
                 await self.websocket.send(json.dumps(pong_msg))
+                
                 self.update_ping_time()
                 logger.debug(f"LBank responded to server ping: {ping_id}")
             else:
-                logger.warning(f"LBank: Could not extract ping ID from: {data}")
+                logger.warning(f"LBank: Could not extract ping ID from server ping: {data}")
                 
         except Exception as e:
-            logger.error(f"LBank ping handling error: {e}")
+            logger.error(f"LBank server ping handling error: {e}")
+
+    async def _handle_pong_response(self, data: Dict[str, Any]):
+        """Handle pong responses to our client pings"""
+        try:
+            current_time = time.time()
+            self.last_pong_received_time = current_time
+            
+            pong_id = data.get('pong', 'unknown')
+            logger.debug(f"LBank pong received for client ping: {pong_id}")
+            
+        except Exception as e:
+            logger.error(f"LBank pong response handling error: {e}")
 
     async def _process_depth_data(self, data: Dict[str, Any]):
         """Process depth data from LBank WebSocket"""
@@ -267,37 +312,48 @@ class LBankService(BaseExchangeService):
         """Parse price data (handled in _process_depth_data)"""
         return None
 
-    async def _ping_handler(self):
-        """Enhanced ping handler for LBank"""
-        ping_interval = 50  # Send ping every 50 seconds (LBank tolerance is 60s)
-        
+    async def _enhanced_ping_handler(self):
+        """Enhanced ping handler with both server response and client-initiated pings"""
         while self.is_connected and self.websocket:
             try:
-                await asyncio.sleep(ping_interval)
+                current_time = time.time()
                 
-                if self.is_connected and self.websocket:
-                    ping_msg = {
-                        "action": "ping",
-                        "ping": f"client-ping-{self.ping_counter}-{int(time.time())}"
-                    }
-                    
-                    await self.websocket.send(json.dumps(ping_msg))
-                    logger.debug(f"LBank ping sent: {self.ping_counter}")
-                    self.ping_counter += 1
-                    
-                    # Check if we got a recent pong (LBank docs say 1 minute tolerance)
-                    current_time = time.time()
-                    if self.last_ping_time > 0:
-                        ping_age = current_time - self.last_ping_time
-                        if ping_age > 90:  # 90 seconds tolerance per LBank docs (1 minute + buffer)
-                            logger.warning(f"LBank: No pong for {ping_age:.1f}s - connection may be dead")
-                            self.mark_connection_dead("Ping timeout")
-                            break
-                            
+                # Send client ping every 30 seconds to keep connection alive
+                if current_time - self.last_ping_sent_time >= self.client_ping_interval:
+                    await self._send_client_ping()
+                
+                # Check ping/pong health
+                if not await self._check_ping_pong_health():
+                    logger.warning("LBank: Ping/Pong health check failed")
+                    self.mark_connection_dead("Ping/Pong health check failed")
+                    break
+                
+                await asyncio.sleep(10)  # Check every 10 seconds
+                
             except Exception as e:
-                logger.error(f"LBank ping error: {e}")
-                self.mark_connection_dead(f"Ping error: {e}")
+                logger.error(f"LBank enhanced ping handler error: {e}")
+                self.mark_connection_dead(f"Ping handler error: {e}")
                 break
+
+    async def _send_client_ping(self):
+        """Send client-initiated ping to server"""
+        try:
+            current_time = time.time()
+            ping_id = f"client-ping-{self.ping_counter}-{int(current_time)}"
+            
+            ping_msg = {
+                "action": "ping",
+                "ping": ping_id
+            }
+            
+            await self.websocket.send(json.dumps(ping_msg))
+            self.last_ping_sent_time = current_time
+            self.ping_counter += 1
+            
+            logger.debug(f"LBank client ping sent: {ping_id}")
+            
+        except Exception as e:
+            logger.error(f"LBank client ping error: {e}")
     
     async def disconnect(self):
         """Disconnect from LBank"""
@@ -312,4 +368,11 @@ class LBankService(BaseExchangeService):
         self.websocket = None
         self.subscribed_pairs.clear()
         self.pending_subscriptions.clear()
+        
+        # Reset ping/pong tracking
+        self.last_ping_sent_time = 0
+        self.last_pong_received_time = 0
+        self.server_ping_received_time = 0
+        self.ping_counter = 1
+        
         logger.info("LBank WebSocket disconnected")
