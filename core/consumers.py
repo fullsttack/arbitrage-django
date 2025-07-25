@@ -35,7 +35,7 @@ class ArbitrageConsumer(AsyncWebsocketConsumer):
         # Start Redis monitoring
         self.monitor_task = asyncio.create_task(self._monitor_redis())
         
-        # Send initial data
+        # Send initial data - استفاده از محدودیت ثابت
         await self.send_initial_data()
         
         logger.info("ArbitrageConsumer connected")
@@ -71,8 +71,6 @@ class ArbitrageConsumer(AsyncWebsocketConsumer):
                     }
                 }))
                 
-                # Skip bulk price updates - individual updates come from exchange services
-                
                 await asyncio.sleep(5)  # Update every 5 seconds
                 
             except Exception as e:
@@ -80,10 +78,13 @@ class ArbitrageConsumer(AsyncWebsocketConsumer):
                 await asyncio.sleep(10)
 
     async def send_initial_data(self):
-        """Send initial opportunities and prices"""
+        """Send initial opportunities and prices with high limit for full data"""
         try:
-            # Get recent opportunities
-            opportunities = await redis_manager.get_latest_opportunities(50)
+            # استفاده از محدودیت بالا برای نمایش همه فرصت‌ها - 1000 فرصت
+            OPPORTUNITIES_DISPLAY_LIMIT = 1000
+            
+            # Get recent opportunities - محدودیت بالا برای نمایش کامل
+            opportunities = await redis_manager.get_latest_opportunities(OPPORTUNITIES_DISPLAY_LIMIT)
             
             logger.info(f"Sending {len(opportunities)} initial opportunities")
             await self.send(text_data=json.dumps({
@@ -114,6 +115,14 @@ class ArbitrageConsumer(AsyncWebsocketConsumer):
                 'type': 'initial_prices',
                 'data': prices_list
             }))
+            
+            # ارسال بهترین فرصت از Redis
+            best_opportunity = await redis_manager.get_highest_profit_opportunity()
+            if best_opportunity:
+                await self.send(text_data=json.dumps({
+                    'type': 'best_opportunity_update',
+                    'data': best_opportunity
+                }))
             
         except Exception as e:
             logger.error(f"Error sending initial data: {e}", exc_info=True)

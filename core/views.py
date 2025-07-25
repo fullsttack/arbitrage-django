@@ -14,6 +14,9 @@ from .models import Exchange, Currency, TradingPair
 
 logger = logging.getLogger(__name__)
 
+# محدودیت برای نمایش فرصت‌ها (بالا برای نمایش همه فرصت‌ها)
+OPPORTUNITIES_DISPLAY_LIMIT = 1000  # نمایش تا 1000 فرصت
+
 @sync_to_async
 def check_superuser_permissions(request):
     """Check if user is authenticated and is superuser - async safe"""
@@ -49,6 +52,7 @@ class DashboardView(LoginRequiredMixin, TemplateView):
             'exchanges': self.get_exchanges(),
             'currencies': self.get_currencies(),
             'trading_pairs': self.get_trading_pairs(),
+            'data_limit': OPPORTUNITIES_DISPLAY_LIMIT,  # اضافه کردن محدودیت به context
         })
         
         return context
@@ -136,7 +140,9 @@ async def api_current_opportunities(request):
     
     try:
         await redis_manager.connect()
-        opportunities = await redis_manager.get_latest_opportunities(100)
+        
+        # استفاده از محدودیت بالا برای نمایش بیشترین فرصت‌ها
+        opportunities = await redis_manager.get_latest_opportunities(OPPORTUNITIES_DISPLAY_LIMIT)
         
         # Get currency names mapping
         currency_names = await get_currency_names_mapping()
@@ -146,19 +152,24 @@ async def api_current_opportunities(request):
             base_symbol = opp.get('base_currency', '').upper()
             opp['currency_name'] = currency_names.get(base_symbol, base_symbol)
         
-        # Find best opportunity from ALL opportunities in Redis (not limited to 1000)
+        # بهترین فرصت از Redis (نه از محدود شده‌ها)
         best_opportunity = await redis_manager.get_highest_profit_opportunity()
         # Add currency name to best opportunity
         if best_opportunity:
             base_symbol = best_opportunity.get('base_currency', '').upper()
             best_opportunity['currency_name'] = currency_names.get(base_symbol, base_symbol)
 
+        # تعداد کل فرصت‌ها از Redis
+        total_opportunities_count = await redis_manager.get_opportunities_count()
+
         return JsonResponse({
             'success': True,
             'data': opportunities,
-            'count': len(opportunities),
+            'count': len(opportunities),  # تعداد بازگردانده شده
+            'total_count': total_opportunities_count,  # تعداد کل در Redis
             'currency_names': currency_names,
-            'best_opportunity': best_opportunity
+            'best_opportunity': best_opportunity,
+            'limit': OPPORTUNITIES_DISPLAY_LIMIT  # محدودیت فعلی
         })
         
     except Exception as e:
@@ -180,6 +191,9 @@ async def api_system_stats(request):
         opportunities_count = await redis_manager.get_opportunities_count()
         prices_count = await redis_manager.get_active_prices_count()
         
+        # بهترین فرصت از Redis برای نمایش در stats
+        best_opportunity = await redis_manager.get_highest_profit_opportunity()
+        
         return JsonResponse({
             'success': True,
             'data': {
@@ -189,7 +203,9 @@ async def api_system_stats(request):
                 'redis_clients': stats.get('connected_clients', 0),
                 'redis_ops_per_sec': stats.get('operations_per_sec', 0),
                 'redis_uptime': stats.get('uptime_seconds', 0),
-                'redis_hit_rate': calculate_hit_rate(stats)
+                'redis_hit_rate': calculate_hit_rate(stats),
+                'best_opportunity': best_opportunity,  # اضافه کردن بهترین فرصت
+                'data_limit': OPPORTUNITIES_DISPLAY_LIMIT  # محدودیت فعلی
             }
         })
         

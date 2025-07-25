@@ -391,6 +391,8 @@
                 this.currencyNames = {};
                 this.bestOpportunity = null;
                 this.lastUpdateTimes = new Map();
+                this.totalOpportunitiesCount = 0; // تعداد کل از Redis
+                this.isInitialDataLoaded = false; // پرچم بارگذاری اولیه
                 
                 // Pagination
                 this.currentPage = 1;
@@ -418,9 +420,18 @@
 
             init() {
                 this.setupTabs();
-                this.setupWebSocket();
                 this.setupPagination();
-                this.loadInitialData();
+                
+                // بارگذاری اولیه داده‌ها از API قبل از WebSocket
+                this.loadInitialData().then(() => {
+                    // پس از بارگذاری موفق، WebSocket را راه‌اندازی کن
+                    this.setupWebSocket();
+                    this.isInitialDataLoaded = true;
+                }).catch(error => {
+                    console.error('Failed to load initial data:', error);
+                    // حتی در صورت خطا، WebSocket را راه‌اندازی کن
+                    this.setupWebSocket();
+                });
                 
                 // Auto-refresh stats every 30 seconds
                 setInterval(() => this.loadSystemStats(), 30000);
@@ -516,27 +527,40 @@
                         this.updateSinglePrice(data.data);
                         break;
                     case 'initial_opportunities':
-                        console.log('Loading initial opportunities:', data.data?.length || 0);
-                        // Clear existing data for fresh start
-                        this.opportunitiesData = [];
-                        this.opportunitiesMap.clear();
-                        
-                        // Add initial opportunities with duplicate detection
-                        if (data.data && Array.isArray(data.data)) {
-                            data.data.forEach(opp => this.addOrUpdateOpportunity(opp));
+                        // فقط اگر داده‌های اولیه از API لود نشده باشد
+                        if (!this.isInitialDataLoaded) {
+                            console.log('Loading initial opportunities from WebSocket:', data.data?.length || 0);
+                            this.handleInitialOpportunities(data.data);
+                        } else {
+                            console.log('Skipping WebSocket initial opportunities (API data already loaded)');
                         }
-                        
-                        this.updateOpportunitiesTable();
-                        this.updateBestOpportunityFromData();
                         break;
                     case 'opportunities_update':
                         console.log('Opportunities update received:', data.data?.length || 0);
                         this.handleNewOpportunities(data.data);
                         break;
+                    case 'best_opportunity_update':
+                        // به‌روزرسانی بهترین فرصت از WebSocket
+                        console.log('Best opportunity update from WebSocket');
+                        this.updateBestOpportunityDisplay(data.data);
+                        break;
                     case 'redis_stats':
                         this.updateSystemStats(data.data);
                         break;
                 }
+            }
+
+            handleInitialOpportunities(opportunities) {
+                // پاک کردن داده‌های قبلی
+                this.opportunitiesData = [];
+                this.opportunitiesMap.clear();
+                
+                // اضافه کردن فرصت‌های اولیه
+                if (opportunities && Array.isArray(opportunities)) {
+                    opportunities.forEach(opp => this.addOrUpdateOpportunity(opp));
+                }
+                
+                this.updateOpportunitiesTable();
             }
 
             createOpportunityKey(opp) {
@@ -572,13 +596,8 @@
                     // Add to array (at beginning for newest first)
                     this.opportunitiesData.unshift(opportunity);
                     
-                    // Keep only latest 500
-                    if (this.opportunitiesData.length > 500) {
-                        const removed = this.opportunitiesData.pop();
-                        if (removed.frontend_key) {
-                            this.opportunitiesMap.delete(removed.frontend_key);
-                        }
-                    }
+                    // حذف محدودیت - بگذار همه فرصت‌ها نگهداری شوند تا با Redis هماهنگ باشد
+                    // Redis حداکثر 10000 فرصت نگهداری میکند و ما تا 1000 نمایش میدهیم
                     
                     console.debug(`Added new opportunity: ${opportunity.symbol} - ${opportunity.profit_percentage.toFixed(2)}%`);
                     return true; // Is new
@@ -611,9 +630,6 @@
                     // Update table
                     this.updateOpportunitiesTable();
                     
-                    // Update best opportunity
-                    this.updateBestOpportunityFromData();
-                    
                     // Show notification for high profit opportunities
                     const highProfitOpps = trulyNewOpportunities.filter(opp => opp.profit_percentage > 1.5);
                     if (highProfitOpps.length > 0) {
@@ -632,22 +648,6 @@
                 } else {
                     console.log('No new opportunities to display (all were duplicates)');
                 }
-            }
-
-            updateBestOpportunityFromData() {
-                if (!this.opportunitiesData || this.opportunitiesData.length === 0) {
-                    this.updateBestOpportunityDisplay(null);
-                    return;
-                }
-
-                // Find highest profit opportunity from current data
-                const bestOpp = this.opportunitiesData.reduce((best, current) => {
-                    const currentProfit = current.profit_percentage || 0;
-                    const bestProfit = best ? (best.profit_percentage || 0) : 0;
-                    return currentProfit > bestProfit ? current : best;
-                }, null);
-
-                this.updateBestOpportunityDisplay(bestOpp);
             }
 
             updateBestOpportunityDisplay(bestOpp) {
@@ -808,12 +808,9 @@
                                       opp.profit_percentage > 1 ? 'text-green-400' : 'text-yellow-400';
                     const timeAgo = this.getTimeAgo(opp.last_seen || opp.timestamp);
                     
-                    // Debug: add seen count for duplicate detection verification
-                    const seenCount = opp.seen_count > 1 ? ` (${opp.seen_count}x)` : '';
-                    
                     return `
                         <tr class="hover:bg-gray-800 transition-colors">
-                            <td class="py-3 px-4 font-medium">${opp.symbol || opp.base_currency + '/' + opp.quote_currency}${seenCount}</td>
+                            <td class="py-3 px-4 font-medium">${opp.symbol || opp.base_currency + '/' + opp.quote_currency}</td>
                             <td class="py-3 px-4">
                                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                                     ${opp.buy_exchange}
@@ -836,8 +833,8 @@
                     `;
                 }).join('');
 
-                // Update counts and pagination
-                document.getElementById('opportunities-count').textContent = `${this.opportunitiesData.length} opportunities`;
+                // Update counts and pagination - استفاده از تعداد محلی فرصت‌ها (نه کل Redis)
+                document.getElementById('opportunities-count').textContent = `${this.opportunitiesData.length} opportunities shown`;
                 document.getElementById('opportunities-last-update').textContent = `Last update: ${new Date().toLocaleTimeString()}`;
                 this.updatePaginationControls(this.opportunitiesData.length);
             }
@@ -870,10 +867,14 @@
             }
 
             updateSystemStats(stats) {
+                // استفاده از تعداد کل از Redis برای باکس بالا
                 document.getElementById('stat-opportunities').textContent = stats.opportunities_count || 0;
                 document.getElementById('stat-prices').textContent = stats.prices_count || 0;
                 document.getElementById('stat-memory').textContent = stats.redis_memory || 'N/A';
                 document.getElementById('stat-health').textContent = `${stats.redis_clients || 0} clients`;
+                
+                // ذخیره تعداد کل
+                this.totalOpportunitiesCount = stats.opportunities_count || 0;
                 
                 // Update monitoring tab
                 document.getElementById('redis-memory').textContent = stats.redis_memory || 'N/A';
@@ -967,14 +968,6 @@
                 }
             }
 
-            setupRefreshButton() {
-                document.getElementById('refresh-data').addEventListener('click', () => {
-                    this.loadInitialData();
-                    this.loadSystemStats();
-                    this.showToast('Data refreshed successfully', 'success');
-                });
-            }
-
             async loadInitialData() {
                 try {
                     const headers = {
@@ -982,23 +975,9 @@
                         'Content-Type': 'application/json',
                     };
                     
-                    // Load prices
-                    const pricesResponse = await fetch('/api/prices/', {
-                        method: 'GET',
-                        headers: headers,
-                        credentials: 'same-origin'
-                    });
-                    if (pricesResponse.ok) {
-                        const pricesData = await pricesResponse.json();
-                        if (pricesData.success) {
-                            if (pricesData.currency_names) {
-                                this.currencyNames = pricesData.currency_names;
-                            }
-                            this.updatePricesTable(pricesData.data);
-                        }
-                    }
+                    console.log('Loading initial data from API...');
                     
-                    // Load opportunities
+                    // Load opportunities first
                     const oppsResponse = await fetch('/api/opportunities/', {
                         method: 'GET',
                         headers: headers,
@@ -1007,6 +986,8 @@
                     if (oppsResponse.ok) {
                         const oppsData = await oppsResponse.json();
                         if (oppsData.success) {
+                            console.log(`Loaded ${oppsData.data?.length || 0} opportunities from API`);
+                            
                             if (oppsData.currency_names) {
                                 this.currencyNames = { ...this.currencyNames, ...oppsData.currency_names };
                             }
@@ -1025,11 +1006,37 @@
                             if (oppsData.best_opportunity) {
                                 this.updateBestOpportunityDisplay(oppsData.best_opportunity);
                             }
+                            
+                            // ذخیره تعداد کل
+                            this.totalOpportunitiesCount = oppsData.total_count || 0;
                         }
                     }
+                    
+                    // Load prices
+                    const pricesResponse = await fetch('/api/prices/', {
+                        method: 'GET',
+                        headers: headers,
+                        credentials: 'same-origin'
+                    });
+                    if (pricesResponse.ok) {
+                        const pricesData = await pricesResponse.json();
+                        if (pricesData.success) {
+                            if (pricesData.currency_names) {
+                                this.currencyNames = { ...this.currencyNames, ...pricesData.currency_names };
+                            }
+                            this.updatePricesTable(pricesData.data);
+                        }
+                    }
+                    
+                    // Load system stats
+                    await this.loadSystemStats();
+                    
+                    console.log('Initial data loaded successfully from API');
+                    
                 } catch (error) {
                     console.error('Failed to load initial data:', error);
                     this.showToast('Failed to load initial data', 'error');
+                    throw error; // Re-throw to handle in init()
                 }
             }
 
@@ -1049,6 +1056,11 @@
                         const data = await response.json();
                         if (data.success) {
                             this.updateSystemStats(data.data);
+                            
+                            // اگر بهترین فرصت در stats وجود داشت، آن را نمایش بده
+                            if (data.data.best_opportunity) {
+                                this.updateBestOpportunityDisplay(data.data.best_opportunity);
+                            }
                         }
                     }
                 } catch (error) {
