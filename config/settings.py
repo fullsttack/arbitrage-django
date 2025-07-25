@@ -270,8 +270,8 @@ LOGOUT_REDIRECT_URL = '/admin/login/'
 
 # Django Unfold Configuration
 UNFOLD = {
-    'SITE_TITLE': 'Digital Currency Arbitrage',
-    'SITE_HEADER': 'Arbitrage Admin',
+    'SITE_TITLE': 'Digital Dashboard',
+    'SITE_HEADER': 'Digital Dashboard',
     'SITE_SYMBOL': '💰',
     'SHOW_HISTORY': True,
     'SHOW_VIEW_ON_SITE': True,
