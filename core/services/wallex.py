@@ -25,7 +25,8 @@ class WallexService(BaseExchangeService):
         
         # Message count reset timer
         self.last_message_reset = 0
-        self.MESSAGE_RESET_INTERVAL = 300  # Reset counts every 5 minutes
+        self.MESSAGE_RESET_INTERVAL = 180  # Reset counts every 3 minutes (کاهش از 5)
+        self.PREEMPTIVE_RECONNECT_THRESHOLD = 200  # Reconnect before server throttling
         
     async def connect(self):
         """Connect to Wallex WebSocket with enhanced error handling"""
@@ -388,12 +389,22 @@ class WallexService(BaseExchangeService):
                 if self.is_connected:
                     current_time = time.time()
                     
-                    # Reset message counts every 5 minutes
-                    if current_time - self.last_message_reset > self.MESSAGE_RESET_INTERVAL:
+                    # Check for server-side throttling and preemptive reconnect
+                    max_messages_any_channel = max(self.message_count_per_channel.values()) if self.message_count_per_channel else 0
+                    
+                    # اگر message count خیلی بالا رفت، قبل از server throttling reconnect کن
+                    if max_messages_any_channel > 200:
+                        logger.warning(f"Wallex: High message count ({max_messages_any_channel}), preemptive reconnect to avoid server throttling")
+                        self.mark_connection_dead("Preemptive reconnect - high message count")
+                        break
+                    
+                    # Reset message counts every 3 minutes (کاهش از 5 به 3)
+                    if current_time - self.last_message_reset > 180:  # 3 minutes
                         old_max = max(self.message_count_per_channel.values()) if self.message_count_per_channel else 0
+                        if old_max > 100:  # فقط اگر واقعاً traffic زیاد بوده
+                            logger.info(f"Wallex: Reset message counts (max was {old_max}) - monitoring for server throttling")
                         self.message_count_per_channel.clear()
                         self.last_message_reset = current_time
-                        logger.info(f"Wallex: Reset message counts (max was {old_max})")
                     
                     # Clean up old partial data
                     symbols_to_clean = []
