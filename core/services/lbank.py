@@ -18,12 +18,22 @@ class LBankService(BaseExchangeService):
         self.pending_subscriptions = {}  # Track pending subscriptions
         self.ping_counter = 1
         
-        # Enhanced ping/pong tracking
+        # Enhanced ping/pong tracking with RELAXED timeouts
         self.last_ping_sent_time = 0
         self.last_pong_received_time = 0
         self.server_ping_received_time = 0
         self.last_data_receive_time = 0  # Track actual data reception
-        self.client_ping_interval = 15  # Send client ping every 15s (aggressive keep-alive)
+        self.client_ping_interval = 120  # Send client ping every 2 minutes (was 15s - TOO AGGRESSIVE)
+        
+        # RELAXED Health check settings for LBank's behavior
+        self.MESSAGE_TIMEOUT = 300  # 5 minutes instead of 3 minutes
+        self.DATA_TIMEOUT = 600     # 10 minutes for data (was 5 minutes)
+        self.PING_TIMEOUT = 120     # 2 minutes ping timeout
+        
+        # LBank-specific behavior tracking
+        self.silent_periods = []  # Track periods without any messages
+        self.current_silent_start = 0
+        self.max_observed_silent_period = 0
         
     async def connect(self):
         """Connect to LBank WebSocket with enhanced ping/pong handling"""
@@ -39,41 +49,42 @@ class LBankService(BaseExchangeService):
                     except:
                         pass
                 
-                # Reset ping/pong tracking
+                # Reset all tracking
                 self.last_ping_sent_time = 0
                 self.last_pong_received_time = 0
                 self.server_ping_received_time = 0
                 self.last_data_receive_time = 0
                 self.ping_counter = 1
+                self.current_silent_start = 0
                 
-                # Simplified connection parameters
+                # Simplified connection parameters with LONGER timeouts
                 self.websocket = await websockets.connect(
                     self.websocket_url,
                     ping_interval=None,  # Handle ping manually
                     ping_timeout=None,
-                    close_timeout=10,
+                    close_timeout=15,     # Increased from 10 to 15
                     max_size=2**20
                 )
                 
                 self.is_connected = True
                 self.reset_connection_state()
                 
-                # Start enhanced health monitoring
+                # Start health monitoring
                 asyncio.create_task(self.health_monitor())
                 
                 # Start message listener
                 asyncio.create_task(self._listen_messages())
                 
-                # Start enhanced ping handler
-                asyncio.create_task(self._enhanced_ping_handler())
+                # Start enhanced ping handler with RELAXED timing
+                asyncio.create_task(self._relaxed_ping_handler())
                 
-                logger.info("LBank WebSocket connected successfully")
+                logger.info("LBank WebSocket connected successfully with relaxed timeouts")
                 return True
                 
             except Exception as e:
                 logger.error(f"LBank connection attempt {attempt + 1} failed: {e}")
                 if attempt < max_retries - 1:
-                    wait_time = min(30, 2 ** attempt)  # Exponential backoff, max 30s
+                    wait_time = min(60, 2 ** attempt)  # Exponential backoff, max 60s
                     logger.info(f"LBank retrying in {wait_time} seconds...")
                     await asyncio.sleep(wait_time)
                 else:
@@ -127,22 +138,45 @@ class LBankService(BaseExchangeService):
         return successful_subscriptions > 0
 
     async def _listen_messages(self):
-        """Listen for WebSocket messages with enhanced error handling"""
+        """Listen for WebSocket messages with MUCH MORE TOLERANT error handling"""
         consecutive_errors = 0
-        max_consecutive_errors = 5
+        max_consecutive_errors = 10  # Increased tolerance
         
         while self.is_connected and self.websocket:
             try:
-                # Shorter timeout for better responsiveness - but not too aggressive
+                # MUCH LONGER timeout - LBank can be silent for long periods
                 message = await asyncio.wait_for(
                     self.websocket.recv(), 
-                    timeout=90  # 90 seconds - reasonable timeout
+                    timeout=360  # 6 minutes timeout (was 90s - TOO SHORT!)
                 )
                 
                 # Reset error counter on successful message
                 consecutive_errors = 0
+                current_time = time.time()
+                
+                # Track end of silent period
+                if self.current_silent_start > 0:
+                    silent_duration = current_time - self.current_silent_start
+                    if silent_duration > 60:  # Only log significant silent periods
+                        logger.info(f"LBank: Silent period ended - {silent_duration:.1f}s without messages")
+                        self.silent_periods.append({
+                            'start': self.current_silent_start,
+                            'end': current_time,
+                            'duration': silent_duration
+                        })
+                        # Keep only last 10 silent periods
+                        if len(self.silent_periods) > 10:
+                            self.silent_periods = self.silent_periods[-10:]
+                        
+                        # Update max observed
+                        if silent_duration > self.max_observed_silent_period:
+                            self.max_observed_silent_period = silent_duration
+                            logger.info(f"LBank: New max silent period observed: {silent_duration:.1f}s")
+                    
+                    self.current_silent_start = 0
+                
                 self.update_message_time()
-                self.last_data_receive_time = time.time()  # Track data reception
+                self.last_data_receive_time = current_time
                 
                 # Parse and process message
                 try:
@@ -154,11 +188,18 @@ class LBankService(BaseExchangeService):
                 await self._process_message(data)
                 
             except asyncio.TimeoutError:
-                logger.debug(f"LBank: No message received for 90 seconds - checking connection health")
-                # Don't immediately disconnect - check actual connection health instead  
-                if not await self._check_actual_connection_health():
-                    self.mark_connection_dead("Actual connection problems detected")
+                logger.info(f"LBank: No message received for 6 minutes")
+                
+                # Start tracking silent period
+                if self.current_silent_start == 0:
+                    self.current_silent_start = time.time()
+                
+                # Only disconnect if it's been REALLY long and we can't ping
+                if not await self._check_connection_with_ping():
+                    self.mark_connection_dead("Extended silent period + ping failed")
                     break
+                else:
+                    logger.info("LBank: Silent period but connection still responsive")
                 
             except websockets.exceptions.ConnectionClosed as e:
                 logger.warning(f"LBank WebSocket connection closed: {e}")
@@ -175,35 +216,38 @@ class LBankService(BaseExchangeService):
                     break
                 
                 # Brief pause before continuing
-                await asyncio.sleep(1)
+                await asyncio.sleep(2)
 
-    async def _check_ping_pong_health(self) -> bool:
-        """Check ping/pong health with relaxed server ping requirement"""
-        current_time = time.time()
-        
-        # اگر data می‌آید، یعنی connection زنده است - مهم‌ترین فاکتور
-        if self.last_data_receive_time > 0:
-            time_since_data = current_time - self.last_data_receive_time
-            if time_since_data > 300:  # 5 دقیقه بدون data = مشکل واقعی
-                logger.warning(f"LBank: No data received for {time_since_data:.1f}s")
-                return False
-        
-        # Server ping optional - اگر نباشد مشکلی نیست
-        if self.server_ping_received_time > 0:
-            time_since_server_ping = current_time - self.server_ping_received_time
-            if time_since_server_ping > 600:  # 10 دقیقه (relaxed)
-                logger.info(f"LBank: No server ping for {time_since_server_ping:.1f}s (server may not send periodic pings)")
-        
-        # Client ping health - اگر خودمان ping فرستادیم ولی pong نگرفتیم
-        if self.last_ping_sent_time > 0 and self.last_pong_received_time > 0:
-            ping_response_time = self.last_pong_received_time - self.last_ping_sent_time
-            if ping_response_time < 0:  # pong قبل از ping = مشکل timing
-                time_since_our_ping = current_time - self.last_ping_sent_time
-                if time_since_our_ping > 120:  # 2 دقیقه بدون pong به ping ما
-                    logger.warning(f"LBank: No pong to our ping for {time_since_our_ping:.1f}s")
-                    return False
-        
-        return True
+    async def _check_connection_with_ping(self) -> bool:
+        """Check if connection is still alive by sending a ping and waiting for pong"""
+        try:
+            # Send a test ping
+            ping_id = f"health-check-{int(time.time())}"
+            ping_msg = {
+                "action": "ping",
+                "ping": ping_id
+            }
+            
+            await self.websocket.send(json.dumps(ping_msg))
+            self.last_ping_sent_time = time.time()
+            
+            logger.debug("LBank: Sent health check ping during silent period")
+            
+            # Wait up to 30 seconds for any response (pong or any message)
+            initial_message_time = self.last_message_time
+            
+            for _ in range(30):  # Wait up to 30 seconds
+                await asyncio.sleep(1)
+                if self.last_message_time > initial_message_time:
+                    logger.info("LBank: Health check ping successful - got response")
+                    return True
+            
+            logger.warning("LBank: Health check ping failed - no response in 30s")
+            return False
+            
+        except Exception as e:
+            logger.error(f"LBank health check ping error: {e}")
+            return False
 
     async def _process_message(self, data: Dict[str, Any]):
         """Process different types of messages from LBank with enhanced ping handling"""
@@ -330,67 +374,80 @@ class LBankService(BaseExchangeService):
         """Parse price data (handled in _process_depth_data)"""
         return None
 
-    async def _enhanced_ping_handler(self):
-        """Final ping handler based on official LBank documentation"""
+    async def _relaxed_ping_handler(self):
+        """RELAXED ping handler that accounts for LBank's behavior patterns"""
         while self.is_connected and self.websocket:
             try:
                 current_time = time.time()
                 
-                # کلید موفقیت: Client ping proactive بفرست (طبق داکیومنت مجاز است)
+                # Send client ping much less frequently
                 if current_time - self.last_ping_sent_time >= self.client_ping_interval:
                     await self._send_client_ping()
                 
-                # فقط روی actual problems چک کن
-                if not await self._check_actual_connection_health():
-                    logger.warning("LBank: Actual connection health check failed")
-                    self.mark_connection_dead("Actual connection health check failed")
+                # More relaxed health checks that account for LBank's silent periods
+                if not await self._relaxed_health_check():
+                    logger.warning("LBank: Relaxed health check failed")
+                    self.mark_connection_dead("Relaxed health check failed")
                     break
                 
-                await asyncio.sleep(10)  # Check every 10 seconds
+                await asyncio.sleep(30)  # Check every 30 seconds (was 10)
                 
             except Exception as e:
-                logger.error(f"LBank ping handler error: {e}")
+                logger.error(f"LBank relaxed ping handler error: {e}")
                 self.mark_connection_dead(f"Ping handler error: {e}")
                 break
 
-    async def _check_actual_connection_health(self) -> bool:
-        """Check ONLY actual problems, not expected server behavior"""
+    async def _relaxed_health_check(self) -> bool:
+        """MUCH MORE RELAXED health check that understands LBank behavior"""
         current_time = time.time()
         
-        # 1. اصلی‌ترین چک: آیا depth data می‌آید؟
-        if self.last_data_receive_time > 0:
-            time_since_data = current_time - self.last_data_receive_time
-            if time_since_data > 300:  # 5 دقیقه بدون data = مشکل واقعی
-                logger.warning(f"LBank: No depth data for {time_since_data:.1f}s - connection dead")
-                return False
-            elif time_since_data > 120:  # 2 دقیقه - هشدار
-                logger.debug(f"LBank: No new data for {time_since_data:.1f}s (monitoring...)")
-        
-        # 2. WebSocket خودش بسته شده؟
+        # 1. Check WebSocket state first
         if hasattr(self.websocket, 'closed') and self.websocket.closed:
             logger.warning("LBank: WebSocket is closed")
             return False
         
-        # 3. اگر ما ping فرستادیم ولی server پاسخ نداد (این مشکل واقعی است)
+        # 2. Data freshness check - but MUCH more relaxed
+        if self.last_data_receive_time > 0:
+            time_since_data = current_time - self.last_data_receive_time
+            # Only worry if it's been more than 10 minutes without ANY data
+            if time_since_data > self.DATA_TIMEOUT:  # 10 minutes
+                logger.warning(f"LBank: No actual data for {time_since_data:.1f}s")
+                
+                # But still try to ping before giving up
+                if await self._check_connection_with_ping():
+                    logger.info("LBank: No data but ping successful - probably quiet market")
+                    return True
+                else:
+                    logger.error("LBank: No data AND ping failed - connection dead")
+                    return False
+        
+        # 3. Message freshness - account for observed silent periods
+        if self.last_message_time > 0:
+            time_since_message = current_time - self.last_message_time
+            
+            # Use adaptive threshold based on observed behavior
+            max_expected_silence = max(300, self.max_observed_silent_period * 1.2)  # At least 5 min, or 120% of max observed
+            
+            if time_since_message > max_expected_silence:
+                logger.warning(f"LBank: No messages for {time_since_message:.1f}s (max expected: {max_expected_silence:.1f}s)")
+                
+                # Try ping before declaring dead
+                if await self._check_connection_with_ping():
+                    logger.info("LBank: Long silence but ping successful")
+                    return True
+                else:
+                    logger.error("LBank: Long silence AND ping failed")
+                    return False
+        
+        # 4. Ping response check - but only if we actually sent one recently
         if self.last_ping_sent_time > 0:
             time_since_our_ping = current_time - self.last_ping_sent_time
-            # اگر 90 ثانیه گذشت و هنوز pong نگرفتیم
-            if (time_since_our_ping > 90 and 
+            # Only worry if we sent a ping recently and got no response
+            if (time_since_our_ping > self.PING_TIMEOUT and 
                 (self.last_pong_received_time == 0 or 
                  self.last_pong_received_time < self.last_ping_sent_time)):
                 logger.warning(f"LBank: No pong response to our ping for {time_since_our_ping:.1f}s")
                 return False
-        
-        # Server ping status - فقط info، نه warning
-        if self.server_ping_received_time > 0:
-            time_since_server_ping = current_time - self.server_ping_received_time
-            if time_since_server_ping > 600:  # 10 دقیقه
-                logger.debug(f"LBank: No server ping for {time_since_server_ping:.1f}s (server sends periodically when needed)")
-        else:
-            logger.debug("LBank: No server ping received yet (server sends periodically when needed)")
-        
-        # مهم: Server ping نیامدن مشکل نیست! Server "periodically" می‌فرسته
-        # یعنی ممکنه هر 5 دقیقه، هر 10 دقیقه، یا اصلاً نفرسته
         
         return True
 
@@ -416,6 +473,40 @@ class LBankService(BaseExchangeService):
             # اگر ping فرستادن با خطا مواجه شد، یعنی connection مشکل دارد
             self.mark_connection_dead(f"Client ping failed: {e}")
     
+    def get_connection_stats(self) -> Dict[str, Any]:
+        """Get detailed connection statistics including silent periods (NEW)"""
+        current_time = time.time()
+        
+        # Calculate current silent period if any
+        current_silent_duration = 0
+        if self.current_silent_start > 0:
+            current_silent_duration = current_time - self.current_silent_start
+        
+        # Calculate averages from historical silent periods
+        if self.silent_periods:
+            avg_silent_duration = sum(p['duration'] for p in self.silent_periods) / len(self.silent_periods)
+            total_silent_time = sum(p['duration'] for p in self.silent_periods)
+        else:
+            avg_silent_duration = 0
+            total_silent_time = 0
+        
+        base_stats = self.get_health_metrics()
+        
+        # Add LBank-specific stats
+        base_stats.update({
+            'silent_periods_count': len(self.silent_periods),
+            'max_observed_silent_period': self.max_observed_silent_period,
+            'avg_silent_period': avg_silent_duration,
+            'total_silent_time': total_silent_time,
+            'current_silent_duration': current_silent_duration,
+            'last_server_ping': self.server_ping_received_time,
+            'last_client_ping': self.last_ping_sent_time,
+            'last_pong_received': self.last_pong_received_time,
+            'client_ping_interval': self.client_ping_interval
+        })
+        
+        return base_stats
+    
     async def disconnect(self):
         """Disconnect from LBank"""
         await super().disconnect()
@@ -436,5 +527,6 @@ class LBankService(BaseExchangeService):
         self.server_ping_received_time = 0
         self.last_data_receive_time = 0
         self.ping_counter = 1
+        self.current_silent_start = 0
         
-        logger.info("LBank WebSocket disconnected")
+        logger.info(f"LBank WebSocket disconnected (observed max silent period: {self.max_observed_silent_period:.1f}s)")
