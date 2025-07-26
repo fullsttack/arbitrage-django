@@ -198,10 +198,10 @@ class WallexService(BaseExchangeService):
         
         while self.is_connected and self.websocket:
             try:
-                # Shorter timeout for faster detection of issues
+                # Faster timeout for quicker detection of issues
                 message = await asyncio.wait_for(
                     self.websocket.recv(), 
-                    timeout=60  # 1 minute timeout
+                    timeout=15  # 15 seconds timeout for INSTANT detection
                 )
                 
                 consecutive_errors = 0
@@ -218,7 +218,7 @@ class WallexService(BaseExchangeService):
                 await self._process_message(data)
                 
             except asyncio.TimeoutError:
-                logger.warning("Wallex: Message timeout (60s) - checking connection health")
+                logger.warning("Wallex: Message timeout (15s) - INSTANT health check")
                 if not await self._check_connection_health():
                     break
                 
@@ -455,7 +455,7 @@ class WallexService(BaseExchangeService):
         """Enhanced health checker with proactive reconnection"""
         while self.is_connected and self.websocket:
             try:
-                await asyncio.sleep(30)  # Check every 30 seconds
+                await asyncio.sleep(5)  # Check every 5 seconds for INSTANT detection
                 
                 if not self.is_connected:
                     break

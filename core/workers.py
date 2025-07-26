@@ -35,9 +35,10 @@ class WorkerTask:
         self.task = None
         self.start_time = None
         self.failure_count = 0
-        self.max_failures = 5
+        self.max_failures = 10  # Increased tolerance
         self.last_restart_time = 0
-        self.min_restart_interval = 10  # Minimum 10 seconds between restarts
+        self.min_restart_interval = 0   # NO DELAY - instant restart
+        self.restart_delay = 0          # INSTANT restart - no waiting
         
     async def start(self):
         """Start the worker task"""
@@ -62,10 +63,9 @@ class WorkerTask:
                 if self.restart_on_failure and self.failure_count < self.max_failures:
                     current_time = time.time()
                     if current_time - self.last_restart_time >= self.min_restart_interval:
-                        logger.info(f"Scheduling restart for worker task '{self.name}' in 5 seconds...")
-                        asyncio.create_task(self._delayed_restart())
-                    else:
-                        logger.warning(f"Worker task '{self.name}' restart skipped due to minimum interval")
+                        logger.info(f"INSTANT restart for worker task '{self.name}' - NO DELAY!")
+                        asyncio.create_task(self._instant_restart())
+                    # No minimum interval check - always restart instantly
                 else:
                     logger.error(f"Worker task '{self.name}' permanently failed after {self.failure_count} attempts")
             else:
@@ -74,11 +74,11 @@ class WorkerTask:
         except Exception as e:
             logger.error(f"Error in task done callback for '{self.name}': {e}")
     
-    async def _delayed_restart(self):
-        """Restart the task after a delay"""
-        await asyncio.sleep(5)
+    async def _instant_restart(self):
+        """INSTANT restart with absolutely NO delay"""
+        # NO SLEEP - instant restart!
         self.last_restart_time = time.time()
-        logger.info(f"Restarting worker task '{self.name}'...")
+        logger.info(f"🚀 INSTANT restart worker task '{self.name}' (attempt {self.failure_count + 1}) - NO DELAY!")
         await self.start()
     
     def is_running(self):
@@ -210,9 +210,9 @@ class HighPerformanceWorkersManager:
         
         service = self.services[exchange_name]
         consecutive_failures = 0
-        max_consecutive_failures = 15  # More tolerance for connection issues
-        base_retry_delay = 10  # Start with longer delay
-        max_retry_delay = 600  # 10 minutes max
+        max_consecutive_failures = 20  # Even more tolerance
+        base_retry_delay = 0   # NO DELAY - instant retry
+        max_retry_delay = 0    # NO MAXIMUM DELAY - always instant
         
         logger.info(f"Starting {exchange_name} worker with {len(pairs)} pairs")
         
@@ -222,12 +222,10 @@ class HighPerformanceWorkersManager:
                 if not service.is_connected:
                     logger.info(f"{exchange_name}: Attempting connection...")
                     
-                    # Calculate retry delay with exponential backoff
-                    retry_delay = min(max_retry_delay, base_retry_delay * (2 ** consecutive_failures))
-                    
+                    # NO DELAY - INSTANT retry for all attempts
                     if consecutive_failures > 0:
-                        logger.info(f"{exchange_name}: Waiting {retry_delay}s before retry (attempt {consecutive_failures + 1})")
-                        await asyncio.sleep(retry_delay)
+                        logger.info(f"{exchange_name}: 🚀 INSTANT retry (attempt {consecutive_failures + 1}) - NO DELAY!")
+                    # No sleep - instant retry!
                     
                     # Attempt connection
                     connection_success = await service.connect()
@@ -247,9 +245,9 @@ class HighPerformanceWorkersManager:
                         logger.error(f"{exchange_name}: Connection failed (attempt {consecutive_failures})")
                         
                         if consecutive_failures >= max_consecutive_failures:
-                            logger.error(f"{exchange_name}: Maximum consecutive failures reached, backing off...")
-                            await asyncio.sleep(max_retry_delay)
-                            consecutive_failures = 0  # Reset counter
+                            logger.error(f"{exchange_name}: Maximum consecutive failures reached, resetting counter...")
+                            # NO BACKOFF DELAY - instant reset and retry
+                            consecutive_failures = 0  # Reset counter immediately
                 
                 # Health monitoring while connected
                 else:
@@ -262,8 +260,8 @@ class HighPerformanceWorkersManager:
                         # Connection is healthy, reset failure counter
                         consecutive_failures = 0
                     
-                    # Regular health check interval
-                    await asyncio.sleep(10)
+                    # ULTRA-FAST health check - check every second
+                    await asyncio.sleep(1)
                 
             except Exception as e:
                 consecutive_failures += 1

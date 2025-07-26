@@ -150,10 +150,10 @@ class LBankService(BaseExchangeService):
         
         while self.is_connected and self.websocket:
             try:
-                # Moderate timeout - LBank sends server pings every ~60 seconds
+                # Faster timeout for quicker connection issue detection
                 message = await asyncio.wait_for(
                     self.websocket.recv(), 
-                    timeout=180  # 3 minutes timeout - should get server ping before this
+                    timeout=30  # ULTRA-FAST detection - 30 seconds
                 )
                 
                 # Reset error counter on successful message
@@ -194,7 +194,7 @@ class LBankService(BaseExchangeService):
                 await self._process_message(data)
                 
             except asyncio.TimeoutError:
-                logger.warning(f"LBank: No message received for 3 minutes - checking connection health")
+                logger.warning(f"LBank: No message received for 30s - INSTANT health check")
                 
                 # Start tracking silent period
                 if self.current_silent_start == 0:
@@ -430,7 +430,7 @@ class LBankService(BaseExchangeService):
                     logger.info(f"LBank: Connection approaching 10min limit ({connection_duration:.0f}s), sending keep-alive ping")
                     await self._send_client_ping()
                 
-                await asyncio.sleep(20)  # Check every 20 seconds for more responsive handling
+                await asyncio.sleep(5)  # Check every 5 seconds for INSTANT response
                 
             except Exception as e:
                 logger.error(f"LBank relaxed ping handler error: {e}")

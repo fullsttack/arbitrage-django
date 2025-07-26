@@ -228,12 +228,12 @@ class BaseExchangeService(ABC):
         """Check if connection is healthy with MUCH MORE RELAXED thresholds"""
         current_time = time.time()
         
-        # Check if we're receiving any messages - be more lenient
+        # Check if we're receiving any messages - faster detection
         if self.last_message_time > 0:
             message_age = current_time - self.last_message_time
-            if message_age > self.MESSAGE_TIMEOUT:  # 5 minutes now
+            if message_age > 30:  # ULTRA-FAST detection - 30 seconds only
                 logger.warning(
-                    f"{self.exchange_name}: No messages for {message_age:.1f}s - connection may be dead"
+                    f"{self.exchange_name}: No messages for {message_age:.1f}s - connection likely dead"
                 )
                 return False
         
