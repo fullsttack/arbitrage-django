@@ -121,23 +121,27 @@ class WallexService(BaseExchangeService):
         # Option 1: Try individual subscriptions first
         success_count = await self._subscribe_individual_pairs(pairs)
         
-        # Option 2: Fallback to all@price if individual fails
-        if success_count == 0 and not self.USE_ALL_PRICE_CHANNEL:
-            logger.warning("Wallex: Individual subscriptions failed, trying all@price channel")
-            await self._subscribe_all_price_channel()
-            self.USE_ALL_PRICE_CHANNEL = True
-        
-        # Wait for confirmations
-        await asyncio.sleep(5)
+        # Wait longer for confirmations (Wallex can be slow to respond)
+        logger.info("Wallex: Waiting for subscription confirmations...")
+        await asyncio.sleep(10)  # Increased from 5 to 10 seconds
         
         # Check actual confirmations
         confirmed_count = len(self.confirmed_subscriptions)
         logger.info(f"Wallex: {confirmed_count}/{len(pairs)} subscriptions confirmed")
         
-        return confirmed_count > 0 or self.USE_ALL_PRICE_CHANNEL
+        # DO NOT use all@price as fallback - it returns ALL symbols, not just ours
+        # We need individual @trade subscriptions to work properly
+        
+        # Only accept if we have individual subscriptions working
+        if confirmed_count > 0:
+            logger.info(f"Wallex: Successfully subscribed to {confirmed_count}/{len(pairs)} individual pairs")
+            return True
+        else:
+            logger.error("Wallex: No individual subscriptions confirmed - individual @trade channels not working")
+            return False
 
     async def _subscribe_individual_pairs(self, pairs: List[str]) -> int:
-        """Subscribe to individual trading pairs"""
+        """Subscribe to individual trading pairs using correct Wallex format"""
         successful_subscriptions = 0
         
         for symbol in pairs:
@@ -147,20 +151,26 @@ class WallexService(BaseExchangeService):
                     if successful_subscriptions > 0:
                         await asyncio.sleep(1)  # 1 second between subscriptions
                     
-                    # Subscribe to both buy and sell depth
-                    subscribe_buy = ["subscribe", {"channel": f"{symbol}@buyDepth"}]
-                    subscribe_sell = ["subscribe", {"channel": f"{symbol}@sellDepth"}]
+                    # Subscribe to buyDepth and sellDepth for each symbol (طابق مستندات Wallex)
+                    # Format: ["subscribe", {"channel": "SYMBOL@buyDepth"}] and ["subscribe", {"channel": "SYMBOL@sellDepth"}]
                     
-                    logger.info(f"Wallex subscribing to {symbol} (buy/sell depth)...")
+                    # Subscribe to buy depth
+                    buy_subscribe_msg = ["subscribe", {"channel": f"{symbol}@buyDepth"}]
+                    logger.info(f"Wallex subscribing to {symbol}@buyDepth...")
+                    await self.websocket.send(json.dumps(buy_subscribe_msg))
                     
-                    await self.websocket.send(json.dumps(subscribe_buy))
-                    await asyncio.sleep(0.5)  # Wait between buy and sell
-                    await self.websocket.send(json.dumps(subscribe_sell))
+                    # Small delay between subscriptions
+                    await asyncio.sleep(0.5)
+                    
+                    # Subscribe to sell depth
+                    sell_subscribe_msg = ["subscribe", {"channel": f"{symbol}@sellDepth"}]
+                    logger.info(f"Wallex subscribing to {symbol}@sellDepth...")
+                    await self.websocket.send(json.dumps(sell_subscribe_msg))
                     
                     # Track pending subscription
                     self.pending_subscriptions[symbol] = time.time()
                     
-                    # Initialize message counters
+                    # Initialize message counters for both channels
                     self.message_count_per_channel[f"{symbol}@buyDepth"] = 0
                     self.message_count_per_channel[f"{symbol}@sellDepth"] = 0
                     
@@ -266,7 +276,7 @@ class WallexService(BaseExchangeService):
             
             # Handle subscription confirmations
             if isinstance(data, dict) and ('result' in data or 'success' in data):
-                logger.debug(f"Wallex subscription response: {data}")
+                logger.info(f"Wallex subscription response: {data}")
                 return
                 
             # Handle errors
@@ -274,16 +284,22 @@ class WallexService(BaseExchangeService):
                 logger.warning(f"Wallex error: {data}")
                 return
             
-            # Process depth data - format: [channel_name, data_array]
+            # Process data based on channel type
             if isinstance(data, list) and len(data) == 2:
-                await self._process_depth_data(data)
+                channel_name = data[0]
                 
-            # Process all@price data
-            elif isinstance(data, list) and len(data) == 2 and data[0] == "all@price":
-                await self._process_all_price_data(data)
+                # Handle all@price channel specifically (not used for our implementation)
+                if channel_name == "all@price":
+                    await self._process_all_price_data(data)
+                # Handle buyDepth and sellDepth channels (main implementation)
+                elif '@buyDepth' in channel_name or '@sellDepth' in channel_name:
+                    await self._process_depth_data(data)
+                # Handle other channel types
+                else:
+                    logger.debug(f"Wallex: Unknown channel type: {channel_name}")
             
             else:
-                logger.debug(f"Wallex unhandled message format: {data}")
+                logger.info(f"Wallex unhandled message format: {str(data)[:200]}...")
                 
         except Exception as e:
             logger.error(f"Wallex message processing error: {e}")
@@ -319,12 +335,12 @@ class WallexService(BaseExchangeService):
             logger.error(f"Wallex all@price processing error: {e}")
 
     async def _process_depth_data(self, data: list):
-        """Process individual depth data with subscription confirmation"""
+        """Process buyDepth and sellDepth data from Wallex"""
         try:
-            channel_name = data[0]  # e.g., "DOGEUSDT@buyDepth"
+            channel_name = data[0]  # e.g., "DOGEUSDT@buyDepth" or "DOGEUSDT@sellDepth"
             orders_data = data[1]   # Array of order objects
             
-            # Extract symbol from channel
+            # Extract symbol and order type from channel
             if '@buyDepth' in channel_name:
                 symbol = channel_name.replace('@buyDepth', '')
                 order_type = 'buy'
@@ -349,24 +365,23 @@ class WallexService(BaseExchangeService):
                 self.message_count_per_channel[channel_name] = 0
             self.message_count_per_channel[channel_name] += 1
             
-            # Process order data
-            if not orders_data or not isinstance(orders_data, list):
-                return
-            
-            # Store price data
-            if order_type == 'buy' and orders_data:
-                best_order = orders_data[0]
+            # Process order data - format: [{"quantity": 255.75, "price": 82131, "sum": 21005003.25}, ...]
+            if orders_data and isinstance(orders_data, list) and orders_data:
+                best_order = orders_data[0]  # First order is the best price
                 if isinstance(best_order, dict) and 'price' in best_order and 'quantity' in best_order:
-                    bid_price = Decimal(str(best_order['price']))
-                    bid_volume = Decimal(str(best_order['quantity']))
-                    await self._store_partial_data_optimized(symbol, bid_price=bid_price, bid_volume=bid_volume)
+                    price = Decimal(str(best_order['price']))
+                    volume = Decimal(str(best_order['quantity']))
                     
-            elif order_type == 'sell' and orders_data:
-                best_order = orders_data[0]
-                if isinstance(best_order, dict) and 'price' in best_order and 'quantity' in best_order:
-                    ask_price = Decimal(str(best_order['price']))
-                    ask_volume = Decimal(str(best_order['quantity']))
-                    await self._store_partial_data_optimized(symbol, ask_price=ask_price, ask_volume=ask_volume)
+                    if order_type == 'buy':
+                        await self._store_partial_data_optimized(symbol, bid_price=price, bid_volume=volume)
+                        logger.debug(f"Wallex {symbol} buyDepth: price={price}, volume={volume}")
+                    else:  # sell
+                        await self._store_partial_data_optimized(symbol, ask_price=price, ask_volume=volume)
+                        logger.debug(f"Wallex {symbol} sellDepth: price={price}, volume={volume}")
+                else:
+                    logger.warning(f"Wallex: Invalid order format in {channel_name}: {best_order}")
+            else:
+                logger.warning(f"Wallex: No orders in {channel_name}")
             
         except Exception as e:
             logger.error(f"Wallex depth data processing error: {e}")
@@ -447,10 +462,10 @@ class WallexService(BaseExchangeService):
                 
                 current_time = time.time()
                 
-                # Check data flow
+                # Check data flow - more tolerant for quiet markets
                 if self.last_data_receive_time > 0:
                     time_since_data = current_time - self.last_data_receive_time
-                    if time_since_data > 90:  # 1.5 minutes without data
+                    if time_since_data > 180:  # 3 minutes without data (increased from 90s)
                         logger.warning(f"Wallex: No data for {time_since_data:.1f}s - reconnecting proactively")
                         self.mark_connection_dead("Proactive reconnect - no data")
                         break

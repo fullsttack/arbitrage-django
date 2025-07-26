@@ -23,7 +23,7 @@ class LBankService(BaseExchangeService):
         self.last_pong_received_time = 0
         self.server_ping_received_time = 0
         self.last_data_receive_time = 0  # Track actual data reception
-        self.client_ping_interval = 90   # Send client ping every 90 seconds
+        self.client_ping_interval = 45   # Send client ping every 45 seconds (keep alive)
         self.last_server_ping_response = 0  # Track when we last responded to server ping
         self.missed_server_pings = 0     # Count missed server pings
         
@@ -409,12 +409,12 @@ class LBankService(BaseExchangeService):
         return None
 
     async def _relaxed_ping_handler(self):
-        """RELAXED ping handler that accounts for LBank's behavior patterns"""
+        """Enhanced ping handler to prevent 10-minute timeout"""
         while self.is_connected and self.websocket:
             try:
                 current_time = time.time()
                 
-                # Send client ping much less frequently
+                # Send client ping to keep connection alive
                 if current_time - self.last_ping_sent_time >= self.client_ping_interval:
                     await self._send_client_ping()
                 
@@ -424,7 +424,13 @@ class LBankService(BaseExchangeService):
                     self.mark_connection_dead("Relaxed health check failed")
                     break
                 
-                await asyncio.sleep(30)  # Check every 30 seconds (was 10)
+                # Check if we're approaching 10-minute limit
+                connection_duration = current_time - self.connection_start_time if self.connection_start_time > 0 else 0
+                if connection_duration > 540:  # 9 minutes - proactive action
+                    logger.info(f"LBank: Connection approaching 10min limit ({connection_duration:.0f}s), sending keep-alive ping")
+                    await self._send_client_ping()
+                
+                await asyncio.sleep(20)  # Check every 20 seconds for more responsive handling
                 
             except Exception as e:
                 logger.error(f"LBank relaxed ping handler error: {e}")
@@ -504,8 +510,12 @@ class LBankService(BaseExchangeService):
     async def _send_client_ping(self):
         """Send client-initiated ping to server to maintain connection"""
         try:
+            if not self.websocket or not self.is_connected:
+                logger.warning("LBank: Cannot send ping - websocket not available")
+                return
+                
             current_time = time.time()
-            ping_id = f"client-ping-{self.ping_counter}-{int(current_time)}"
+            ping_id = f"keep-alive-{self.ping_counter}-{int(current_time)}"
             
             ping_msg = {
                 "action": "ping",
@@ -516,7 +526,9 @@ class LBankService(BaseExchangeService):
             self.last_ping_sent_time = current_time
             self.ping_counter += 1
             
-            logger.debug(f"LBank client ping sent: {ping_id}")
+            # Log connection duration when sending ping
+            connection_duration = current_time - self.connection_start_time if self.connection_start_time > 0 else 0
+            logger.info(f"LBank: Client keep-alive ping sent: {ping_id} (connected for {connection_duration:.0f}s)")
             
         except Exception as e:
             logger.error(f"LBank client ping error: {e}")

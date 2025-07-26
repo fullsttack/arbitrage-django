@@ -1,5 +1,3 @@
-
-درباره سوکت های والکس
 سوکت های والکس
 مقدمه
 در دنیای پرتغییر بازارهای مالی، دسترسی به اطلاعات لحظه‌ای یکی از عوامل حیاتی موفقیت است.
@@ -30,41 +28,46 @@
 دقت داشته باشید حداکثر میتوانید صد PONG ارسال کنید
 در ادامه این مستند، نحوه اتصال، لیست کانال‌های موجود، و نمونه‌کدهایی در زبان‌های مختلف برای استفاده از این قابلیت قدرتمند ارائه شده است.
 
-وب سوکت
-/
-قیمت کوین
-دریافت قیمت لحظه‌ای همه بازارها (all@price)
-معرفی
-کانال all@price برای دریافت قیمت لحظه‌ای تمام بازارهای فعال در والکس طراحی شده است. این کانال به‌صورت پیوسته، اطلاعات قیمتی جدید را برای مارکت‌هایی که قیمت آن‌ها تغییر کرده است ارسال می‌کند.
 
-با استفاده از این کانال می‌توانید بدون نیاز به subscribe کردن به هر مارکت به‌صورت جداگانه، تغییرات قیمت همه بازارها را در لحظه دریافت کرده و آن‌ها را در جدول‌ها، داشبوردها یا ویجت‌های قیمت نمایش دهید.
+دریافت عمق بازار خرید (buyDepth)
+از طریق این کانال می‌توانید سفارش‌های خرید موجود در Order Book یک بازار خاص را به‌صورت لحظه‌ای دریافت کنید.
+این داده‌ها برای نمایش لیست سفارش‌های خرید، تحلیل عمق بازار، و طراحی ابزارهای معاملاتی بسیار کاربردی هستند.
 
 آدرس اتصال WebSocket
-برای اتصال باید از آدرس زیر استفاده کنید wss://api.wallex.ir/ws
+برای اتصال باید از آدرس زیر استفاده کنید.
 
+
+
+wss://api.wallex.ir/ws
 فرمت پیام Subscribe
-برای دریافت قیمت تمامی کوین ها باید پیام خود را در قالب زیر ارسال کنید
+برای دریافت عمق بازار باید پیام خود را با فرمت زیر ارسال کنید و میتوانید هر مارکتی را جایگزین MARKET قرار دهید
 
 
 
-["subscribe", { "channel": "MARKET@trade" }]
-نمونه پاسخ دریافتی
-پس از ارسال پیام در سوکت ، جواب هایی که دریافت میکنید بصورت زیر میباشد .
-
-فیلد	نوع	توضیح
-symbol	string	نماد بازار (مانند BTCUSDT, PEPEUSDT)
-price	String (decimal)	قیمت لحظه‌ای فعلی
-24h_ch	Float	درصد تغییر قیمت در ۲۴ ساعت گذشته
+["subscribe", { "channel": "MARKET@buyDepth" }]
+مثال
 
 
-[
-    "all@price",
-    {
-        "symbol": "PEPEUSDT",
-        "price": "0.00001136",
-        "24h_ch": 1.15
-    }
-]
+
+["subscribe", { "channel": "َUSDTTMN@buyDepth" }]
+["subscribe", { "channel": "َBTCUSDT@buyDepth" }]
+نمونه Response-Body
+پس از ارسال پیام در سوکت ، فرمت جواب هایی که دریافت میکنید به‌صورت زیر میباشد که هر آبجکت بیانگر یک اوردر در اوردربوک میباشد.
+
+فیلد	توضیحات
+quantity	مقدار سفارش
+price	قیمت هر واحد
+sum	مجموع مقدار سفارش
+
+
+  [
+    "USDTTMN@buyDepth",
+    [
+      { "quantity": 255.75, "price": 82131, "sum": 21005003.25 },
+      { "quantity": 103.07, "price": 82083, "sum": 8460294.81 },
+      { "quantity": 139.05, "price": 82066, "sum": 11411277.3 }
+    ]
+  ]
 نمونه کد در زبان های مختلف
 JavaScript
 Python
@@ -72,21 +75,30 @@ GOLang
 cURL (websocat)
 
 
-  # نصب ابزار websocat (فقط یک بار)
-  # https://github.com/vi/websocat
+  import websocket
+  import json
 
-  # اتصال به سرور
-  websocat wss://api.wallex.ir/ws
+  def on_message(ws, message):
+      print("Received:", message)
 
-  # پس از اتصال، دستور زیر را در ترمینال وارد کنید:
-  ["subscribe", {"channel": "USDTTMN@buyDepth"}]
+  def on_open(ws):
+      subscribe = ["subscribe", { "channel": "USDTTMN@buyDepth" }]
+      ws.send(json.dumps(subscribe))
 
-  وب سوکت
-/
-ایونت های خصوصی کاربر
-event های خصوصی کاربران
-کانال‌های خصوصی WebSocket در والکس به کاربران احراز هویت‌شده اجازه می‌دهند تا تغییرات شخصی مربوط به حساب خود را به‌صورت لحظه ای دریافت کنند.
-این event ها شامل به‌روزرسانی موجودی، وضعیت سفارش‌ها، و پیام‌های اطلاع‌رسانی هستند.
+  ws = websocket.WebSocketApp(
+      "wss://api.wallex.ir/ws",
+      on_open=on_open,
+      on_message=on_message
+  )
+
+  ws.run_forever()
+      
+
+
+
+دریافت عمق بازار فروش (sellDepth)
+از طریق این کانال می‌توانید سفارش‌های فروش موجود در Order Book یک بازار خاص را به‌صورت لحظه‌ای دریافت کنید.
+این داده‌ها برای نمایش لیست سفارش‌های فروش ، تحلیل عمق بازار، و طراحی ابزارهای معاملاتی بسیار کاربردی هستند.
 
 آدرس اتصال WebSocket
 برای اتصال باید از آدرس زیر استفاده کنید
@@ -99,67 +111,30 @@ wss://api.wallex.ir/ws
 
 
 
-["subscribe", { "channel": "STREAMKEY" }]
-توجه داشته باشید در هنگام لاگین به والکس در مرحله ی آخر یک کلید به نام stream_key در پاسخ ای پی آی دریافت میکنید که باید جایگزین STREAMKEY قرار دهید
-
-event های بروزرسانی موجودی کیف پول(balanceUpdated)
-پس از هرگونه واریز ، برداشت ، یا ساخت سفارش و انجام معامله که در پی آن موجودی کیف پول شما آپدیت میشود ، شما یک ایونت دریافت میکنید
-
-فیلد	نوع	توضیح
-event	string	balanceUpdated
-timestamp	timestamp	زمان بروزرسانی موجودی
-price	String (decimal)	قیمت انجام معامله
-asset	String	ارز اپدیت شده در کیف پول کاربر
-value	String	مقدار موجود در کیف پول
-locked	String	میزان دارایی فریز شده کاربر(زمان برداشت یا انجام یک معامله)
+["subscribe", { "channel": "MARKET@sellDepth" }]
+مثال
 
 
-  [
-    "STREAMKEY",
-    {
-      "event": "balanceUpdated",
-      "timestamp": 1748773416376,
-      "data": {
-        "TMN": {
-          "asset": "TMN",
-          "faName": "تومان",
-          "value": "16033085",
-          "locked": "2507491"
-        }
-      }
-    }
-]
-ثبت سفارش جدید یا بروزرسانی سفارش (orderSaved)
-پس از ثبت سفارش جدید و یا بروزرسانی سفارش ها ، eventهایی که در خصوص آن دریافت میکنید به شرح زیر میباشد.
 
-فیلد	نوع	توضیح
-event	string	orderSaved
-timestamp	timestamp	زمان بوجود آمدن اوردر جدید
-price	String (decimal)	قیمت هر واحد
-symbol	String	نام مارکت
-side	String	BUY , SELL
-origiQty	String	حجم سفارش
-executedQty	String	مقدار معامله شده
-status	String	NEW
-active	Boolean	وضعیت فعال بودن سفارش گذاشته شده
+["subscribe", { "channel": "َUSDTTMN@sellDepth" }]
+["subscribe", { "channel": "َBTCUSDT@sellDepth" }]
+نمونه Response-Body
+پس از ارسال پیام در سوکت ، فرمت جواب هایی که دریافت میکنید به‌صورت زیر میباشد که هر آبجکت بیانگر یک اوردر در اوردربوک میباشد.
+
+فیلد	توضیحات
+quantity	مقدار سفارش
+price	قیمت هر واحد
+sum	مجموع مقدار سفارش
 
 
   [
-    "streamKey",
-    {
-      "event": "orderSaved",
-      "timestamp": 1748773416414,
-      "data": {
-        "symbol": "USDTTMN",
-        "side": "BUY",
-        "clientOrderId": "LIMIT-xxxx",
-        "price": "82102.0000000000000000",
-        "origQty": "10.0000000000000000",
-        "executedQty": "0.0000000000000000",
-        "status": "NEW",
-        "active": true
-      }
-    }
+    "USDTTMN@sellbuyDepth",
+    [
+      { "quantity": 255.75, "price": 82131, "sum": 21005003.25 },
+      { "quantity": 103.07, "price": 82083, "sum": 8460294.81 },
+      { "quantity": 139.05, "price": 82066, "sum": 11411277.3 }
+      
+    ]
   ]
 نمونه کد در زبان های مختلف
 JavaScript
@@ -168,11 +143,21 @@ GOLang
 cURL (websocat)
 
 
-  # نصب ابزار websocat (فقط یک بار)
-  # https://github.com/vi/websocat
+  import websocket
+  import json
 
-  # اتصال به سرور
-  websocat wss://api.wallex.ir/ws
+  def on_message(ws, message):
+      print("Received:", message)
 
-  # پس از اتصال، دستور زیر را در ترمینال وارد کنید:
-  ["subscribe", {"channel": "STREAMKEY"}]
+  def on_open(ws):
+      subscribe = ["subscribe", { "channel": "USDTTMN@sellDepth" }]
+      ws.send(json.dumps(subscribe))
+
+  ws = websocket.WebSocketApp(
+      "wss://api.wallex.ir/ws",
+      on_open=on_open,
+      on_message=on_message
+  )
+
+  ws.run_forever()
+      
