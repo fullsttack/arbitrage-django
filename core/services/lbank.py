@@ -209,12 +209,12 @@ class LBankService(BaseExchangeService):
                     self.mark_connection_dead(f"No server ping for {time_since_server_ping:.1f}s")
                     break
                 
-                # Try ping test before giving up
-                if not await self._check_connection_with_ping():
-                    self.mark_connection_dead("Timeout + ping failed")
+                # Simple connection health check - no parallel recv calls
+                if not self.is_connection_healthy():
+                    self.mark_connection_dead("Timeout + health check failed")
                     break
                 else:
-                    logger.info("LBank: Timeout but ping successful - continuing")
+                    logger.debug("LBank: Timeout but connection still healthy - continuing")
                 
             except websockets.exceptions.ConnectionClosed as e:
                 logger.warning(f"LBank WebSocket connection closed: {e}")
@@ -234,35 +234,11 @@ class LBankService(BaseExchangeService):
                 await asyncio.sleep(2)
 
     async def _check_connection_with_ping(self) -> bool:
-        """Check if connection is still alive by sending a ping and waiting for pong"""
-        try:
-            # Send a test ping
-            ping_id = f"health-check-{int(time.time())}"
-            ping_msg = {
-                "action": "ping",
-                "ping": ping_id
-            }
-            
-            await self.websocket.send(json.dumps(ping_msg))
-            self.last_ping_sent_time = time.time()
-            
-            logger.debug("LBank: Sent health check ping during silent period")
-            
-            # Wait up to 30 seconds for any response (pong or any message)
-            initial_message_time = self.last_message_time
-            
-            # Don't wait in a loop that might interfere with main message listener
-            await asyncio.sleep(5)  # Single wait
-            if self.last_message_time > initial_message_time:
-                logger.info("LBank: Health check ping successful - got response")
-                return True
-            
-            logger.warning("LBank: Health check ping failed - no response in 30s")
-            return False
-            
-        except Exception as e:
-            logger.error(f"LBank health check ping error: {e}")
-            return False
+        """DISABLED - Check if connection is still alive (causes recv conflicts)"""
+        # This function is disabled to prevent "recv while another coroutine is running" errors
+        # We rely on is_connection_healthy() instead which doesn't use recv
+        logger.debug("LBank: Health check ping disabled to prevent recv conflicts")
+        return True
 
     async def _process_message(self, data: Dict[str, Any]):
         """Process different types of messages from LBank with enhanced ping handling"""
@@ -457,10 +433,8 @@ class LBankService(BaseExchangeService):
             # If no server ping for > 2 minutes, something is wrong
             if time_since_server_ping > 120:
                 logger.warning(f"LBank: No server ping for {time_since_server_ping:.1f}s - unusual")
-                # Try our own ping to check connection
-                if not await self._check_connection_with_ping():
-                    logger.error("LBank: No server ping AND our ping failed")
-                    return False
+                # Skip ping check to avoid recv conflicts - just log warning
+                logger.warning("LBank: No server ping for extended period - monitoring")
         
         # 4. Data freshness check - but more relaxed
         if self.last_data_receive_time > 0:
@@ -469,13 +443,9 @@ class LBankService(BaseExchangeService):
             if time_since_data > 900:  # 15 minutes
                 logger.warning(f"LBank: No actual data for {time_since_data:.1f}s")
                 
-                # But still try to ping before giving up
-                if await self._check_connection_with_ping():
-                    logger.info("LBank: No data but ping successful - probably quiet market")
-                    return True
-                else:
-                    logger.error("LBank: No data AND ping failed - connection dead")
-                    return False
+                # No ping check - just log and assume connection is still alive
+                logger.info("LBank: No data but assuming quiet market - continuing")
+                return True
         
         # 5. Message freshness - account for observed silent periods
         if self.last_message_time > 0:
@@ -487,13 +457,9 @@ class LBankService(BaseExchangeService):
             if time_since_message > max_expected_silence:
                 logger.warning(f"LBank: No messages for {time_since_message:.1f}s (max expected: {max_expected_silence:.1f}s)")
                 
-                # Try ping before declaring dead
-                if await self._check_connection_with_ping():
-                    logger.info("LBank: Long silence but ping successful")
-                    return True
-                else:
-                    logger.error("LBank: Long silence AND ping failed")
-                    return False
+                # Skip ping check - rely on WebSocket state and server pings only
+                logger.warning("LBank: Long silence but no ping check to avoid recv conflicts")
+                return False  # Disconnect after long silence without ping confirmation
         
         # 6. Our ping response check - but only if we actually sent one recently
         if self.last_ping_sent_time > 0:
