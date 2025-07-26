@@ -251,11 +251,11 @@ class LBankService(BaseExchangeService):
             # Wait up to 30 seconds for any response (pong or any message)
             initial_message_time = self.last_message_time
             
-            for _ in range(30):  # Wait up to 30 seconds
-                await asyncio.sleep(1)
-                if self.last_message_time > initial_message_time:
-                    logger.info("LBank: Health check ping successful - got response")
-                    return True
+            # Don't wait in a loop that might interfere with main message listener
+            await asyncio.sleep(5)  # Single wait
+            if self.last_message_time > initial_message_time:
+                logger.info("LBank: Health check ping successful - got response")
+                return True
             
             logger.warning("LBank: Health check ping failed - no response in 30s")
             return False
