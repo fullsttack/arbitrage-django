@@ -69,9 +69,7 @@ class LBankService(BaseExchangeService):
                     close_timeout=20,     # Increased to 20 seconds
                     max_size=2**20,
                     max_queue=64,         # Increase queue size
-                    compression=None,     # Disable compression
-                    origin=None,          # Don't send origin header
-                    extra_headers={}      # No extra headers
+                    compression=None      # Disable compression
                 )
                 
                 self.is_connected = True
