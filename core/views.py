@@ -50,7 +50,7 @@ class SimpleDashboardView(LoginRequiredMixin, TemplateView):
         ws_url = f"{ws_scheme}://{request.get_host()}/ws/arbitrage/"
         
         context.update({
-            'page_title': 'Arbitrage Dashboard',
+            'page_title': 'Dashboard',
             'websocket_url': ws_url,
             'opportunities_limit': WEB_CONFIG.get('opportunities_limit', -1),
             'max_opportunities': WEB_CONFIG.get('max_opportunities', -1),
