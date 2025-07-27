@@ -7,7 +7,7 @@ from typing import Dict, Any, Optional, List
 from .base import BaseExchangeService
 
 try:
-    from centrifuge import Client
+    from centrifuge import Client, SubscriptionEventHandler, ClientEventHandler
     CENTRIFUGE_AVAILABLE = True
 except ImportError:
     CENTRIFUGE_AVAILABLE = False
@@ -82,16 +82,11 @@ class RamzinexService(BaseExchangeService):
                 # ✅ Reset tracking variables
                 self._reset_activity_tracking()
                 
-                # Create centrifuge client
+                # Create client with proper event handlers
                 self.client = Client(
                     address=self.websocket_url,
-                    name="python-arbitrage"
+                    events=self._create_client_event_handler()
                 )
-                
-                # Set up event handlers
-                self.client.on_connect = self._on_connect
-                self.client.on_disconnect = self._on_disconnect
-                self.client.on_error = self._on_error
                 
                 # Connect to server
                 await self.client.connect()
@@ -126,7 +121,7 @@ class RamzinexService(BaseExchangeService):
         self.connection_health_checks = 0
 
     async def subscribe_to_pairs(self, pairs: List[str]):
-        """Subscribe to trading pairs using centrifuge client"""
+        """Subscribe to trading pairs using centrifuge client - PROPER API"""
         if not self.is_connected or not self.client:
             logger.error("Ramzinex: Cannot subscribe - not connected")
             return False
@@ -141,25 +136,14 @@ class RamzinexService(BaseExchangeService):
                 try:
                     channel = f'orderbook:{pair_id}'
                     
-                    # ✅ FIXED: Subscribe using centrifuge client with delta compression
-                    subscription = self.client.new_subscription(channel, {
-                        'recover': True,
-                        'delta': 'fossil'  # ✅ طبق مستندات Ramzinex
-                    })
+                    # Create subscription with proper event handler
+                    subscription = self.client.new_subscription(
+                        channel=channel,
+                        events=self._create_subscription_event_handler(pair_id)
+                    )
                     
-                    # Set up event handlers - must be async functions
-                    def make_publication_handler(pair_id):
-                        async def handler(ctx):
-                            await self._on_publication(ctx, pair_id)
-                        return handler
-                    
-                    subscription.events.on_publication = make_publication_handler(pair_id)
-                    
-                    # Subscribe
+                    # Subscribe to channel
                     await subscription.subscribe()
-                    
-                    # Mark as subscribed after successful subscription
-                    self.subscribed_pairs.add(pair_id)
                     
                     # Store subscription
                     self.subscriptions[pair_id] = subscription
@@ -183,103 +167,129 @@ class RamzinexService(BaseExchangeService):
         logger.info(f"Ramzinex: Successfully subscribed to {successful_subscriptions}/{len(pairs)} pairs")
         return successful_subscriptions > 0
 
-    # ✅ FIXED: Event handlers برای centrifuge client
-    async def _on_connect(self, event):
-        """Handle connection success"""
-        logger.info(f"Ramzinex connected: {event}")
-        self.update_message_time()
-        self.last_activity_time = time.time()
+    def _create_client_event_handler(self):
+        """Create client event handler for connection lifecycle"""
+        class RamzinexClientHandler(ClientEventHandler):
+            def __init__(self, service):
+                super().__init__()
+                self.service = service
+            
+            async def on_connecting(self, ctx):
+                logger.debug("Ramzinex: Connecting to WebSocket...")
+                self.service.last_activity_time = time.time()
+            
+            async def on_connected(self, ctx):
+                logger.info("Ramzinex: Connected to WebSocket")
+                self.service.last_activity_time = time.time()
+                self.service.update_message_time()
+            
+            async def on_disconnected(self, ctx):
+                logger.warning(f"Ramzinex: Disconnected - {ctx}")
+                self.service.mark_connection_dead(f"Disconnected: {ctx}")
+            
+            async def on_error(self, ctx):
+                logger.error(f"Ramzinex: Client error - {ctx}")
+        
+        return RamzinexClientHandler(self)
     
-    async def _on_disconnect(self, event):
-        """Handle disconnection"""
-        logger.warning(f"Ramzinex disconnected: {event}")
-        self.mark_connection_dead(f"Client disconnected: {event}")
+    def _create_subscription_event_handler(self, pair_id: str):
+        """Create subscription event handler for a specific pair"""
+        class RamzinexSubscriptionHandler(SubscriptionEventHandler):
+            def __init__(self, pair_id, service):
+                super().__init__()
+                self.pair_id = pair_id
+                self.service = service
+            
+            async def on_subscribing(self, ctx):
+                logger.debug(f"Ramzinex: Subscribing to {self.pair_id}")
+                self.service.last_activity_time = time.time()
+            
+            async def on_subscribed(self, ctx):
+                logger.info(f"Ramzinex: Successfully subscribed to {self.pair_id}")
+                self.service.subscribed_pairs.add(self.pair_id)
+                self.service.update_message_time()
+                self.service.last_activity_time = time.time()
+            
+            async def on_unsubscribed(self, ctx):
+                logger.info(f"Ramzinex: Unsubscribed from {self.pair_id}")
+                if self.pair_id in self.service.subscribed_pairs:
+                    self.service.subscribed_pairs.remove(self.pair_id)
+            
+            async def on_error(self, ctx):
+                logger.error(f"Ramzinex: Subscription error for {self.pair_id} - {ctx}")
+            
+            async def on_publication(self, ctx):
+                # Handle published data
+                await self.service._on_publication_async(ctx, self.pair_id)
+        
+        return RamzinexSubscriptionHandler(pair_id, self)
     
-    async def _on_error(self, event):
-        """Handle connection errors"""
-        logger.error(f"Ramzinex connection error: {event}")
-        self.mark_connection_dead(f"Connection error: {event}")
-    
-    async def _on_subscribed(self, ctx, pair_id: str):
-        """Handle successful subscription"""
-        logger.info(f"Ramzinex subscription successful for pair {pair_id}")
-        self.subscribed_pairs.add(pair_id)
-        self.update_message_time()
-        self.last_activity_time = time.time()
-    
-    async def _on_subscription_error(self, ctx, pair_id: str):
-        """Handle subscription error"""
-        logger.error(f"Ramzinex subscription error for pair {pair_id}: {ctx}")
-    
-    async def _on_publication(self, ctx, pair_id: str):
-        """✅ FIXED: Handle published data with activity tracking"""
+    async def _on_publication_async(self, ctx, pair_id: str):
+        """Handle published data from Ramzinex"""
         try:
             current_time = time.time()
             self.update_message_time()
-            self.last_activity_time = current_time      # ✅ Track activity
-            self.last_data_receive_time = current_time  # ✅ Track data reception
+            self.last_activity_time = current_time
+            self.last_data_receive_time = current_time
             
-            # The centrifuge client automatically handles delta decompression
-            # ctx.pub.data contains the decompressed data
+            # Get data from context - centrifuge provides ctx.pub.data
             if hasattr(ctx, 'pub') and hasattr(ctx.pub, 'data'):
-                data = ctx.pub.data
+                orderbook_data = ctx.pub.data
+            elif hasattr(ctx, 'data'):
+                orderbook_data = ctx.data
             else:
                 logger.warning(f"Ramzinex: No data in publication context for {pair_id}: {ctx}")
                 return
             
-            if isinstance(data, (str, bytes)):
-                # Parse JSON if it's a string
-                if isinstance(data, bytes):
-                    data = data.decode('utf-8')
+            # Data should already be a dict from centrifuge
+            if isinstance(orderbook_data, dict):
+                # Process the orderbook data directly
+                await self._process_orderbook_data(pair_id, orderbook_data)
+            elif isinstance(orderbook_data, (str, bytes)):
+                # Fallback: parse JSON if it's a string
+                if isinstance(orderbook_data, bytes):
+                    orderbook_data = orderbook_data.decode('utf-8')
                 
                 try:
-                    orderbook_data = json.loads(data)
+                    parsed_data = json.loads(orderbook_data)
+                    await self._process_orderbook_data(pair_id, parsed_data)
                 except json.JSONDecodeError as e:
                     logger.warning(f"Ramzinex: Invalid JSON in published data for {pair_id}: {e}")
                     return
-            elif isinstance(data, dict):
-                # Already parsed
-                orderbook_data = data
             else:
-                logger.debug(f"Ramzinex: Unknown data format for {pair_id}: {type(data)}")
+                logger.warning(f"Ramzinex: Unexpected data format for {pair_id}: {type(orderbook_data)}")
                 return
-            
-            # Process the orderbook data
-            await self._process_orderbook_data(pair_id, orderbook_data)
             
         except Exception as e:
             logger.error(f"Ramzinex publish event processing error for {pair_id}: {e}")
 
     async def _process_orderbook_data(self, pair_id: str, orderbook_data: Dict[str, Any]):
-        """Process orderbook data from Ramzinex"""
+        """Process orderbook data from Ramzinex with new complex format"""
         try:
-            # ✅ Track data processing
+            # Track data processing
             self.last_data_receive_time = time.time()
             self.last_activity_time = time.time()
             
-            # Get buys and sells
+            # Get buys and sells arrays
             buys = orderbook_data.get('buys', [])
             sells = orderbook_data.get('sells', [])
             
             logger.debug(f"Ramzinex pair {pair_id}: buys={len(buys)}, sells={len(sells)}")
             
             if buys and sells:
-                # ✅ CORRECT: طبق مستندات و API response Ramzinex
-                # Buys: highest price first (descending order) → Best bid = buys[0]
-                # Sells: highest price first (descending order) → Best ask = sells[-1] (cheapest)
-                
-                # Best bid (highest buy price) - first in buys
+                # Format: [price, volume, total_value, boolean, null, count, timestamp]
+                # Best bid (highest buy price) - first in buys array (sorted descending)
                 if isinstance(buys[0], list) and len(buys[0]) >= 2:
-                    bid_price = Decimal(str(buys[0][0]))
-                    bid_volume = Decimal(str(buys[0][1]))
+                    bid_price = Decimal(str(buys[0][0]))    # First element is price
+                    bid_volume = Decimal(str(buys[0][1]))   # Second element is volume
                 else:
                     logger.warning(f"Ramzinex invalid buys format for pair {pair_id}: {buys[0] if buys else 'None'}")
                     return
                 
-                # ✅ CORRECT: Best ask (lowest sell price) - LAST in sells (cheapest!)
+                # Best ask (lowest sell price) - LAST in sells array (طبق مستندات ramzinex)
                 if isinstance(sells[-1], list) and len(sells[-1]) >= 2:
-                    ask_price = Decimal(str(sells[-1][0]))
-                    ask_volume = Decimal(str(sells[-1][1]))
+                    ask_price = Decimal(str(sells[-1][0]))   # First element is price  
+                    ask_volume = Decimal(str(sells[-1][1]))  # Second element is volume
                 else:
                     logger.warning(f"Ramzinex invalid sells format for pair {pair_id}: {sells[-1] if sells else 'None'}")
                     return
@@ -290,7 +300,7 @@ class RamzinexService(BaseExchangeService):
                 # Save price data
                 await self.save_price_data(symbol_format, bid_price, ask_price, bid_volume, ask_volume)
                 
-                logger.debug(f"Ramzinex {symbol_format} (pair_id: {pair_id}): bid={bid_price}({bid_volume}), ask={ask_price}({ask_volume})")
+                logger.info(f"Ramzinex {symbol_format} (pair_id: {pair_id}): bid={bid_price}({bid_volume}), ask={ask_price}({ask_volume})")
             else:
                 logger.warning(f"Ramzinex pair {pair_id}: No buys or sells data")
             
