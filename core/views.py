@@ -47,7 +47,7 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         
         # Add initial context data
         context.update({
-            'page_title': 'Cryptocurrency Arbitrage Dashboard',
+            'page_title': 'Dashboard',
             'websocket_url': 'ws://localhost:8000/ws/arbitrage/',
             'exchanges': self.get_exchanges(),
             'currencies': self.get_currencies(),
