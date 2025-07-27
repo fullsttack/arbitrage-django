@@ -83,39 +83,43 @@ class SimpleWorkersManager:
             await self.stop()
 
     async def _exchange_worker(self, exchange_name: str, pairs: List[str]):
-        """📡 Simple exchange worker"""
+        """📡 Enhanced exchange worker with better logging"""
         service = self.services[exchange_name]
         failures = 0
         max_failures = self.config['max_connection_failures']
         retry_interval = self.config['connection_retry_interval']
         
+        logger.info(f"{exchange_name}: Worker started with pairs: {pairs}")
+        
         while self.is_running:
             try:
                 # Check connection
                 if not service.is_connected:
-                    logger.debug(f"🔌 Connecting to {exchange_name}...")
+                    logger.info(f"{exchange_name}: Connection lost, attempting reconnect (failure #{failures + 1})")
                     
                     if await service.connect_with_retries():
                         # Subscribe to pairs
+                        logger.info(f"{exchange_name}: Connection successful, subscribing to {len(pairs)} pairs")
+                        
                         if await service.subscribe_to_pairs(pairs):
                             failures = 0  # Reset on success
-                            logger.info(f"✅ {exchange_name} connected and subscribed")
+                            logger.info(f"{exchange_name}: ✅ Connected and subscribed successfully")
                         else:
                             failures += 1
-                            logger.warning(f"❌ {exchange_name} subscription failed")
+                            logger.warning(f"{exchange_name}: ❌ Subscription failed (failure #{failures})")
                     else:
                         failures += 1
-                        logger.warning(f"❌ {exchange_name} connection failed")
+                        logger.warning(f"{exchange_name}: ❌ Connection failed (failure #{failures})")
                 
-                # Health check
+                # Health check for connected services
                 elif not service.is_healthy():
-                    logger.warning(f"⚠️ {exchange_name} health check failed")
+                    logger.warning(f"{exchange_name}: ⚠️ Health check failed, marking as dead")
                     service.mark_dead("Health check failed")
                     failures += 1
                 
                 # Exit if too many failures
                 if failures >= max_failures:
-                    logger.error(f"💀 {exchange_name} permanently failed after {failures} attempts")
+                    logger.error(f"{exchange_name}: 💀 Permanently failed after {failures} attempts")
                     break
                 
                 # Wait before next check
@@ -123,23 +127,27 @@ class SimpleWorkersManager:
                 
             except Exception as e:
                 failures += 1
-                logger.error(f"❌ {exchange_name} worker error: {e}")
+                logger.error(f"{exchange_name}: ❌ Worker error: {e} (failure #{failures})")
                 service.mark_dead(f"Worker error: {e}")
                 
                 if failures < max_failures:
+                    logger.info(f"{exchange_name}: Waiting {retry_interval}s before retry")
                     await asyncio.sleep(retry_interval)
                 else:
+                    logger.error(f"{exchange_name}: 💀 Max failures reached, stopping worker")
                     break
         
         # Cleanup
         try:
             await service.disconnect()
-            logger.info(f"🔌 {exchange_name} disconnected")
+            logger.info(f"{exchange_name}: 🔌 Worker stopped and disconnected")
         except Exception as e:
-            logger.error(f"❌ {exchange_name} cleanup error: {e}")
+            logger.error(f"{exchange_name}: ❌ Cleanup error: {e}")
 
     async def _system_monitor(self):
-        """📊 Simple system monitoring"""
+        """📊 Enhanced system monitoring with detailed logging"""
+        logger.info("📊 System monitor started")
+        
         while self.is_running:
             try:
                 # Get basic stats
@@ -151,13 +159,25 @@ class SimpleWorkersManager:
                            f"Exchanges: {connected_exchanges}/{len(self.services)}, "
                            f"Calculators: {running_calculators}/{len(self.calculators)}")
                 
-                # Log individual exchange status
+                # Log individual exchange status with details
                 for name, service in self.services.items():
                     if service.is_connected:
                         uptime = time.time() - service.last_message_time if service.last_message_time > 0 else 0
-                        logger.debug(f"✅ {name}: Connected (uptime: {uptime:.0f}s)")
+                        subscribed_count = len(getattr(service, 'subscribed_pairs', []))
+                        logger.debug(f"✅ {name}: Connected "
+                                   f"(uptime: {uptime:.0f}s, "
+                                   f"messages: {service.message_count}, "
+                                   f"subscribed: {subscribed_count})")
                     else:
                         logger.debug(f"❌ {name}: Disconnected")
+                
+                # Get Redis stats
+                try:
+                    opportunities_count = await redis_manager.get_opportunities_count()
+                    prices_count = await redis_manager.get_active_prices_count()
+                    logger.debug(f"📊 Redis: {opportunities_count} opportunities, {prices_count} prices")
+                except Exception as e:
+                    logger.warning(f"📊 Redis stats error: {e}")
                 
                 await asyncio.sleep(self.config['system_monitor_interval'])
                 
@@ -166,12 +186,17 @@ class SimpleWorkersManager:
                 await asyncio.sleep(30)
 
     async def _cleanup_worker(self):
-        """🧹 Simple cleanup worker"""
+        """🧹 Enhanced cleanup worker"""
+        logger.debug("🧹 Cleanup worker started")
+        
         while self.is_running:
             try:
                 # Cleanup old data
+                start_time = time.time()
                 await redis_manager.cleanup_old_data()
-                logger.debug("🧹 Cleanup completed")
+                cleanup_time = time.time() - start_time
+                
+                logger.debug(f"🧹 Cleanup completed in {cleanup_time:.2f}s")
                 
                 await asyncio.sleep(self.config['cleanup_interval'])
                 
@@ -181,7 +206,7 @@ class SimpleWorkersManager:
 
     @database_sync_to_async
     def _get_trading_pairs_sync(self):
-        """📋 Get trading pairs from database"""
+        """📋 Get trading pairs from database with enhanced logging"""
         pairs_by_exchange = {}
         
         try:
@@ -200,6 +225,10 @@ class SimpleWorkersManager:
             total_pairs = sum(len(pairs) for pairs in pairs_by_exchange.values())
             logger.info(f"📋 Loaded {total_pairs} trading pairs from {len(pairs_by_exchange)} exchanges")
             
+            # Log pairs per exchange
+            for exchange, pairs in pairs_by_exchange.items():
+                logger.debug(f"📋 {exchange}: {len(pairs)} pairs - {pairs}")
+            
         except Exception as e:
             logger.error(f"❌ Error loading trading pairs: {e}")
         
@@ -210,7 +239,7 @@ class SimpleWorkersManager:
         return await self._get_trading_pairs_sync()
 
     async def stop(self):
-        """🛑 Stop all workers"""
+        """🛑 Stop all workers with enhanced logging"""
         if not self.is_running:
             return
             
@@ -218,35 +247,53 @@ class SimpleWorkersManager:
         self.is_running = False
         
         # Cancel all tasks
+        canceled_count = 0
         for task in self.tasks:
             if not task.done():
-                task.cancel()
+                try:
+                    task.cancel()
+                    canceled_count += 1
+                except Exception as e:
+                    logger.error(f"❌ Task cancel error: {e}")
+        
+        logger.info(f"🛑 Canceled {canceled_count} tasks")
         
         # Wait for tasks to complete
         if self.tasks:
+            logger.debug("🛑 Waiting for tasks to complete...")
             await asyncio.gather(*self.tasks, return_exceptions=True)
         
         # Stop calculators
+        stopped_calculators = 0
         for calculator in self.calculators:
             try:
                 await calculator.stop_calculation()
+                stopped_calculators += 1
             except Exception as e:
                 logger.error(f"❌ Calculator stop error: {e}")
         
+        logger.info(f"🛑 Stopped {stopped_calculators} calculators")
+        
         # Disconnect services
-        for service in self.services.values():
+        disconnected_services = 0
+        for name, service in self.services.items():
             try:
                 await service.disconnect()
+                disconnected_services += 1
+                logger.debug(f"🛑 {name} disconnected")
             except Exception as e:
-                logger.error(f"❌ Service disconnect error: {e}")
+                logger.error(f"❌ {name} disconnect error: {e}")
+        
+        logger.info(f"🛑 Disconnected {disconnected_services} services")
         
         # Close Redis
         try:
             await redis_manager.close()
+            logger.debug("🛑 Redis connection closed")
         except Exception as e:
             logger.error(f"❌ Redis close error: {e}")
         
-        logger.info("✅ All workers stopped")
+        logger.info("✅ All workers stopped successfully")
 
 # Legacy compatibility
 workers_manager = SimpleWorkersManager()

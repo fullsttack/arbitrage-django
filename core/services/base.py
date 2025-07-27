@@ -31,6 +31,11 @@ class BaseExchangeService(ABC):
         # Simple broadcast throttle
         self._last_broadcast = {}
         
+        # Background tasks tracking
+        self.background_tasks = []
+        
+        logger.info(f"{self.exchange_name}: Service initialized")
+
     async def init_redis(self):
         """Initialize Redis - called once"""
         if not redis_manager.is_connected:
@@ -79,36 +84,93 @@ class BaseExchangeService(ABC):
         """📡 Update message tracking"""
         self.last_message_time = time.time()
         self.message_count += 1
+        logger.debug(f"{self.exchange_name}: Message #{self.message_count} received")
 
     def is_healthy(self) -> bool:
         """🔍 Simple health check"""
         if not self.is_connected:
+            logger.debug(f"{self.exchange_name}: Health check - not connected")
             return False
         
         current_time = time.time()
         
         # Check message flow (30s timeout)
-        if self.last_message_time > 0 and current_time - self.last_message_time > 30:
-            return False
+        if self.last_message_time > 0:
+            time_since_last = current_time - self.last_message_time
+            logger.debug(f"{self.exchange_name}: Health check - last message {time_since_last:.1f}s ago")
             
+            if time_since_last > 30:
+                logger.warning(f"{self.exchange_name}: Health check failed - no messages for {time_since_last:.1f}s")
+                return False
+        
         return True
 
     def mark_dead(self, reason: str = ""):
         """💀 Mark connection as dead"""
+        logger.warning(f"{self.exchange_name}: Marking as dead - {reason}")
         self.is_connected = False
         if reason:
             logger.warning(f"{self.exchange_name}: {reason}")
 
     async def connect_with_retries(self, max_retries: int = 3) -> bool:
         """🔄 Simple connection with retries"""
+        logger.info(f"{self.exchange_name}: Starting connection with retries (max: {max_retries})")
+        
         for attempt in range(max_retries):
             try:
+                logger.info(f"{self.exchange_name}: Reconnect attempt {attempt + 1}")
+                logger.debug(f"{self.exchange_name}: Subscribed pairs before connect: {getattr(self, 'subscribed_pairs', 'N/A')}")
+                
                 if await self.connect():
+                    logger.info(f"{self.exchange_name}: Connection successful")
                     return True
-                await asyncio.sleep(2 ** attempt)  # exponential backoff
+                    
+                wait_time = 2 ** attempt
+                logger.info(f"{self.exchange_name}: Attempt {attempt + 1} failed, waiting {wait_time}s")
+                await asyncio.sleep(wait_time)
+                
             except Exception as e:
                 logger.error(f"{self.exchange_name} attempt {attempt + 1}: {e}")
+        
+        logger.error(f"{self.exchange_name}: All reconnect attempts failed")
         return False
+
+    async def reset_state(self):
+        """🔄 Reset internal state for reconnection"""
+        logger.debug(f"{self.exchange_name}: Resetting state")
+        
+        # Reset timing
+        self.last_message_time = 0
+        self.last_data_time = 0
+        self.message_count = 0
+        
+        # Reset broadcast throttle
+        self._last_broadcast.clear()
+        
+        # Reset connection state
+        self.is_connected = False
+        self.websocket = None
+        
+        logger.debug(f"{self.exchange_name}: State reset completed")
+
+    async def cancel_background_tasks(self):
+        """🛑 Cancel all background tasks"""
+        logger.debug(f"{self.exchange_name}: Canceling {len(self.background_tasks)} background tasks")
+        
+        for task in self.background_tasks:
+            if not task.done():
+                try:
+                    task.cancel()
+                    logger.debug(f"{self.exchange_name}: Background task canceled")
+                except Exception as e:
+                    logger.warning(f"{self.exchange_name}: Error canceling task: {e}")
+        
+        # Wait for tasks to complete
+        if self.background_tasks:
+            await asyncio.gather(*self.background_tasks, return_exceptions=True)
+        
+        self.background_tasks.clear()
+        logger.debug(f"{self.exchange_name}: All background tasks canceled")
 
     @abstractmethod
     async def connect(self) -> bool:
@@ -127,28 +189,59 @@ class BaseExchangeService(ABC):
 
     async def listen_loop(self):
         """👂 Simple message listening loop"""
+        logger.info(f"{self.exchange_name}: Starting listen loop")
+        
         try:
             while self.is_connected and self.websocket:
-                message = await asyncio.wait_for(self.websocket.recv(), timeout=60)
-                self.update_message_time()
-                await self.handle_message(message)
+                try:
+                    message = await asyncio.wait_for(self.websocket.recv(), timeout=60)
+                    self.update_message_time()
+                    await self.handle_message(message)
+                except asyncio.TimeoutError:
+                    logger.warning(f"{self.exchange_name}: Listen timeout (60s)")
+                    break
+                except Exception as e:
+                    logger.error(f"{self.exchange_name}: Listen error: {e}")
+                    break
+                    
         except Exception as e:
-            self.mark_dead(f"Listen error: {e}")
+            logger.error(f"{self.exchange_name}: Listen loop error: {e}")
+            
+        self.mark_dead("Listen loop terminated")
+        logger.info(f"{self.exchange_name}: Listen loop ended")
 
     async def health_monitor(self):
         """💓 Simple health monitoring"""
+        logger.debug(f"{self.exchange_name}: Starting health monitor")
+        
         while self.is_connected:
             await asyncio.sleep(10)
             if not self.is_healthy():
                 self.mark_dead("Health check failed")
                 break
+                
+        logger.debug(f"{self.exchange_name}: Health monitor ended")
 
     async def disconnect(self):
         """🔌 Clean disconnect"""
+        logger.info(f"{self.exchange_name}: Starting disconnect")
+        logger.debug(f"{self.exchange_name}: Current state - connected: {self.is_connected}, subscribed: {getattr(self, 'subscribed_pairs', 'N/A')}")
+        
+        # Cancel background tasks first
+        await self.cancel_background_tasks()
+        
+        # Mark as disconnected
         self.is_connected = False
+        
+        # Close WebSocket
         if self.websocket:
             try:
                 await self.websocket.close()
-            except:
-                pass
-        self.websocket = None
+                logger.debug(f"{self.exchange_name}: WebSocket closed")
+            except Exception as e:
+                logger.warning(f"{self.exchange_name}: Error closing websocket: {e}")
+        
+        # Reset state
+        await self.reset_state()
+        
+        logger.info(f"{self.exchange_name}: Disconnect completed")
