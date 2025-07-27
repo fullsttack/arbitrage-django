@@ -1,0 +1,142 @@
+/* Custom scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+    height: 8px;
+    width: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: #374151;
+    border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #6b7280;
+    border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #9ca3af;
+}
+
+/* Sortable columns */
+.sortable {
+    cursor: pointer;
+    user-select: none;
+    position: relative;
+    transition: color 0.2s ease;
+}
+
+.sortable:hover {
+    color: #0ea5e9;
+}
+
+.sortable.sorted-asc::after {
+    content: " ↑";
+    color: #0ea5e9;
+    font-weight: bold;
+}
+
+.sortable.sorted-desc::after {
+    content: " ↓";
+    color: #0ea5e9;
+    font-weight: bold;
+}
+
+/* Toast animations with Tailwind classes - minimal custom CSS */
+.toast-container {
+    pointer-events: none;
+}
+
+.toast-container > * {
+    pointer-events: auto;
+}
+
+/* Loading states */
+.loading-shimmer {
+    background: linear-gradient(90deg, #374151 25%, #4b5563 50%, #374151 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+    0% {
+        background-position: -200% 0;
+    }
+    100% {
+        background-position: 200% 0;
+    }
+}
+
+/* Responsive improvements */
+@media (max-width: 768px) {
+    .table-container {
+        font-size: 0.875rem;
+    }
+    
+    .table-container th,
+    .table-container td {
+        padding: 0.5rem 0.25rem;
+    }
+    
+    /* Hide less important columns on mobile */
+    .table-container .mobile-hide {
+        display: none;
+    }
+}
+
+/* Performance optimizations */
+.gpu-accelerated {
+    transform: translateZ(0);
+    will-change: transform;
+}
+
+/* Connection status indicator */
+.status-pulse {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* High profit opportunity highlight */
+.profit-highlight {
+    background: linear-gradient(90deg, rgba(34, 197, 94, 0.1) 0%, rgba(34, 197, 94, 0.05) 100%);
+    border-left: 3px solid rgb(34, 197, 94);
+}
+
+/* Glass morphism effect for cards */
+.glass-card {
+    backdrop-filter: blur(16px) saturate(180%);
+    background-color: rgba(17, 25, 40, 0.75);
+    border: 1px solid rgba(255, 255, 255, 0.125);
+}
+
+/* Font families */
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+    font-variation-settings: normal;
+}
+
+.font-mono {
+    font-family: 'JetBrains Mono', 'Fira Code', Consolas, 'Courier New', monospace;
+    font-feature-settings: 'calt', 'liga';
+}
+
+/* Numbers and data display */
+.numeric {
+    font-family: 'JetBrains Mono', 'Fira Code', Consolas, 'Courier New', monospace;
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: 'tnum';
+}
+
+/* Improved text rendering */
+* {
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Smooth transitions for all interactive elements */
+* {
+    transition-property: background-color, border-color, color, fill, stroke, opacity, box-shadow, transform;
+    transition-duration: 150ms;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+} 

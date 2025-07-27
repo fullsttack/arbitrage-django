@@ -162,39 +162,13 @@ WALLEX_API_KEY = os.getenv('WALLEX_API_KEY', '')
 LBANK_API_KEY = os.getenv('LBANK_API_KEY', '')
 RAMZINEX_API_KEY = os.getenv('RAMZINEX_API_KEY', '')
 
-# High-Performance Logging Configuration
-LOG_LEVEL = os.getenv('LOG_LEVEL', 'INFO')
-LOG_MAX_SIZE = os.getenv('LOG_MAX_SIZE', '100MB')
-LOG_BACKUP_COUNT = int(os.getenv('LOG_BACKUP_COUNT', 10))
-
-def parse_size(size_str):
-    """Parse size string like '100MB' to bytes"""
-    size_str = size_str.upper()
-    if size_str.endswith('MB'):
-        return int(size_str[:-2]) * 1024 * 1024
-    elif size_str.endswith('GB'):
-        return int(size_str[:-2]) * 1024 * 1024 * 1024
-    else:
-        return int(size_str)
-
+# Simplified Logging Configuration
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'formatters': {
-        'verbose': {
-            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
-            'style': '{',
-        },
         'simple': {
             'format': '{levelname} {asctime} {message}',
-            'style': '{',
-        },
-        'detailed': {
-            'format': '[{asctime}] {levelname} {name} {module}.{funcName}:{lineno} - {message}',
-            'style': '{',
-        },
-        'performance': {
-            'format': '[{asctime}] PERF {module}.{funcName} - {message}',
             'style': '{',
         },
     },
@@ -202,61 +176,11 @@ LOGGING = {
         'console': {
             'class': 'logging.StreamHandler',
             'formatter': 'simple',
-            'level': 'INFO',
-        },
-        'file_debug': {
-            'class': 'logging.handlers.RotatingFileHandler',
-            'filename': LOGS_DIR / 'debug.log',
-            'maxBytes': parse_size(LOG_MAX_SIZE),
-            'backupCount': LOG_BACKUP_COUNT,
-            'formatter': 'detailed',
-            'level': 'DEBUG',
-        },
-        'file_info': {
-            'class': 'logging.handlers.RotatingFileHandler',
-            'filename': LOGS_DIR / 'info.log',
-            'maxBytes': parse_size(LOG_MAX_SIZE),
-            'backupCount': LOG_BACKUP_COUNT,
-            'formatter': 'verbose',
-            'level': 'INFO',
-        },
-        'file_error': {
-            'class': 'logging.handlers.RotatingFileHandler',
-            'filename': LOGS_DIR / 'error.log',
-            'maxBytes': parse_size(LOG_MAX_SIZE),
-            'backupCount': LOG_BACKUP_COUNT,
-            'formatter': 'detailed',
-            'level': 'ERROR',
-        },
-        'file_performance': {
-            'class': 'logging.handlers.RotatingFileHandler',
-            'filename': LOGS_DIR / 'performance.log',
-            'maxBytes': parse_size(LOG_MAX_SIZE),
-            'backupCount': LOG_BACKUP_COUNT,
-            'formatter': 'performance',
-            'level': 'INFO',
-        },
-    },
-    'loggers': {
-        'django': {
-            'handlers': ['console', 'file_info'],
-            'level': LOG_LEVEL,
-            'propagate': True,
-        },
-        'core': {
-            'handlers': ['console', 'file_debug', 'file_error'],
-            'level': 'DEBUG',
-            'propagate': False,
-        },
-        'performance': {
-            'handlers': ['console', 'file_performance'],
-            'level': 'INFO',
-            'propagate': False,
         },
     },
     'root': {
-        'handlers': ['console', 'file_info', 'file_error'],
-        'level': LOG_LEVEL,
+        'handlers': ['console'],
+        'level': 'INFO',
     },
 }
 
@@ -312,6 +236,22 @@ UNFOLD = {
                         'title': _('Trading Pairs'),
                         'icon': 'swap_horiz',
                         'link': reverse_lazy('admin:core_tradingpair_changelist'),
+                    },
+                ],
+            },
+            {
+                'title': _('Configuration'),
+                'icon': 'settings',
+                'items': [
+                    {
+                        'title': _('Configuration Categories'),
+                        'icon': 'folder',
+                        'link': reverse_lazy('admin:core_configurationcategory_changelist'),
+                    },
+                    {
+                        'title': _('Configurations'),
+                        'icon': 'tune',
+                        'link': reverse_lazy('admin:core_configuration_changelist'),
                     },
                 ],
             },

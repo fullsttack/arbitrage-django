@@ -5,7 +5,7 @@ app_name = 'core'
 
 urlpatterns = [
     # Main dashboard
-    path('', views.DashboardView.as_view(), name='dashboard'),
+    path('', views.SimpleDashboardView.as_view(), name='dashboard'),
     
     # API endpoints for real-time data
     path('api/prices/', views.api_current_prices, name='api_prices'),

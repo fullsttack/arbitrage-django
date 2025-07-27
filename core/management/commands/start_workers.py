@@ -1,24 +1,25 @@
 import asyncio
 import signal
 import logging
-import multiprocessing
+import sys
 from django.core.management.base import BaseCommand
-from core.workers import workers_manager
+from core.workers import SimpleWorkersManager
 
 class Command(BaseCommand):
-    help = 'Start high-performance arbitrage workers'
+    """🚀 Simple and Fast Workers Starter"""
+    help = 'Start optimized arbitrage workers'
 
     def add_arguments(self, parser):
         parser.add_argument(
-            '--workers',
-            type=int,
-            default=multiprocessing.cpu_count() * 2,
-            help='Number of worker processes'
-        )
-        parser.add_argument(
             '--log-level',
             default='INFO',
-            help='Set log level (DEBUG, INFO, WARNING, ERROR)'
+            choices=['DEBUG', 'INFO', 'WARNING', 'ERROR'],
+            help='Set log level'
+        )
+        parser.add_argument(
+            '--config',
+            default='default',
+            help='Configuration profile to use'
         )
 
     def handle(self, *args, **options):
@@ -29,30 +30,29 @@ class Command(BaseCommand):
             format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
         )
 
-        # Update worker count
-        workers_manager.worker_count = options['workers']
-        
         self.stdout.write(
-            self.style.SUCCESS(
-                f"Starting {options['workers']} high-performance workers..."
-            )
+            self.style.SUCCESS(f"🚀 Starting optimized arbitrage workers...")
         )
+
+        # Create workers manager
+        manager = SimpleWorkersManager(config_profile=options['config'])
 
         # Setup signal handlers
         def signal_handler(signum, frame):
-            self.stdout.write("Gracefully shutting down workers...")
-            asyncio.create_task(workers_manager.stop_all_workers())
+            self.stdout.write("🛑 Gracefully shutting down workers...")
+            asyncio.create_task(manager.stop())
+            sys.exit(0)
 
         signal.signal(signal.SIGINT, signal_handler)
         signal.signal(signal.SIGTERM, signal_handler)
 
         # Start workers
         try:
-            asyncio.run(self._run_workers())
+            asyncio.run(manager.start())
         except KeyboardInterrupt:
-            self.stdout.write("Received interrupt signal")
+            self.stdout.write("🛑 Received interrupt signal")
+        except Exception as e:
+            self.stdout.write(self.style.ERROR(f"❌ Error: {e}"))
+            sys.exit(1)
         finally:
-            self.stdout.write("Workers stopped")
-
-    async def _run_workers(self):
-        await workers_manager.start_all_workers()
+            self.stdout.write("✅ Workers stopped")

@@ -58,6 +58,9 @@ uv run python manage.py migrate\n\
 echo "Seeding database..."\n\
 uv run python manage.py seeder\n\
 \n\
+echo "Migrating configurations..."\n\
+uv run python manage.py migrate_configs\n\
+\n\
 echo "Starting workers..."\n\
 uv run python manage.py start_workers &\n\
 \n\
