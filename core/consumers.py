@@ -46,7 +46,7 @@ class ArbitrageConsumer(AsyncWebsocketConsumer):
         # Send initial data - استفاده از محدودیت ثابت
         await self.send_initial_data()
         
-        logger.info("ArbitrageConsumer connected with CONNECTION HEALTH monitoring")
+        logger.debug("ArbitrageConsumer connected with CONNECTION HEALTH monitoring")
 
     async def disconnect(self, close_code):
         """Disconnect from WebSocket"""
@@ -62,7 +62,7 @@ class ArbitrageConsumer(AsyncWebsocketConsumer):
         if self.connection_alerts_monitor_task:
             self.connection_alerts_monitor_task.cancel()
         
-        logger.info(f"ArbitrageConsumer disconnected: {close_code}")
+        logger.debug(f"ArbitrageConsumer disconnected: {close_code}")
 
     async def _monitor_redis(self):
         """Monitor Redis stats and send updates"""
@@ -189,7 +189,7 @@ class ArbitrageConsumer(AsyncWebsocketConsumer):
             # Get recent opportunities - محدودیت بالا برای نمایش کامل
             opportunities = await redis_manager.get_latest_opportunities(OPPORTUNITIES_DISPLAY_LIMIT)
             
-            logger.info(f"Sending {len(opportunities)} initial opportunities")
+            logger.debug(f"Sending {len(opportunities)} initial opportunities")
             await self.send(text_data=json.dumps({
                 'type': 'initial_opportunities',
                 'data': opportunities
@@ -199,7 +199,7 @@ class ArbitrageConsumer(AsyncWebsocketConsumer):
             prices = await redis_manager.get_all_current_prices()
             prices_list = []
             
-            logger.info(f"Got {len(prices)} price keys from Redis: {list(prices.keys())}")
+            logger.debug(f"Got {len(prices)} price keys from Redis: {list(prices.keys())}")
             
             for key, price_data in prices.items():
                 # Convert key format "prices:exchange:symbol" to readable format
@@ -222,9 +222,8 @@ class ArbitrageConsumer(AsyncWebsocketConsumer):
                     price_data['is_stale'] = not price_data.get('is_valid', True)
                     
                     prices_list.append(price_data)
-                    logger.debug(f"Processed price: {price_data}")
             
-            logger.info(f"Sending {len(prices_list)} initial prices to WebSocket")
+            logger.debug(f"Sending {len(prices_list)} initial prices to WebSocket")
             await self.send(text_data=json.dumps({
                 'type': 'initial_prices',
                 'data': prices_list

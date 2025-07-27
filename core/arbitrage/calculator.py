@@ -81,7 +81,7 @@ class FastArbitrageCalculator:
     async def start_calculation(self):
         """Start arbitrage calculation loop with connection-based validity"""
         self.is_running = True
-        logger.info("FastArbitrageCalculator started with connection-based validity approach")
+        logger.debug("FastArbitrageCalculator started with connection-based validity approach")
         
         while self.is_running:
             try:
@@ -146,7 +146,7 @@ class FastArbitrageCalculator:
                     
                     # Log performance metrics with connection health info
                     if len(all_valid_opportunities) != self.last_opportunities_count:
-                        performance_logger.info(
+                        performance_logger.debug(
                             f"Arbitrage: Found {len(all_valid_opportunities)} opportunities "
                             f"({len(valid_opportunities)} fully valid, {len(mixed_opportunities)} mixed connection, "
                             f"{len(significant_opportunities)} broadcast-worthy) - "
@@ -168,13 +168,6 @@ class FastArbitrageCalculator:
                 self.calculation_count += 1
                 self.stats['total_calculations'] += 1
                 
-                # Performance logging every 1000 calculations
-                if self.calculation_count % 1000 == 0:
-                    performance_logger.debug(
-                        f"Arbitrage: {self.calculation_count} calculations, "
-                        f"avg time: {processing_time:.3f}s, "
-                        f"validity ratio: {self.stats['valid_opportunities']/(self.stats['valid_opportunities']+self.stats['invalid_opportunities_rejected']+1):.2f}"
-                    )
                 
                 await asyncio.sleep(sleep_time)
                 
@@ -198,14 +191,6 @@ class FastArbitrageCalculator:
                 f"Validity ratio: {summary.get('validity_ratio', 0):.2f}"
             )
             
-            # Log per-exchange status
-            for exchange, data in by_exchange.items():
-                if data['total_pairs'] > 0:
-                    logger.debug(
-                        f"{exchange}: {data['valid_pairs']}/{data['total_pairs']} valid "
-                        f"(status: {data['connection_status']}, "
-                        f"heartbeat: {data.get('seconds_since_heartbeat', 'N/A')}s ago)"
-                    )
             
         except Exception as e:
             logger.error(f"Error logging connection health status: {e}")
@@ -235,7 +220,6 @@ class FastArbitrageCalculator:
                     'max_volume': float(pair.max_volume)
                 })
             
-            logger.debug(f"Updated trading pairs cache: {len(trading_pairs_cache)} currency pairs")
             return trading_pairs_cache
             
         except Exception as e:
@@ -291,18 +275,8 @@ class FastArbitrageCalculator:
                         )
                         opportunities.extend(mixed_opportunities)
                     else:
-                        logger.debug(
-                            f"Skipping {currency_pair}: insufficient acceptable connections "
-                            f"(acceptable: {len(acceptable_prices)}, required: {self.MIN_EXCHANGES_FOR_ARBITRAGE})"
-                        )
                         self.stats['invalid_opportunities_rejected'] += 1
                 
-                # Strategy 3: Log when we skip due to insufficient data
-                else:
-                    logger.debug(
-                        f"Skipping {currency_pair}: insufficient connections "
-                        f"(valid: {len(valid_prices_for_pair)}, all: {len(all_prices_for_pair)})"
-                    )
             
         except Exception as e:
             logger.error(f"Error finding arbitrage opportunities with connection-based validation: {e}")
@@ -436,7 +410,6 @@ class FastArbitrageCalculator:
             )
             
         except Exception as e:
-            logger.debug(f"Error calculating opportunity with connection health: {e}")
             return None
 
     def _group_prices_by_pair_optimized(self, all_prices: Dict[str, Any]) -> Dict[str, List[PricePoint]]:
@@ -491,7 +464,6 @@ class FastArbitrageCalculator:
                 price_groups[currency_pair].append(price_point)
                 
             except Exception as e:
-                logger.debug(f"Error processing price data for {redis_key}: {e}")
                 continue
         
         return price_groups
@@ -561,8 +533,7 @@ class FastArbitrageCalculator:
             )
             
         except Exception as e:
-            # Don't let broadcast errors stop the calculation
-            logger.debug(f"Broadcast error (non-critical): {e}")
+            pass  # Don't let broadcast errors stop the calculation
 
     async def stop_calculation(self):
         """Stop arbitrage calculation"""

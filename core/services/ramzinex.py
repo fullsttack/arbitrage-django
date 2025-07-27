@@ -205,13 +205,13 @@ class RamzinexService(BaseExchangeService):
                 self.service.last_activity_time = time.time()
             
             async def on_subscribed(self, ctx):
-                logger.info(f"Ramzinex: Successfully subscribed to {self.pair_id}")
+                logger.debug(f"Ramzinex: Successfully subscribed to {self.pair_id}")
                 self.service.subscribed_pairs.add(self.pair_id)
                 self.service.update_message_time()
                 self.service.last_activity_time = time.time()
             
             async def on_unsubscribed(self, ctx):
-                logger.info(f"Ramzinex: Unsubscribed from {self.pair_id}")
+                logger.debug(f"Ramzinex: Unsubscribed from {self.pair_id}")
                 if self.pair_id in self.service.subscribed_pairs:
                     self.service.subscribed_pairs.remove(self.pair_id)
             
@@ -300,7 +300,7 @@ class RamzinexService(BaseExchangeService):
                 # Save price data
                 await self.save_price_data(symbol_format, bid_price, ask_price, bid_volume, ask_volume)
                 
-                logger.info(f"Ramzinex {symbol_format} (pair_id: {pair_id}): bid={bid_price}({bid_volume}), ask={ask_price}({ask_volume})")
+                logger.debug(f"Ramzinex {symbol_format} (pair_id: {pair_id}): bid={bid_price}({bid_volume}), ask={ask_price}({ask_volume})")
             else:
                 logger.warning(f"Ramzinex pair {pair_id}: No buys or sells data")
             
@@ -335,7 +335,7 @@ class RamzinexService(BaseExchangeService):
             
             # اگر بیش از 40 ثانیه سکوت = مشکل (25s ping + 15s margin)
             if time_since_activity > self.MAX_SILENT_PERIOD:  # 40 ثانیه
-                logger.warning(f"Ramzinex: No activity for {time_since_activity:.1f}s (ping timeout likely)")
+                logger.warning(f"Ramzinex: No activity for {time_since_activity:.1f}s (ping timeout likely) - connection will be reset")
                 return False
         
         # 2. ✅ بررسی message reception - سخت‌گیرانه برای Ramzinex
@@ -344,7 +344,7 @@ class RamzinexService(BaseExchangeService):
             
             # Ramzinex has 25s ping cycle, so be strict about messages
             if time_since_message > self.MESSAGE_TIMEOUT:  # 35 ثانیه
-                logger.warning(f"Ramzinex: No messages for {time_since_message:.1f}s (expected ping every 25s)")
+                logger.warning(f"Ramzinex: No messages for {time_since_message:.1f}s (expected ping every 25s) - connection will be reset")
                 return False
         
         # 3. ✅ بررسی data reception - متعادل

@@ -163,7 +163,7 @@ class WallexService(BaseExchangeService):
                     
                     # Subscribe to buy depth
                     buy_subscribe_msg = ["subscribe", {"channel": f"{symbol}@buyDepth"}]
-                    logger.info(f"Wallex subscribing to {symbol}@buyDepth...")
+                    logger.debug(f"Wallex subscribing to {symbol}@buyDepth...")
                     await self.websocket.send(json.dumps(buy_subscribe_msg))
                     self.last_activity_time = time.time()
                     
@@ -172,7 +172,7 @@ class WallexService(BaseExchangeService):
                     
                     # Subscribe to sell depth
                     sell_subscribe_msg = ["subscribe", {"channel": f"{symbol}@sellDepth"}]
-                    logger.info(f"Wallex subscribing to {symbol}@sellDepth...")
+                    logger.debug(f"Wallex subscribing to {symbol}@sellDepth...")
                     await self.websocket.send(json.dumps(sell_subscribe_msg))
                     self.last_activity_time = time.time()
                     
@@ -298,7 +298,7 @@ class WallexService(BaseExchangeService):
                 
                 # ✅ چک محدودیت PONG (100 max)
                 if self.pong_count >= self.MAX_PONG_COUNT:
-                    logger.warning(f"Wallex: PONG limit approaching ({self.pong_count}/100), reconnecting proactively")
+                    logger.warning(f"Wallex: PONG limit approaching ({self.pong_count}/100) - will reconnect proactively")
                     self.mark_connection_dead("PONG limit approaching")
                     return
                 
@@ -311,7 +311,7 @@ class WallexService(BaseExchangeService):
                 self.last_activity_time = current_time
                 self.update_ping_time()
                 
-                logger.debug(f"Wallex PONG sent ({self.pong_count}/100)")
+                logger.debug(f"Wallex: PONG sent for ping {ping_id} ({self.pong_count}/100)")
                 
         except Exception as e:
             logger.error(f"Wallex PING handling error: {e}")
@@ -341,7 +341,7 @@ class WallexService(BaseExchangeService):
             # Mark subscription as confirmed
             if symbol not in self.confirmed_subscriptions:
                 self.confirmed_subscriptions.add(symbol)
-                logger.info(f"Wallex: Confirmed subscription for {symbol}")
+                logger.debug(f"Wallex: Confirmed subscription for {symbol}")
                 
             # Remove from pending
             if symbol in self.pending_subscriptions:

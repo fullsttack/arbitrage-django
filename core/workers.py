@@ -45,13 +45,13 @@ class WorkerTask:
         self.start_time = time.time()
         self.task = asyncio.create_task(self.coro)
         self.task.add_done_callback(self._task_done_callback)
-        logger.info(f"Worker task '{self.name}' started")
+        logger.debug(f"Worker task '{self.name}' started")
         
     def _task_done_callback(self, task):
         """Handle task completion/failure"""
         try:
             if task.cancelled():
-                logger.info(f"Worker task '{self.name}' was cancelled")
+                logger.debug(f"Worker task '{self.name}' was cancelled")
                 return
                 
             exception = task.exception()
@@ -63,13 +63,13 @@ class WorkerTask:
                 if self.restart_on_failure and self.failure_count < self.max_failures:
                     current_time = time.time()
                     if current_time - self.last_restart_time >= self.min_restart_interval:
-                        logger.info(f"INSTANT restart for worker task '{self.name}' - NO DELAY!")
+                        logger.debug(f"INSTANT restart for worker task '{self.name}' - NO DELAY!")
                         asyncio.create_task(self._instant_restart())
                     # No minimum interval check - always restart instantly
                 else:
                     logger.error(f"Worker task '{self.name}' permanently failed after {self.failure_count} attempts")
             else:
-                logger.info(f"Worker task '{self.name}' completed successfully")
+                logger.debug(f"Worker task '{self.name}' completed successfully")
                 
         except Exception as e:
             logger.error(f"Error in task done callback for '{self.name}': {e}")
@@ -78,7 +78,7 @@ class WorkerTask:
         """INSTANT restart with absolutely NO delay"""
         # NO SLEEP - instant restart!
         self.last_restart_time = time.time()
-        logger.info(f"🚀 INSTANT restart worker task '{self.name}' (attempt {self.failure_count + 1}) - NO DELAY!")
+        logger.debug(f"🚀 INSTANT restart worker task '{self.name}' (attempt {self.failure_count + 1}) - NO DELAY!")
         await self.start()
     
     def is_running(self):
@@ -99,7 +99,7 @@ class WorkerTask:
                 await self.task
             except asyncio.CancelledError:
                 pass
-        logger.info(f"Worker task '{self.name}' stopped")
+        logger.debug(f"Worker task '{self.name}' stopped")
 
 class HighPerformanceWorkersManager:
     def __init__(self, worker_count=None):
@@ -107,11 +107,11 @@ class HighPerformanceWorkersManager:
         if UVLOOP_AVAILABLE:
             try:
                 asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
-                logger.info("Using uvloop for better performance")
+                logger.debug("Using uvloop for better performance")
             except Exception as e:
                 logger.warning(f"Failed to set uvloop: {e}")
         else:
-            logger.info("Using default asyncio event loop")
+            logger.debug("Using default asyncio event loop")
         
         self.worker_count = worker_count or getattr(settings, 'WORKER_COUNT', multiprocessing.cpu_count() * 2)
         
@@ -148,7 +148,7 @@ class HighPerformanceWorkersManager:
         for i in range(self.optimal_calculator_count):
             calc = FastArbitrageCalculator()
             self.arbitrage_calculators.append(calc)
-            performance_logger.info(f"Created arbitrage calculator {i+1}/{self.optimal_calculator_count}")
+            performance_logger.debug(f"Created arbitrage calculator {i+1}/{self.optimal_calculator_count}")
         
         # Create and start worker tasks
         await self._create_worker_tasks(pairs_by_exchange)
@@ -200,12 +200,12 @@ class HighPerformanceWorkersManager:
             await worker_task.start()
             self.worker_tasks[name] = worker_task
             
-        performance_logger.info(f"Created {len(exchange_workers)} exchange workers, {len(arbitrage_workers)} arbitrage workers, {len(system_workers)} system workers")
+        performance_logger.debug(f"Created {len(exchange_workers)} exchange workers, {len(arbitrage_workers)} arbitrage workers, {len(system_workers)} system workers")
 
     async def _enhanced_exchange_worker(self, exchange_name: str, pairs: List[str]):
         """Enhanced exchange worker with robust reconnection"""
         if not pairs:
-            logger.info(f"No {exchange_name} pairs configured")
+            logger.debug(f"No {exchange_name} pairs configured")
             return
         
         service = self.services[exchange_name]
@@ -214,17 +214,17 @@ class HighPerformanceWorkersManager:
         base_retry_delay = 0   # NO DELAY - instant retry
         max_retry_delay = 0    # NO MAXIMUM DELAY - always instant
         
-        logger.info(f"Starting {exchange_name} worker with {len(pairs)} pairs")
+        logger.debug(f"Starting {exchange_name} worker with {len(pairs)} pairs")
         
         while self.is_running:
             try:
                 # Connection state check
                 if not service.is_connected:
-                    logger.info(f"{exchange_name}: Attempting connection...")
+                    logger.debug(f"{exchange_name}: Attempting connection...")
                     
                     # NO DELAY - INSTANT retry for all attempts
                     if consecutive_failures > 0:
-                        logger.info(f"{exchange_name}: 🚀 INSTANT retry (attempt {consecutive_failures + 1}) - NO DELAY!")
+                        logger.debug(f"{exchange_name}: 🚀 INSTANT retry (attempt {consecutive_failures + 1}) - NO DELAY!")
                     # No sleep - instant retry!
                     
                     # Attempt connection
@@ -276,7 +276,7 @@ class HighPerformanceWorkersManager:
         # Cleanup on exit
         try:
             await service.disconnect()
-            logger.info(f"{exchange_name} worker stopped and disconnected")
+            logger.debug(f"{exchange_name} worker stopped and disconnected")
         except Exception as e:
             logger.error(f"{exchange_name} cleanup error: {e}")
 
@@ -315,7 +315,7 @@ class HighPerformanceWorkersManager:
 
     async def _start_cleanup_worker(self):
         """Worker: Cleanup old data"""
-        performance_logger.info("Cleanup worker started")
+        performance_logger.debug("Cleanup worker started")
         
         while self.is_running:
             try:
@@ -328,7 +328,7 @@ class HighPerformanceWorkersManager:
 
     async def _start_performance_monitor(self):
         """Worker: Monitor system performance metrics"""
-        performance_logger.info("Performance monitor started")
+        performance_logger.debug("Performance monitor started")
         
         while self.is_running:
             try:
@@ -369,7 +369,7 @@ class HighPerformanceWorkersManager:
 
     async def _system_monitor(self):
         """Enhanced system monitoring with detailed metrics"""
-        performance_logger.info("System monitor started")
+        performance_logger.debug("System monitor started")
         
         while self.is_running:
             try:

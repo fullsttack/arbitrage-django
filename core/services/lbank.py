@@ -120,7 +120,7 @@ class LBankService(BaseExchangeService):
                         "depth": "100"
                     }
                     
-                    logger.info(f"LBank subscribing to {symbol}...")
+                    logger.debug(f"LBank subscribing to {symbol}...")
                     await self.websocket.send(json.dumps(subscribe_msg))
                     
                     self.pending_subscriptions[symbol] = time.time()
@@ -139,7 +139,7 @@ class LBankService(BaseExchangeService):
         for symbol in pairs:
             if symbol in self.subscribed_pairs:
                 successful_subscriptions += 1
-                logger.info(f"LBank confirmed subscription for {symbol}")
+                logger.debug(f"LBank confirmed subscription for {symbol}")
             else:
                 logger.warning(f"LBank no confirmation received for {symbol}")
         
@@ -231,7 +231,7 @@ class LBankService(BaseExchangeService):
                 if pair and pair in self.pending_subscriptions:
                     self.subscribed_pairs.add(pair)
                     del self.pending_subscriptions[pair]
-                    logger.info(f"LBank confirmed subscription for {pair}")
+                    logger.debug(f"LBank confirmed subscription for {pair}")
             
             # Handle errors
             elif 'error' in data or data.get('success') is False:
@@ -264,7 +264,7 @@ class LBankService(BaseExchangeService):
                 self.missed_server_pings = 0
                 
                 self.update_ping_time()
-                logger.info(f"LBank: Server ping received, responded with pong: {ping_id}")
+                logger.debug(f"LBank: Server ping received, responded with pong: {ping_id}")
                 
                 # Send heartbeat to Redis
                 await self.send_heartbeat_if_needed()
@@ -312,7 +312,7 @@ class LBankService(BaseExchangeService):
             if symbol and symbol in self.pending_subscriptions:
                 self.subscribed_pairs.add(symbol)
                 del self.pending_subscriptions[symbol]
-                logger.info(f"LBank confirmed subscription for {symbol} via data")
+                logger.debug(f"LBank confirmed subscription for {symbol} via data")
             
             # Process bid/ask data
             asks = depth_data.get('asks', [])
@@ -378,7 +378,7 @@ class LBankService(BaseExchangeService):
         if self.server_ping_received_time > 0:
             time_since_server_ping = current_time - self.server_ping_received_time
             if time_since_server_ping > 180:  # 3 دقیقه بدون server ping
-                logger.warning(f"LBank: No server ping for {time_since_server_ping:.1f}s")
+                logger.warning(f"LBank: No server ping for {time_since_server_ping:.1f}s - connection may be dead")
                 return False
         
         # 4. ✅ بررسی overall activity
@@ -394,7 +394,7 @@ class LBankService(BaseExchangeService):
             if (time_since_ping > self.PING_TIMEOUT and 
                 (self.last_pong_received_time == 0 or 
                  self.last_pong_received_time < self.last_ping_sent_time)):
-                logger.warning(f"LBank: No pong response for {time_since_ping:.1f}s")
+                logger.warning(f"LBank: No pong response for {time_since_ping:.1f}s - server not responding to our pings")
                 return False
         
         return True
@@ -418,7 +418,7 @@ class LBankService(BaseExchangeService):
             self.last_activity_time = current_time
             self.ping_counter += 1
             
-            logger.info(f"LBank: Client ping sent: {ping_id}")
+            logger.debug(f"LBank: Client ping sent: {ping_id}")
             
         except Exception as e:
             logger.error(f"LBank client ping error: {e}")

@@ -36,7 +36,7 @@ class RedisManager:
                 decode_responses=True
             )
             self.is_connected = True
-            logger.info("Redis connected successfully")
+            logger.debug("Redis connected successfully")
     
     def _create_opportunity_composite_key(self, opportunity: Dict[str, Any]) -> str:
         """Create unique composite key based on opportunity characteristics"""
@@ -80,7 +80,6 @@ class RedisManager:
         # Update connection heartbeat with TTL
         await self._update_connection_heartbeat(exchange, timestamp)
         
-        logger.debug(f"Price saved (persistent): {exchange} {symbol} - bid:{bid_price}, ask:{ask_price}")
     
     async def _update_connection_heartbeat(self, exchange: str, timestamp: float):
         """Update connection heartbeat - this has TTL to detect offline exchanges"""
@@ -174,7 +173,6 @@ class RedisManager:
             if price_data.get('is_valid', False):
                 valid_prices[key] = price_data
         
-        logger.debug(f"Valid prices: {len(valid_prices)}/{len(all_prices)} based on connection health")
         return valid_prices
     
     async def get_exchange_connection_status(self) -> Dict[str, Any]:
@@ -365,7 +363,7 @@ class RedisManager:
                     except Exception as e:
                         logger.debug(f"Error invalidating price {key}: {e}")
             
-            logger.info(f"Manually invalidated {invalidated_count} prices for {exchange}")
+            logger.debug(f"Manually invalidated {invalidated_count} prices for {exchange}")
             return invalidated_count
             
         except Exception as e:
@@ -435,7 +433,6 @@ class RedisManager:
                 # Update timestamp in sorted set for ordering
                 await self.redis_client.zadd("opportunities:latest", {existing_key: timestamp})
                 
-                logger.debug(f"Updated existing opportunity: {opportunity.get('symbol')} - seen {existing_opportunity['seen_count']} times")
                 return "UPDATED", existing_opportunity['id']
                 
             except (json.JSONDecodeError, KeyError) as e:
@@ -467,7 +464,6 @@ class RedisManager:
         # Keep only latest 10000 active opportunities for performance
         await self.redis_client.zremrangebyrank("opportunities:latest", 0, -10001)
         
-        logger.debug(f"Created new opportunity: {opportunity.get('symbol')} - {opportunity.get('profit_percentage', 0):.2f}% profit")
         return "CREATED", unique_id
     
     async def get_latest_opportunities(self, limit: int = 50) -> List[Dict[str, Any]]:
@@ -604,7 +600,7 @@ class RedisManager:
         await self.cleanup_old_prices()
         
         if old_active_opportunities or cleaned_historical > 0:
-            logger.info(
+            logger.debug(
                 f"Cleanup completed - "
                 f"Active opportunities: {len(old_active_opportunities)}, "
                 f"Historical opportunities: {cleaned_historical}"
@@ -629,7 +625,7 @@ class RedisManager:
         
         await self.redis_client.delete("opportunities:latest")
         
-        logger.info("All Redis data cleared")
+        logger.debug("All Redis data cleared")
     
     async def close(self):
         """Close Redis connection"""
