@@ -11,13 +11,14 @@ from .config import get_config, get_ramzinex_display_symbol, get_ramzinex_pair_i
 logger = logging.getLogger(__name__)
 
 class RamzinexService(BaseExchangeService):
-    """🚀 Fast and Simple Ramzinex Service"""
+    """🚀 Fast and Simple Ramzinex Service with Enhanced Debugging"""
     
     def __init__(self):
         config = get_config('ramzinex')
         super().__init__('ramzinex', config)
         self.subscribed_pairs = set()
         self.pong_count = 0
+        self.ping_count = 0
         
     async def connect(self) -> bool:
         """🔌 Simple connection"""
@@ -39,8 +40,9 @@ class RamzinexService(BaseExchangeService):
             
             # Send connect message
             connect_msg = self.config['connect_msg']
-            await self.websocket.send(json.dumps(connect_msg))
-            logger.debug(f"{self.exchange_name}: Connect message sent")
+            connect_json = json.dumps(connect_msg)
+            await self.websocket.send(connect_json)
+            logger.info(f"{self.exchange_name}: Connect message sent: {connect_json}")
             
             logger.info(f"{self.exchange_name}: Connected successfully")
             
@@ -50,7 +52,7 @@ class RamzinexService(BaseExchangeService):
             
             self.background_tasks = [listen_task, health_task]
             
-            logger.debug(f"{self.exchange_name}: Background tasks started")
+            logger.debug(f"{self.exchange_name}: Background tasks started: {len(self.background_tasks)}")
             return True
             
         except Exception as e:
@@ -81,7 +83,7 @@ class RamzinexService(BaseExchangeService):
                     # Check if we have mapping for this pair_id
                     pair_info = get_ramzinex_pair_info(pair_id)
                     if pair_info:
-                        logger.debug(f"{self.exchange_name}: Pair {pair_id} -> {pair_info['symbol']}")
+                        logger.debug(f"{self.exchange_name}: Pair {pair_id} -> {pair_info['symbol']} ({pair_info['name']})")
                     else:
                         logger.warning(f"{self.exchange_name}: No mapping for pair_id {pair_id}, skipping")
                         continue
@@ -91,11 +93,12 @@ class RamzinexService(BaseExchangeService):
                         'id': 2 + len(self.subscribed_pairs)
                     }
                     
-                    await self.websocket.send(json.dumps(msg))
+                    msg_json = json.dumps(msg)
+                    await self.websocket.send(msg_json)
                     self.subscribed_pairs.add(pair_id)
                     success_count += 1
                     
-                    logger.debug(f"{self.exchange_name}: Subscribed to {pair_id}")
+                    logger.debug(f"{self.exchange_name}: Subscribed to {pair_id} with message: {msg_json}")
                     await asyncio.sleep(0.5)  # Rate limit
                     
                 except Exception as e:
@@ -107,9 +110,31 @@ class RamzinexService(BaseExchangeService):
         return success_count > 0
 
     async def handle_message(self, message: str):
-        """📨 Handle incoming messages"""
+        """📨 Handle incoming messages with enhanced debugging"""
         try:
-            data = json.loads(message)
+            # First, let's see if it's JSON
+            try:
+                data = json.loads(message)
+                logger.debug(f"{self.exchange_name}: JSON MESSAGE TYPE: {type(data)}")
+                
+                if isinstance(data, dict):
+                    keys = list(data.keys())
+                    logger.debug(f"{self.exchange_name}: JSON DICT KEYS: {keys}")
+                    
+                    # Check for specific keys
+                    if 'push' in data:
+                        logger.debug(f"{self.exchange_name}: PUSH MESSAGE detected")
+                    elif len(data) == 0:
+                        logger.debug(f"{self.exchange_name}: EMPTY JSON detected (likely ping)")
+                    else:
+                        logger.debug(f"{self.exchange_name}: OTHER DICT MESSAGE: {data}")
+                        
+                else:
+                    logger.debug(f"{self.exchange_name}: JSON NON-DICT: {type(data)} - {data}")
+                    
+            except json.JSONDecodeError:
+                logger.warning(f"{self.exchange_name}: NON-JSON MESSAGE: {message[:100]}{'...' if len(message) > 100 else ''}")
+                return
             
             # Handle ping (empty JSON {})
             if isinstance(data, dict) and len(data) == 0:
@@ -119,34 +144,55 @@ class RamzinexService(BaseExchangeService):
             elif isinstance(data, dict) and 'push' in data:
                 await self._handle_push_data(data)
                 
-        except json.JSONDecodeError:
-            pass  # Ignore non-JSON
+            # Handle connection response
+            elif isinstance(data, dict) and 'connect' in data:
+                logger.info(f"{self.exchange_name}: Connection response: {data}")
+                
+            # Handle subscription response
+            elif isinstance(data, dict) and 'subscribe' in data:
+                logger.info(f"{self.exchange_name}: Subscription response: {data}")
+                
+            # Handle other messages
+            elif isinstance(data, dict):
+                logger.debug(f"{self.exchange_name}: UNHANDLED DICT MESSAGE: {data}")
+                
+            else:
+                logger.warning(f"{self.exchange_name}: UNKNOWN MESSAGE FORMAT: {type(data)} - {data}")
+                
         except Exception as e:
             logger.error(f"{self.exchange_name}: Message handling error: {e}")
 
     async def _handle_ping(self):
-        """🏓 Handle server ping (empty JSON)"""
+        """🏓 Handle server ping (empty JSON) with detailed logging"""
         try:
-            self.pong_count += 1
-            logger.debug(f"{self.exchange_name}: Received PING (empty JSON) #{self.pong_count}")
+            self.ping_count += 1
+            logger.info(f"{self.exchange_name}: 🏓 RECEIVED PING #{self.ping_count} (empty JSON)")
             
             if self.websocket and self.is_connected:
                 await self.websocket.send('{}')  # Send pong (empty JSON)
-                logger.debug(f"{self.exchange_name}: Sent PONG (empty JSON) #{self.pong_count}")
+                self.pong_count += 1
+                logger.info(f"{self.exchange_name}: 🏓 SENT PONG #{self.pong_count} (empty JSON)")
             else:
-                logger.warning(f"{self.exchange_name}: Cannot send PONG - no websocket or disconnected")
+                logger.error(f"{self.exchange_name}: Cannot send PONG - no websocket or disconnected")
                 
         except Exception as e:
             logger.error(f"{self.exchange_name}: Ping handling error: {e}")
 
     async def _handle_push_data(self, data: dict):
-        """📊 Process orderbook data"""
+        """📊 Process orderbook data with enhanced debugging"""
         try:
             push = data.get('push', {})
             channel = push.get('channel', '')
             pub_data = push.get('pub', {}).get('data')
             
-            if not channel.startswith('orderbook:') or not pub_data:
+            logger.debug(f"{self.exchange_name}: PUSH DATA - Channel: {channel}")
+            
+            if not channel.startswith('orderbook:'):
+                logger.debug(f"{self.exchange_name}: Non-orderbook push data: {channel}")
+                return
+                
+            if not pub_data:
+                logger.warning(f"{self.exchange_name}: Push data without pub.data: {push}")
                 return
                 
             pair_id = channel.split(':')[1]
@@ -154,10 +200,17 @@ class RamzinexService(BaseExchangeService):
             
             # Parse pub_data
             if isinstance(pub_data, str):
-                pub_data = json.loads(pub_data)
-                
+                try:
+                    pub_data = json.loads(pub_data)
+                    logger.debug(f"{self.exchange_name}: Parsed pub_data for {pair_id}")
+                except json.JSONDecodeError as e:
+                    logger.error(f"{self.exchange_name}: Failed to parse pub_data: {e}")
+                    return
+                    
             buys = pub_data.get('buys', [])
             sells = pub_data.get('sells', [])
+            
+            logger.debug(f"{self.exchange_name}: Orderbook for {pair_id} - buys: {len(buys)}, sells: {len(sells)}")
             
             if buys and sells:
                 # Check if we have mapping for this pair_id
@@ -174,12 +227,28 @@ class RamzinexService(BaseExchangeService):
                 ask_price = Decimal(str(sells[-1][0]))
                 ask_volume = Decimal(str(sells[-1][1]))
                 
+                logger.debug(f"{self.exchange_name}: Best prices for {pair_id} ({pair_info['symbol']}) - "
+                           f"bid: {bid_price}@{bid_volume}, ask: {ask_price}@{ask_volume}")
+                
                 # Save with pair_id directly (will be converted in frontend)
                 await self.save_price_data(pair_id, bid_price, ask_price, bid_volume, ask_volume)
-                logger.debug(f"{self.exchange_name}: Saved price data for {pair_id} ({pair_info['symbol']})")
+                logger.debug(f"{self.exchange_name}: 💾 Saved price data for {pair_id} ({pair_info['symbol']})")
+                
+            else:
+                logger.warning(f"{self.exchange_name}: Empty buys or sells for {pair_id}")
                 
         except Exception as e:
             logger.error(f"{self.exchange_name}: Push data processing error: {e}")
+
+    def is_healthy(self) -> bool:
+        """🔍 Ramzinex health check with ping/pong stats"""
+        if not super().is_healthy():
+            return False
+            
+        # Log ping/pong stats
+        logger.debug(f"{self.exchange_name}: Health check - pings received: {self.ping_count}, pongs sent: {self.pong_count}")
+        
+        return True
 
     async def reset_state(self):
         """🔄 Reset Ramzinex-specific state"""
@@ -188,10 +257,13 @@ class RamzinexService(BaseExchangeService):
         logger.debug(f"{self.exchange_name}: Resetting Ramzinex-specific state")
         
         # Clear subscriptions
+        logger.debug(f"{self.exchange_name}: Clearing {len(self.subscribed_pairs)} subscribed pairs")
         self.subscribed_pairs.clear()
         
-        # Reset pong counter
+        # Reset ping/pong counters
+        logger.debug(f"{self.exchange_name}: Resetting counters - pings: {self.ping_count}, pongs: {self.pong_count}")
         self.pong_count = 0
+        self.ping_count = 0
         
         logger.debug(f"{self.exchange_name}: Ramzinex state reset completed")
 

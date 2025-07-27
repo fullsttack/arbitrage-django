@@ -11,7 +11,7 @@ from .config import get_config
 logger = logging.getLogger(__name__)
 
 class WallexService(BaseExchangeService):
-    """🚀 Fast and Simple Wallex Service"""
+    """🚀 Wallex Service - Complete Message Debug to Find Missing Pings"""
     
     def __init__(self):
         config = get_config('wallex')
@@ -20,6 +20,11 @@ class WallexService(BaseExchangeService):
         self.pong_count = 0
         self.connection_start_time = 0
         self.partial_data = {}  # Store bid/ask separately
+        self.ping_count = 0  # Track received pings
+        self.total_messages = 0
+        self.depth_messages = 0
+        self.non_depth_messages = 0
+        self.message_log = []  # Log first 50 non-depth messages
         
     async def connect(self) -> bool:
         """🔌 Simple connection"""
@@ -41,6 +46,7 @@ class WallexService(BaseExchangeService):
             self.connection_start_time = time.time()
             
             logger.info(f"{self.exchange_name}: Connected successfully")
+            logger.warning(f"{self.exchange_name}: 🔍 DEBUGGING MODE: Will log ALL non-depth messages to find server pings")
             
             # Start background tasks and track them
             listen_task = asyncio.create_task(self.listen_loop())
@@ -48,7 +54,7 @@ class WallexService(BaseExchangeService):
             
             self.background_tasks = [listen_task, health_task]
             
-            logger.debug(f"{self.exchange_name}: Background tasks started")
+            logger.debug(f"{self.exchange_name}: Background tasks started: {len(self.background_tasks)}")
             return True
             
         except Exception as e:
@@ -102,58 +108,161 @@ class WallexService(BaseExchangeService):
         return success_count > 0
 
     async def handle_message(self, message: str):
-        """📨 Handle incoming messages"""
+        """📨 Handle incoming messages with COMPLETE DEBUG"""
+        self.total_messages += 1
+        
         try:
-            data = json.loads(message)
+            # Check if it's a simple string first
+            message_clean = message.strip()
             
-            # Handle server ping
-            if isinstance(data, dict) and 'ping' in data:
-                await self._handle_ping(data)
+            # Log EVERY non-depth message
+            is_depth = False
+            try:
+                data = json.loads(message)
+                if isinstance(data, list) and len(data) == 2:
+                    channel = data[0]
+                    if isinstance(channel, str) and ('@buyDepth' in channel or '@sellDepth' in channel):
+                        is_depth = True
+            except:
+                pass
+            
+            if not is_depth:
+                self.non_depth_messages += 1
                 
+                # Log first 50 non-depth messages completely
+                if len(self.message_log) < 50:
+                    self.message_log.append({
+                        'timestamp': time.time(),
+                        'message_number': self.total_messages,
+                        'raw_message': message,
+                        'length': len(message)
+                    })
+                    
+                    logger.warning(f"{self.exchange_name}: 🔍 NON-DEPTH MESSAGE #{self.non_depth_messages}")
+                    logger.warning(f"{self.exchange_name}: 🔍 RAW: {message}")
+                    logger.warning(f"{self.exchange_name}: 🔍 LENGTH: {len(message)}")
+                    logger.warning(f"{self.exchange_name}: 🔍 CLEAN: '{message_clean}'")
+            
+            # Check for all possible ping formats
+            if self._is_possible_ping(message, message_clean):
+                await self._handle_possible_ping(message, message_clean)
+                return
+            
+            # Try to parse as JSON
+            try:
+                data = json.loads(message)
+            except json.JSONDecodeError:
+                if not is_depth:  # Only log non-depth parsing failures
+                    logger.warning(f"{self.exchange_name}: 🔍 JSON PARSE FAILED: {message[:100]}")
+                return
+            
+            # Check for JSON ping formats
+            if isinstance(data, dict):
+                # Standard ping
+                if 'ping' in data:
+                    await self._handle_json_ping(data)
+                    return
+                
+                # Other possible ping formats
+                if any(key in data for key in ['heartbeat', 'keepalive', 'pong', 'ack']):
+                    if not is_depth:
+                        logger.warning(f"{self.exchange_name}: 🔍 POSSIBLE PING/CONTROL MESSAGE: {data}")
+                    return
+                
+                # Any other dict that's not depth
+                if not is_depth:
+                    logger.warning(f"{self.exchange_name}: 🔍 OTHER DICT MESSAGE: {data}")
+                    return
+            
             # Handle depth data [channel_name, data_array]
-            elif isinstance(data, list) and len(data) == 2:
+            if isinstance(data, list) and len(data) == 2:
                 await self._handle_depth_data(data)
+            else:
+                if not is_depth:
+                    logger.warning(f"{self.exchange_name}: 🔍 OTHER LIST MESSAGE: {data}")
                 
-        except json.JSONDecodeError:
-            pass  # Ignore non-JSON
         except Exception as e:
             logger.error(f"{self.exchange_name}: Message handling error: {e}")
+            logger.error(f"{self.exchange_name}: Problematic message: {message[:200]}")
 
-    async def _handle_ping(self, data: dict):
-        """🏓 Handle server ping"""
-        try:
-            ping_id = data.get('ping')
-            logger.debug(f"{self.exchange_name}: Received PING {ping_id}")
+    def _is_possible_ping(self, message: str, message_clean: str) -> bool:
+        """🔍 Check if message could be a ping"""
+        # Check simple string pings
+        if message_clean.lower() in ['ping', 'pong', '{}', 'heartbeat', 'keepalive']:
+            return True
+        
+        # Check if it's short and might be a ping
+        if len(message_clean) < 20 and message_clean.isalnum():
+            return True
             
-            if ping_id:
-                # Check pong limit
-                if self.pong_count >= self.config['max_pongs']:
-                    logger.warning(f"{self.exchange_name}: Max pongs reached ({self.pong_count})")
-                    self.mark_dead("Max pongs reached")
-                    return
-                    
-                # Send pong
-                pong_msg = {"pong": ping_id}
-                await self.websocket.send(json.dumps(pong_msg))
-                
+        return False
+
+    async def _handle_possible_ping(self, message: str, message_clean: str):
+        """🔍 Handle possible ping messages"""
+        logger.warning(f"{self.exchange_name}: 🚨🚨🚨 POSSIBLE PING DETECTED!")
+        logger.warning(f"{self.exchange_name}: 🚨 RAW: '{message}'")
+        logger.warning(f"{self.exchange_name}: 🚨 CLEAN: '{message_clean}'")
+        
+        if message_clean.lower() == 'ping':
+            self.ping_count += 1
+            logger.error(f"{self.exchange_name}: 🏓🏓🏓 STRING PING #{self.ping_count} CONFIRMED!")
+            
+            # Send pong response
+            await self.websocket.send('pong')
+            self.pong_count += 1
+            logger.error(f"{self.exchange_name}: 🏓🏓🏓 SENT STRING PONG #{self.pong_count}")
+            
+        elif message_clean in ['{}', 'heartbeat']:
+            self.ping_count += 1
+            logger.error(f"{self.exchange_name}: 🏓🏓🏓 SPECIAL PING #{self.ping_count}: {message_clean}")
+            
+            # Try different pong responses
+            if message_clean == '{}':
+                await self.websocket.send('{}')
                 self.pong_count += 1
-                logger.debug(f"{self.exchange_name}: Sent PONG {ping_id} (count: {self.pong_count}/{self.config['max_pongs']})")
+                logger.error(f"{self.exchange_name}: 🏓🏓🏓 SENT EMPTY JSON PONG #{self.pong_count}")
+            else:
+                await self.websocket.send('pong')
+                self.pong_count += 1
+                logger.error(f"{self.exchange_name}: 🏓🏓🏓 SENT STRING PONG #{self.pong_count}")
+
+    async def _handle_json_ping(self, data: dict):
+        """🏓 Handle JSON ping"""
+        ping_id = data.get('ping')
+        self.ping_count += 1
+        
+        logger.error(f"{self.exchange_name}: 🏓🏓🏓 JSON PING #{self.ping_count} CONFIRMED!")
+        logger.error(f"{self.exchange_name}: 🏓 PING DATA: {data}")
+        logger.error(f"{self.exchange_name}: 🏓 PING ID: {ping_id}")
+        
+        if ping_id:
+            # Check pong limit
+            if self.pong_count >= self.config['max_pongs']:
+                logger.error(f"{self.exchange_name}: Max pongs reached ({self.pong_count})")
+                self.mark_dead("Max pongs reached")
+                return
                 
-        except Exception as e:
-            logger.error(f"{self.exchange_name}: Ping handling error: {e}")
+            # Send pong
+            pong_msg = {"pong": ping_id}
+            await self.websocket.send(json.dumps(pong_msg))
+            
+            self.pong_count += 1
+            logger.error(f"{self.exchange_name}: 🏓🏓🏓 SENT JSON PONG #{self.pong_count}: {ping_id}")
 
     async def _handle_depth_data(self, data: list):
-        """📊 Process depth data"""
+        """📊 Process depth data (minimal logging)"""
         try:
             channel_name = data[0]
             orders_data = data[1]
             
             if '@buyDepth' in channel_name:
                 symbol = channel_name.replace('@buyDepth', '')
+                self.depth_messages += 1
                 await self._store_order_data(symbol, 'buy', orders_data)
                 
             elif '@sellDepth' in channel_name:
                 symbol = channel_name.replace('@sellDepth', '')
+                self.depth_messages += 1
                 await self._store_order_data(symbol, 'sell', orders_data)
                 
         except Exception as e:
@@ -187,12 +296,10 @@ class WallexService(BaseExchangeService):
                 data['bid_price'] = price
                 data['bid_volume'] = volume
                 data['bid_time'] = current_time
-                logger.debug(f"{self.exchange_name}: Updated bid for {symbol}: {price}")
             else:  # sell
                 data['ask_price'] = price
                 data['ask_volume'] = volume
                 data['ask_time'] = current_time
-                logger.debug(f"{self.exchange_name}: Updated ask for {symbol}: {price}")
             
             # Save when we have both bid and ask
             if all(k in data for k in ['bid_price', 'ask_price', 'bid_volume', 'ask_volume']):
@@ -208,30 +315,44 @@ class WallexService(BaseExchangeService):
                         data['ask_volume']
                     )
                     data['last_save_time'] = current_time
-                    logger.debug(f"{self.exchange_name}: Saved price data for {symbol}")
                     
         except Exception as e:
             logger.error(f"{self.exchange_name}: Store order data error for {symbol}: {e}")
 
     def is_healthy(self) -> bool:
-        """🔍 Wallex-specific health check"""
-        if not super().is_healthy():
+        """🔍 Enhanced health check with message analysis"""
+        if not self.is_connected:
             return False
             
         current_time = time.time()
+        connection_age = current_time - self.connection_start_time if self.connection_start_time > 0 else 0
         
-        # Check connection time limit (30 minutes)
-        if self.connection_start_time > 0:
-            connection_age = current_time - self.connection_start_time
-            logger.debug(f"{self.exchange_name}: Connection age: {connection_age:.1f}s")
+        # Log detailed stats every 30 seconds
+        if int(connection_age) % 30 == 0 and connection_age > 0:
+            logger.error(f"{self.exchange_name}: 🔍 DEBUG STATS:")
+            logger.error(f"{self.exchange_name}: 🔍   Connection age: {connection_age:.0f}s")
+            logger.error(f"{self.exchange_name}: 🔍   Total messages: {self.total_messages}")
+            logger.error(f"{self.exchange_name}: 🔍   Depth messages: {self.depth_messages}")
+            logger.error(f"{self.exchange_name}: 🔍   Non-depth messages: {self.non_depth_messages}")
+            logger.error(f"{self.exchange_name}: 🔍   Server pings received: {self.ping_count}")
+            logger.error(f"{self.exchange_name}: 🔍   Pongs sent: {self.pong_count}")
             
-            if connection_age > self.config['max_connection_time']:
-                logger.warning(f"{self.exchange_name}: Connection age limit reached ({connection_age:.1f}s)")
+            # Expected ping count based on 20-second intervals
+            expected_pings = int(connection_age / 20)
+            logger.error(f"{self.exchange_name}: 🔍   Expected pings (20s intervals): {expected_pings}")
+            
+            if expected_pings > 0 and self.ping_count == 0:
+                logger.error(f"{self.exchange_name}: 🚨 NO PINGS RECEIVED - SERVER NOT SENDING PINGS!")
+        
+        # Normal health check
+        if self.last_message_time > 0:
+            time_since_last = current_time - self.last_message_time
+            if time_since_last > 120:  # 2 minutes
                 return False
-                
-        # Check pong count
-        if self.pong_count >= self.config['max_pongs']:
-            logger.warning(f"{self.exchange_name}: Pong count limit reached ({self.pong_count})")
+        
+        # 30-minute limit
+        if connection_age > self.config['max_connection_time']:
+            logger.info(f"{self.exchange_name}: 30-minute limit reached - expected behavior")
             return False
             
         return True
@@ -240,26 +361,38 @@ class WallexService(BaseExchangeService):
         """🔄 Reset Wallex-specific state"""
         await super().reset_state()
         
-        logger.debug(f"{self.exchange_name}: Resetting Wallex-specific state")
-        
         # Clear subscriptions
         self.subscribed_pairs.clear()
         
         # Reset counters
         self.pong_count = 0
+        self.ping_count = 0
         self.connection_start_time = 0
+        self.total_messages = 0
+        self.depth_messages = 0
+        self.non_depth_messages = 0
+        self.message_log.clear()
         
         # Clear partial data
         self.partial_data.clear()
-        
-        logger.debug(f"{self.exchange_name}: Wallex state reset completed")
 
     async def disconnect(self):
-        """🔌 Disconnect"""
-        logger.info(f"{self.exchange_name}: Starting Wallex disconnect")
+        """🔌 Disconnect with debug summary"""
+        logger.error(f"{self.exchange_name}: 🔍 DISCONNECT DEBUG SUMMARY:")
+        logger.error(f"{self.exchange_name}: 🔍   Session duration: {time.time() - self.connection_start_time:.0f}s")
+        logger.error(f"{self.exchange_name}: 🔍   Total messages: {self.total_messages}")
+        logger.error(f"{self.exchange_name}: 🔍   Depth messages: {self.depth_messages}")
+        logger.error(f"{self.exchange_name}: 🔍   Non-depth messages: {self.non_depth_messages}")
+        logger.error(f"{self.exchange_name}: 🔍   Server pings: {self.ping_count}")
+        logger.error(f"{self.exchange_name}: 🔍   Pongs sent: {self.pong_count}")
         
-        # Call parent disconnect first
+        # Log first few non-depth messages for analysis
+        if self.message_log:
+            logger.error(f"{self.exchange_name}: 🔍 FIRST FEW NON-DEPTH MESSAGES:")
+            for i, msg in enumerate(self.message_log[:10]):
+                logger.error(f"{self.exchange_name}: 🔍   #{i+1}: {msg['raw_message'][:100]}")
+        
+        # Call parent disconnect
         await super().disconnect()
         
-        # Wallex-specific cleanup already handled in reset_state
-        logger.info(f"{self.exchange_name}: Wallex disconnect completed")
+        logger.info(f"{self.exchange_name}: Disconnect completed")

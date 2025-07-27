@@ -11,7 +11,7 @@ from .config import get_config
 logger = logging.getLogger(__name__)
 
 class LBankService(BaseExchangeService):
-    """🚀 Fast and Simple LBank Service"""
+    """🚀 Fast and Simple LBank Service with Enhanced Debugging"""
     
     def __init__(self):
         config = get_config('lbank')
@@ -19,6 +19,10 @@ class LBankService(BaseExchangeService):
         self.subscribed_pairs = set()
         self.ping_counter = 1
         self.client_ping_task = None
+        self.server_ping_count = 0
+        self.server_pong_count = 0
+        self.client_ping_count = 0
+        self.client_pong_received_count = 0
         
     async def connect(self) -> bool:
         """🔌 Simple connection"""
@@ -49,7 +53,7 @@ class LBankService(BaseExchangeService):
             self.background_tasks = [listen_task, health_task, ping_task]
             self.client_ping_task = ping_task  # Keep reference for specific handling
             
-            logger.debug(f"{self.exchange_name}: Background tasks started")
+            logger.debug(f"{self.exchange_name}: Background tasks started: {len(self.background_tasks)}")
             return True
             
         except Exception as e:
@@ -81,11 +85,12 @@ class LBankService(BaseExchangeService):
                     msg = self.config['subscribe_format'].copy()
                     msg['pair'] = symbol
                     
-                    await self.websocket.send(json.dumps(msg))
+                    msg_json = json.dumps(msg)
+                    await self.websocket.send(msg_json)
                     self.subscribed_pairs.add(symbol)
                     success_count += 1
                     
-                    logger.debug(f"{self.exchange_name}: Subscribed to {symbol}")
+                    logger.debug(f"{self.exchange_name}: Subscribed to {symbol} with message: {msg_json}")
                     await asyncio.sleep(0.5)  # Rate limit
                     
                 except Exception as e:
@@ -97,9 +102,23 @@ class LBankService(BaseExchangeService):
         return success_count > 0
 
     async def handle_message(self, message: str):
-        """📨 Handle incoming messages"""
+        """📨 Handle incoming messages with enhanced debugging"""
         try:
-            data = json.loads(message)
+            # First, let's see if it's JSON
+            try:
+                data = json.loads(message)
+                logger.debug(f"{self.exchange_name}: JSON MESSAGE TYPE: {type(data)}")
+                
+                if isinstance(data, dict):
+                    action = data.get('action')
+                    msg_type = data.get('type')
+                    logger.debug(f"{self.exchange_name}: JSON DICT - action: {action}, type: {msg_type}, keys: {list(data.keys())}")
+                else:
+                    logger.debug(f"{self.exchange_name}: JSON NON-DICT: {type(data)} - {data}")
+                    
+            except json.JSONDecodeError:
+                logger.warning(f"{self.exchange_name}: NON-JSON MESSAGE: {message[:100]}{'...' if len(message) > 100 else ''}")
+                return
             
             # Handle server ping
             if isinstance(data, dict) and data.get('action') == 'ping':
@@ -113,50 +132,75 @@ class LBankService(BaseExchangeService):
             elif data.get('type') == 'depth' and 'depth' in data:
                 await self._handle_depth_data(data)
                 
-        except json.JSONDecodeError:
-            pass  # Ignore non-JSON
+            # Handle other message types
+            elif isinstance(data, dict):
+                msg_type = data.get('type', 'unknown')
+                action = data.get('action', 'unknown')
+                logger.debug(f"{self.exchange_name}: UNHANDLED MESSAGE - type: {msg_type}, action: {action}")
+                
+            else:
+                logger.warning(f"{self.exchange_name}: UNKNOWN MESSAGE FORMAT: {type(data)} - {data}")
+                
         except Exception as e:
             logger.error(f"{self.exchange_name}: Message handling error: {e}")
 
     async def _handle_server_ping(self, data: dict):
-        """🏓 Handle server ping"""
+        """🏓 Handle server ping with detailed logging"""
         try:
             ping_id = data.get('ping')
-            logger.debug(f"{self.exchange_name}: Received server PING {ping_id}")
+            self.server_ping_count += 1
+            
+            logger.info(f"{self.exchange_name}: 🏓 RECEIVED SERVER PING #{self.server_ping_count}: {ping_id}")
+            logger.debug(f"{self.exchange_name}: Full server ping message: {data}")
             
             if ping_id:
                 # Send pong response
                 pong_msg = {"action": "pong", "pong": ping_id}
                 
                 if self.websocket and self.is_connected:
-                    await self.websocket.send(json.dumps(pong_msg))
-                    logger.debug(f"{self.exchange_name}: Sent server PONG {ping_id}")
+                    pong_json = json.dumps(pong_msg)
+                    await self.websocket.send(pong_json)
+                    self.server_pong_count += 1
+                    
+                    logger.info(f"{self.exchange_name}: 🏓 SENT SERVER PONG #{self.server_pong_count}: {ping_id}")
+                    logger.debug(f"{self.exchange_name}: Server pong message sent: {pong_json}")
                 else:
-                    logger.warning(f"{self.exchange_name}: Cannot send PONG - no websocket or disconnected")
+                    logger.error(f"{self.exchange_name}: Cannot send server PONG - no websocket or disconnected")
+                    
+            else:
+                logger.warning(f"{self.exchange_name}: Server ping message without ping ID: {data}")
                 
         except Exception as e:
             logger.error(f"{self.exchange_name}: Server ping handling error: {e}")
 
     async def _handle_server_pong(self, data: dict):
-        """📨 Handle server pong (response to our ping)"""
+        """📨 Handle server pong (response to our ping) with detailed logging"""
         try:
             pong_id = data.get('pong')
-            logger.debug(f"{self.exchange_name}: Received server PONG {pong_id}")
+            self.client_pong_received_count += 1
+            
+            logger.info(f"{self.exchange_name}: 🏓 RECEIVED SERVER PONG #{self.client_pong_received_count}: {pong_id}")
+            logger.debug(f"{self.exchange_name}: Full server pong message: {data}")
             
         except Exception as e:
             logger.error(f"{self.exchange_name}: Server pong handling error: {e}")
 
     async def _handle_depth_data(self, data: dict):
-        """📊 Process depth data"""
+        """📊 Process depth data with debugging"""
         try:
             depth = data.get('depth', {})
             symbol = data.get('pair', '')
             
+            logger.debug(f"{self.exchange_name}: DEPTH DATA for {symbol}")
+            
             if not symbol:
+                logger.warning(f"{self.exchange_name}: Depth data without symbol: {data}")
                 return
                 
             asks = depth.get('asks', [])
             bids = depth.get('bids', [])
+            
+            logger.debug(f"{self.exchange_name}: Depth for {symbol} - asks: {len(asks)}, bids: {len(bids)}")
             
             if asks and bids:
                 # Best prices
@@ -165,42 +209,72 @@ class LBankService(BaseExchangeService):
                 bid_price = Decimal(str(bids[0][0]))
                 bid_volume = Decimal(str(bids[0][1]))
                 
+                logger.debug(f"{self.exchange_name}: Best prices for {symbol} - bid: {bid_price}@{bid_volume}, ask: {ask_price}@{ask_volume}")
+                
                 await self.save_price_data(symbol, bid_price, ask_price, bid_volume, ask_volume)
-                logger.debug(f"{self.exchange_name}: Processed depth data for {symbol}")
+                logger.debug(f"{self.exchange_name}: 💾 Saved price data for {symbol}")
+                
+            else:
+                logger.warning(f"{self.exchange_name}: Empty asks or bids for {symbol}")
                 
         except Exception as e:
             logger.error(f"{self.exchange_name}: Depth data processing error: {e}")
 
     async def _client_ping_task(self):
-        """🏓 Send periodic client pings"""
-        logger.debug(f"{self.exchange_name}: Starting client ping task")
+        """🏓 Send periodic client pings with enhanced logging"""
+        logger.info(f"{self.exchange_name}: Starting client ping task")
         
-        while self.is_connected:
-            try:
-                await asyncio.sleep(self.config['ping_interval'])
-                
-                if not self.is_connected:
-                    logger.debug(f"{self.exchange_name}: Ping task stopping - disconnected")
+        try:
+            while self.is_connected and self._listen_task_running:
+                try:
+                    await asyncio.sleep(self.config['ping_interval'])
+                    
+                    if not self.is_connected:
+                        logger.debug(f"{self.exchange_name}: Client ping task stopping - disconnected")
+                        break
+                    
+                    if not self.websocket:
+                        logger.warning(f"{self.exchange_name}: Client ping task stopping - no websocket")
+                        break
+                        
+                    # Send client ping
+                    ping_id = f"client-{self.ping_counter}-{int(time.time())}"
+                    ping_msg = {"action": "ping", "ping": ping_id}
+                    
+                    ping_json = json.dumps(ping_msg)
+                    await self.websocket.send(ping_json)
+                    self.ping_counter += 1
+                    self.client_ping_count += 1
+                    
+                    logger.info(f"{self.exchange_name}: 🏓 SENT CLIENT PING #{self.client_ping_count}: {ping_id}")
+                    logger.debug(f"{self.exchange_name}: Client ping message sent: {ping_json}")
+                    
+                except asyncio.CancelledError:
+                    logger.info(f"{self.exchange_name}: Client ping task canceled")
                     break
-                
-                if not self.websocket:
-                    logger.warning(f"{self.exchange_name}: Ping task stopping - no websocket")
+                except Exception as e:
+                    logger.error(f"{self.exchange_name}: Client ping error: {e}")
                     break
                     
-                # Send client ping
-                ping_id = f"client-{self.ping_counter}-{int(time.time())}"
-                ping_msg = {"action": "ping", "ping": ping_id}
-                
-                await self.websocket.send(json.dumps(ping_msg))
-                self.ping_counter += 1
-                
-                logger.debug(f"{self.exchange_name}: Client ping sent #{self.ping_counter}: {ping_id}")
-                
-            except Exception as e:
-                logger.error(f"{self.exchange_name}: Client ping error: {e}")
-                break
+        except Exception as e:
+            logger.error(f"{self.exchange_name}: Client ping task error: {e}")
         
-        logger.debug(f"{self.exchange_name}: Client ping task terminated")
+        finally:
+            logger.info(f"{self.exchange_name}: Client ping task terminated")
+
+    def is_healthy(self) -> bool:
+        """🔍 LBank health check with ping/pong stats"""
+        if not super().is_healthy():
+            return False
+            
+        # Log ping/pong stats
+        logger.debug(f"{self.exchange_name}: Health check - "
+                   f"server pings: {self.server_ping_count}, "
+                   f"server pongs sent: {self.server_pong_count}, "
+                   f"client pings sent: {self.client_ping_count}, "
+                   f"client pongs received: {self.client_pong_received_count}")
+        
+        return True
 
     async def reset_state(self):
         """🔄 Reset LBank-specific state"""
@@ -209,10 +283,21 @@ class LBankService(BaseExchangeService):
         logger.debug(f"{self.exchange_name}: Resetting LBank-specific state")
         
         # Clear subscriptions
+        logger.debug(f"{self.exchange_name}: Clearing {len(self.subscribed_pairs)} subscribed pairs")
         self.subscribed_pairs.clear()
         
-        # Reset ping counter
+        # Reset ping counters
+        logger.debug(f"{self.exchange_name}: Resetting ping counters - "
+                   f"server pings: {self.server_ping_count}, "
+                   f"server pongs: {self.server_pong_count}, "
+                   f"client pings: {self.client_ping_count}, "
+                   f"client pongs: {self.client_pong_received_count}")
+        
         self.ping_counter = 1
+        self.server_ping_count = 0
+        self.server_pong_count = 0
+        self.client_ping_count = 0
+        self.client_pong_received_count = 0
         
         # Clear ping task reference
         self.client_ping_task = None
