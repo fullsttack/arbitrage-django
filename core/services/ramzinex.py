@@ -26,6 +26,18 @@ class RamzinexService(BaseExchangeService):
         self.pair_symbol_map = {}  # Map pair IDs to symbol formats
         self.subscriptions = {}    # Store active subscriptions
         
+        # ✅ FIXED: تنظیمات خاص Ramzinex طبق مستندات
+        self.PING_INTERVAL = 25             # ✅ سرور هر 25 ثانیه ping میفرسته
+        self.PING_TIMEOUT = 25              # ✅ باید در 25 ثانیه جواب بدیم
+        self.MESSAGE_TIMEOUT = 35           # ✅ 35 ثانیه (25 + 10 safety margin)
+        self.DATA_TIMEOUT = 120             # ✅ 2 دقیقه برای data
+        self.MAX_SILENT_PERIOD = 40         # ✅ حداکثر 40 ثانیه سکوت (نه 2 دقیقه!)
+        
+        # Connection activity tracking
+        self.last_activity_time = 0
+        self.last_data_receive_time = 0
+        self.connection_health_checks = 0
+        
         if not CENTRIFUGE_AVAILABLE:
             logger.error("centrifuge-python not available - Ramzinex service disabled")
         
@@ -50,7 +62,7 @@ class RamzinexService(BaseExchangeService):
             logger.error(f"Error building Ramzinex pair-symbol mapping: {e}")
         
     async def connect(self):
-        """Connect to Ramzinex using centrifuge-python client"""
+        """اتصال بهینه‌شده به Ramzinex"""
         if not CENTRIFUGE_AVAILABLE:
             logger.error("Ramzinex: centrifuge-python not available")
             return False
@@ -66,6 +78,9 @@ class RamzinexService(BaseExchangeService):
                         await self.client.disconnect()
                     except:
                         pass
+                
+                # ✅ Reset tracking variables
+                self._reset_activity_tracking()
                 
                 # Create centrifuge client
                 self.client = Client(
@@ -83,14 +98,15 @@ class RamzinexService(BaseExchangeService):
                 
                 self.is_connected = True
                 self.reset_connection_state()
+                self.last_activity_time = time.time()
                 
                 # Build pair-symbol mapping after connection
                 await self._build_pair_symbol_mapping()
                 
-                # Start health monitoring
-                asyncio.create_task(self.health_monitor())
+                # Start health monitoring - ✅ بهینه‌شده
+                asyncio.create_task(self._optimized_health_monitor())
                 
-                logger.info("Ramzinex WebSocket connected successfully using centrifuge client")
+                logger.info("Ramzinex WebSocket connected successfully with Ramzinex-optimized settings (25s ping cycle)")
                 return True
                 
             except Exception as e:
@@ -102,6 +118,12 @@ class RamzinexService(BaseExchangeService):
                 else:
                     self.mark_connection_dead(f"Failed after {max_retries} attempts: {e}")
                     return False
+
+    def _reset_activity_tracking(self):
+        """Reset تمام activity tracking variables"""
+        self.last_activity_time = 0
+        self.last_data_receive_time = 0
+        self.connection_health_checks = 0
 
     async def subscribe_to_pairs(self, pairs: List[str]):
         """Subscribe to trading pairs using centrifuge client"""
@@ -119,8 +141,11 @@ class RamzinexService(BaseExchangeService):
                 try:
                     channel = f'orderbook:{pair_id}'
                     
-                    # Subscribe using centrifuge client
-                    subscription = self.client.new_subscription(channel)
+                    # ✅ FIXED: Subscribe using centrifuge client with delta compression
+                    subscription = self.client.new_subscription(channel, {
+                        'recover': True,
+                        'delta': 'fossil'  # ✅ طبق مستندات Ramzinex
+                    })
                     
                     # Set up event handlers - must be async functions
                     def make_publication_handler(pair_id):
@@ -139,6 +164,9 @@ class RamzinexService(BaseExchangeService):
                     # Store subscription
                     self.subscriptions[pair_id] = subscription
                     
+                    # ✅ Track activity
+                    self.last_activity_time = time.time()
+                    
                     logger.info(f"Ramzinex sent subscription for pair ID {pair_id} on channel {channel}")
                     
                     # Small delay between subscriptions
@@ -155,11 +183,12 @@ class RamzinexService(BaseExchangeService):
         logger.info(f"Ramzinex: Successfully subscribed to {successful_subscriptions}/{len(pairs)} pairs")
         return successful_subscriptions > 0
 
-    # Event handlers for centrifuge client - must be async
+    # ✅ FIXED: Event handlers برای centrifuge client
     async def _on_connect(self, event):
         """Handle connection success"""
         logger.info(f"Ramzinex connected: {event}")
         self.update_message_time()
+        self.last_activity_time = time.time()
     
     async def _on_disconnect(self, event):
         """Handle disconnection"""
@@ -176,15 +205,19 @@ class RamzinexService(BaseExchangeService):
         logger.info(f"Ramzinex subscription successful for pair {pair_id}")
         self.subscribed_pairs.add(pair_id)
         self.update_message_time()
+        self.last_activity_time = time.time()
     
     async def _on_subscription_error(self, ctx, pair_id: str):
         """Handle subscription error"""
         logger.error(f"Ramzinex subscription error for pair {pair_id}: {ctx}")
     
     async def _on_publication(self, ctx, pair_id: str):
-        """Handle published data with delta decompression"""
+        """✅ FIXED: Handle published data with activity tracking"""
         try:
+            current_time = time.time()
             self.update_message_time()
+            self.last_activity_time = current_time      # ✅ Track activity
+            self.last_data_receive_time = current_time  # ✅ Track data reception
             
             # The centrifuge client automatically handles delta decompression
             # ctx.pub.data contains the decompressed data
@@ -220,6 +253,10 @@ class RamzinexService(BaseExchangeService):
     async def _process_orderbook_data(self, pair_id: str, orderbook_data: Dict[str, Any]):
         """Process orderbook data from Ramzinex"""
         try:
+            # ✅ Track data processing
+            self.last_data_receive_time = time.time()
+            self.last_activity_time = time.time()
+            
             # Get buys and sells
             buys = orderbook_data.get('buys', [])
             sells = orderbook_data.get('sells', [])
@@ -227,9 +264,9 @@ class RamzinexService(BaseExchangeService):
             logger.debug(f"Ramzinex pair {pair_id}: buys={len(buys)}, sells={len(sells)}")
             
             if buys and sells:
-                # Per official Ramzinex docs: format is [price, volume, total, flag, null, ?, timestamp]
-                # Buys: highest price first (descending order)
-                # Sells: lowest price last (ascending order, so last = lowest ask)
+                # ✅ CORRECT: طبق مستندات و API response Ramzinex
+                # Buys: highest price first (descending order) → Best bid = buys[0]
+                # Sells: highest price first (descending order) → Best ask = sells[-1] (cheapest)
                 
                 # Best bid (highest buy price) - first in buys
                 if isinstance(buys[0], list) and len(buys[0]) >= 2:
@@ -239,7 +276,7 @@ class RamzinexService(BaseExchangeService):
                     logger.warning(f"Ramzinex invalid buys format for pair {pair_id}: {buys[0] if buys else 'None'}")
                     return
                 
-                # Best ask (lowest sell price) - LAST in sells
+                # ✅ CORRECT: Best ask (lowest sell price) - LAST in sells (cheapest!)
                 if isinstance(sells[-1], list) and len(sells[-1]) >= 2:
                     ask_price = Decimal(str(sells[-1][0]))
                     ask_volume = Decimal(str(sells[-1][1]))
@@ -260,9 +297,69 @@ class RamzinexService(BaseExchangeService):
         except Exception as e:
             logger.error(f"Ramzinex orderbook data processing error for pair {pair_id}: {e}")
 
+    async def _optimized_health_monitor(self):
+        """✅ FIXED: Health monitor بهینه‌شده برای Ramzinex (25s ping cycle)"""
+        while self.is_connected:
+            try:
+                # ✅ Health check هوشمند
+                if not await self._intelligent_health_check():
+                    logger.warning("Ramzinex: Health check failed")
+                    self.mark_connection_dead("Health check failed")
+                    break
+                
+                # ✅ چک هر 5 ثانیه (برای 25s ping cycle)
+                await asyncio.sleep(5)
+                
+            except Exception as e:
+                logger.error(f"Ramzinex health monitor error: {e}")
+                self.mark_connection_dead(f"Health monitor error: {e}")
+                break
+
+    async def _intelligent_health_check(self) -> bool:
+        """✅ FIXED: Health check طبق مستندات Ramzinex (25s ping/pong)"""
+        current_time = time.time()
+        
+        # 1. ✅ بررسی activity - خیلی مهم برای Ramzinex (25s ping rule)
+        if self.last_activity_time > 0:
+            time_since_activity = current_time - self.last_activity_time
+            
+            # اگر بیش از 40 ثانیه سکوت = مشکل (25s ping + 15s margin)
+            if time_since_activity > self.MAX_SILENT_PERIOD:  # 40 ثانیه
+                logger.warning(f"Ramzinex: No activity for {time_since_activity:.1f}s (ping timeout likely)")
+                return False
+        
+        # 2. ✅ بررسی message reception - سخت‌گیرانه برای Ramzinex
+        if self.last_message_time > 0:
+            time_since_message = current_time - self.last_message_time
+            
+            # Ramzinex has 25s ping cycle, so be strict about messages
+            if time_since_message > self.MESSAGE_TIMEOUT:  # 35 ثانیه
+                logger.warning(f"Ramzinex: No messages for {time_since_message:.1f}s (expected ping every 25s)")
+                return False
+        
+        # 3. ✅ بررسی data reception - متعادل
+        if self.last_data_receive_time > 0:
+            time_since_data = current_time - self.last_data_receive_time
+            
+            # برای data کمی بیشتر تحمل (بازارهای آرام)
+            if time_since_data > self.DATA_TIMEOUT:  # 2 دقیقه
+                logger.info(f"Ramzinex: No data for {time_since_data:.1f}s (quiet market)")
+                
+                # فقط بعد از سکوت خیلی طولانی disconnect
+                if time_since_data > 600:  # 10 دقیقه
+                    logger.warning(f"Ramzinex: Extended quiet period - {time_since_data:.1f}s without data")
+                    return False
+        
+        return True
+
     def parse_price_data(self, data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         """Parse price data (handled in _process_orderbook_data)"""
         return None
+
+    def reset_connection_state(self):
+        """Reset connection state"""
+        super().reset_connection_state()
+        self._reset_activity_tracking()
 
     async def disconnect(self):
         """Disconnect from Ramzinex"""
@@ -286,4 +383,5 @@ class RamzinexService(BaseExchangeService):
         self.subscribed_pairs.clear()
         self.subscriptions.clear()
         self.pair_symbol_map.clear()
+        self._reset_activity_tracking()
         logger.info("Ramzinex centrifuge client disconnected")
