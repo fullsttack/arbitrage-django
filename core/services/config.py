@@ -3,18 +3,16 @@
 
 EXCHANGE_CONFIGS = {
     'mexc': {
-        'url': 'wss://wbs-api.mexc.com/ws',
-        'ping_interval': 25,  # Send ping every 25 seconds (connection auto-closes after 30s of no activity)
-        'timeout': 35,        # Connection timeout
-        'max_subscriptions': 30,  # MEXC limit per connection
-        'connection_lifetime': 86400,  # 24 hours max connection time
+        'url': 'ws://wbs-api.mexc.com/ws',
+        'ping_interval': 25,  
+        'timeout': 30,        
+        'max_subscriptions': 30,  
         'ping_format': 'json_method',     # {"method": "PING"}
-        'pong_format': 'json_response',   # {"id": 0, "code": 0, "msg": "PONG"}
-        'client_ping': True,              # Client must send ping
-        'stream_type': 'book_ticker',     # Use book ticker for best bid/ask
-        'protobuf_required': True,        # Requires protobuf for market data
+        'pong_format': 'json_response',   # {"msg": "PONG"}
+        'client_ping': True,              
+        'stream_type': 'book_ticker',     
+        'protobuf_required': True,
     },
-    
     'ramzinex': {
         'url': 'wss://websocket.ramzinex.com/websocket',
         'ping_interval': 25,  # Server pings every 25s
