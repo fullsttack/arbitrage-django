@@ -11,7 +11,7 @@ from .config import get_config
 logger = logging.getLogger(__name__)
 
 class MexcService(BaseExchangeService):
-    """🚀 MEXC Service - WebSocket with Protocol Buffers Support"""
+    """🚀 MEXC Service - WebSocket with Protocol Buffers Support (Enhanced Debug)"""
     
     def __init__(self):
         config = get_config('mexc')
@@ -36,24 +36,34 @@ class MexcService(BaseExchangeService):
     def _check_protobuf_support(self) -> bool:
         """🔧 Check if protobuf is available"""
         try:
-            # Try to import the generated protobuf classes
-            # These should be generated from: https://github.com/mexcdevelop/websocket-proto
-            # Command: protoc *.proto --python_out=core/services/mexc_proto/
+            import sys
+            import os
             
-            # Uncomment when protobuf files are available:
-            from .mexc_proto import PushDataV3ApiWrapper_pb2
+            # Add mexc_proto to path for direct import
+            proto_path = os.path.join(os.path.dirname(__file__), 'mexc_proto')
+            if proto_path not in sys.path:
+                sys.path.insert(0, proto_path)
+            
+            # Import protobuf classes directly
+            import PushDataV3ApiWrapper_pb2
             self.PushDataV3ApiWrapper = PushDataV3ApiWrapper_pb2.PushDataV3ApiWrapper
+            
+            logger.info(f"{self.exchange_name}: ✅ Protobuf support loaded successfully")
             return True
             
-            logger.warning(f"{self.exchange_name}: Protobuf classes not found. Please run:")
-            logger.warning(f"  1. git clone https://github.com/mexcdevelop/websocket-proto")
-            logger.warning(f"  2. protoc *.proto --python_out=core/services/mexc_proto/")
-            logger.warning(f"  3. Uncomment protobuf imports in mexc.py")
-            
-            return False
-            
         except ImportError as e:
-            logger.warning(f"{self.exchange_name}: Protobuf support not available: {e}")
+            logger.error(f"{self.exchange_name}: Protobuf support not available: {e}")
+            logger.error(f"Please run: protoc *.proto --python_out=. in mexc_proto directory")
+            
+            # Debug: list available files
+            try:
+                import os
+                proto_dir = os.path.join(os.path.dirname(__file__), 'mexc_proto')
+                files = [f for f in os.listdir(proto_dir) if f.endswith('.py')]
+                logger.error(f"Available files: {files}")
+            except Exception as debug_e:
+                logger.error(f"Debug error: {debug_e}")
+            
             return False
         
     async def connect(self) -> bool:
@@ -151,13 +161,16 @@ class MexcService(BaseExchangeService):
             return False
 
     async def handle_message(self, message):
-        """📨 Handle incoming messages (JSON or Binary Protobuf)"""
+        """📨 Handle incoming messages (JSON or Binary Protobuf) with enhanced debugging"""
         try:
-            # Check if message is binary (protobuf) or text (JSON)
+            # Log ALL incoming messages for debugging
             if isinstance(message, bytes):
+                logger.info(f"{self.exchange_name}: 📦 BINARY message received ({len(message)} bytes)")
+                logger.debug(f"{self.exchange_name}: Binary hex (first 50 bytes): {message[:50].hex()}")
                 # Binary message = Protobuf market data
                 await self._handle_protobuf_message(message)
             else:
+                logger.info(f"{self.exchange_name}: 📝 TEXT message received: {message}")
                 # Text message = JSON (subscription responses, ping/pong)
                 await self._handle_json_message(message)
                 
@@ -188,18 +201,17 @@ class MexcService(BaseExchangeService):
             logger.error(f"{self.exchange_name}: JSON message handling error: {e}")
 
     async def _handle_protobuf_message(self, binary_data: bytes):
-        """📊 Handle binary protobuf messages (market data)"""
+        """📊 Handle binary protobuf messages (market data) with enhanced debugging"""
         try:
             self.protobuf_messages += 1
+            logger.info(f"{self.exchange_name}: 🔍 Processing protobuf message #{self.protobuf_messages} ({len(binary_data)} bytes)")
             
             if not self.protobuf_available:
-                # Skip protobuf parsing if not available
-                logger.debug(f"{self.exchange_name}: Protobuf message #{self.protobuf_messages} (skipped - no protobuf support)")
+                logger.warning(f"{self.exchange_name}: Protobuf message #{self.protobuf_messages} (skipped - no protobuf support)")
                 return
             
-            # TODO: Uncomment when protobuf classes are available
-            """
             # Parse the protobuf message
+            logger.debug(f"{self.exchange_name}: Parsing protobuf with PushDataV3ApiWrapper...")
             wrapper = self.PushDataV3ApiWrapper()
             wrapper.ParseFromString(binary_data)
             
@@ -207,45 +219,104 @@ class MexcService(BaseExchangeService):
             channel = getattr(wrapper, 'channel', '')
             symbol = getattr(wrapper, 'symbol', '')
             
-            logger.debug(f"{self.exchange_name}: Protobuf message - channel: {channel}, symbol: {symbol}")
+            logger.info(f"{self.exchange_name}: 📊 Protobuf parsed - channel: '{channel}', symbol: '{symbol}'")
+            
+            # Debug: Check all wrapper attributes
+            wrapper_attrs = [attr for attr in dir(wrapper) if not attr.startswith('_')]
+            logger.debug(f"{self.exchange_name}: Wrapper attributes: {wrapper_attrs}")
             
             # Handle book ticker data
             if 'bookTicker' in channel and hasattr(wrapper, 'publicbookticker'):
+                logger.info(f"{self.exchange_name}: 📈 Found book ticker data for {symbol}")
                 await self._process_book_ticker_protobuf(symbol, wrapper.publicbookticker)
+            elif hasattr(wrapper, 'publicBookTicker'):
+                logger.info(f"{self.exchange_name}: 📈 Found publicBookTicker (alternate) for {symbol}")
+                await self._process_book_ticker_protobuf(symbol, wrapper.publicBookTicker)
             else:
-                logger.debug(f"{self.exchange_name}: Unhandled protobuf channel: {channel}")
-            """
-            
-            # For now, just log that we received protobuf data
-            logger.debug(f"{self.exchange_name}: Protobuf message #{self.protobuf_messages} received ({len(binary_data)} bytes)")
+                logger.warning(f"{self.exchange_name}: ❌ No book ticker data found in protobuf")
+                logger.debug(f"{self.exchange_name}: Available wrapper attributes: {[attr for attr in dir(wrapper) if not attr.startswith('_') and hasattr(wrapper, attr)]}")
             
         except Exception as e:
             self.protobuf_errors += 1
-            logger.error(f"{self.exchange_name}: Protobuf parsing error #{self.protobuf_errors}: {e}")
+            logger.error(f"{self.exchange_name}: 💥 Protobuf parsing error #{self.protobuf_errors}: {e}")
+            # Log first few bytes for debugging
+            hex_data = binary_data[:50].hex() if len(binary_data) >= 50 else binary_data.hex()
+            logger.error(f"{self.exchange_name}: Binary data (first 50 bytes): {hex_data}")
+            
+            # Try to understand the structure
+            try:
+                logger.debug(f"{self.exchange_name}: Attempting alternate parsing...")
+                # Maybe try direct field access or different wrapper
+            except Exception as e2:
+                logger.debug(f"{self.exchange_name}: Alternate parsing failed: {e2}")
 
     async def _process_book_ticker_protobuf(self, symbol: str, book_ticker):
-        """📊 Process book ticker protobuf data"""
+        """📊 Process book ticker protobuf data with enhanced debugging"""
         try:
-            # Extract bid/ask from protobuf object
-            bid_price = Decimal(str(getattr(book_ticker, 'bidprice', '0')))
-            bid_quantity = Decimal(str(getattr(book_ticker, 'bidquantity', '0')))
-            ask_price = Decimal(str(getattr(book_ticker, 'askprice', '0')))
-            ask_quantity = Decimal(str(getattr(book_ticker, 'askquantity', '0')))
+            logger.info(f"{self.exchange_name}: 💰 Processing book ticker for {symbol}")
             
-            logger.debug(f"{self.exchange_name}: Book ticker for {symbol} - "
-                       f"bid: {bid_price}@{bid_quantity}, ask: {ask_price}@{ask_quantity}")
+            # Debug book ticker structure
+            ticker_attrs = [attr for attr in dir(book_ticker) if not attr.startswith('_')]
+            logger.debug(f"{self.exchange_name}: Book ticker attributes: {ticker_attrs}")
+            
+            # Try different possible field names
+            possible_bid_fields = ['bidprice', 'bidPrice', 'bid_price', 'bid']
+            possible_ask_fields = ['askprice', 'askPrice', 'ask_price', 'ask']
+            possible_bid_qty_fields = ['bidquantity', 'bidQuantity', 'bid_quantity', 'bidQty']
+            possible_ask_qty_fields = ['askquantity', 'askQuantity', 'ask_quantity', 'askQty']
+            
+            bid_price = None
+            ask_price = None
+            bid_quantity = None
+            ask_quantity = None
+            
+            # Find bid price
+            for field in possible_bid_fields:
+                if hasattr(book_ticker, field):
+                    bid_price = Decimal(str(getattr(book_ticker, field)))
+                    logger.debug(f"{self.exchange_name}: Found bid price in field '{field}': {bid_price}")
+                    break
+            
+            # Find ask price  
+            for field in possible_ask_fields:
+                if hasattr(book_ticker, field):
+                    ask_price = Decimal(str(getattr(book_ticker, field)))
+                    logger.debug(f"{self.exchange_name}: Found ask price in field '{field}': {ask_price}")
+                    break
+            
+            # Find bid quantity
+            for field in possible_bid_qty_fields:
+                if hasattr(book_ticker, field):
+                    bid_quantity = Decimal(str(getattr(book_ticker, field)))
+                    logger.debug(f"{self.exchange_name}: Found bid quantity in field '{field}': {bid_quantity}")
+                    break
+            
+            # Find ask quantity
+            for field in possible_ask_qty_fields:
+                if hasattr(book_ticker, field):
+                    ask_quantity = Decimal(str(getattr(book_ticker, field)))
+                    logger.debug(f"{self.exchange_name}: Found ask quantity in field '{field}': {ask_quantity}")
+                    break
+            
+            if bid_price is None or ask_price is None:
+                logger.error(f"{self.exchange_name}: ❌ Could not find bid/ask prices")
+                logger.error(f"{self.exchange_name}: Available fields: {[attr for attr in dir(book_ticker) if not attr.startswith('_')]}")
+                return
+            
+            logger.info(f"{self.exchange_name}: 📊 Book ticker for {symbol} - "
+                       f"bid: {bid_price}@{bid_quantity or 0}, ask: {ask_price}@{ask_quantity or 0}")
             
             # Validate prices
-            if bid_price <= 0 or ask_price <= 0 or bid_quantity <= 0 or ask_quantity <= 0:
-                logger.debug(f"{self.exchange_name}: Invalid price/quantity for {symbol}")
+            if bid_price <= 0 or ask_price <= 0:
+                logger.warning(f"{self.exchange_name}: ❌ Invalid prices for {symbol}: bid={bid_price}, ask={ask_price}")
                 return
             
             # Save price data
-            await self.save_price_data(symbol, bid_price, ask_price, bid_quantity, ask_quantity)
-            logger.debug(f"{self.exchange_name}: 💾 Saved protobuf price data for {symbol}")
+            await self.save_price_data(symbol, bid_price, ask_price, bid_quantity or 0, ask_quantity or 0)
+            logger.info(f"{self.exchange_name}: ✅ Successfully saved price data for {symbol}")
             
         except Exception as e:
-            logger.error(f"{self.exchange_name}: Book ticker protobuf processing error: {e}")
+            logger.error(f"{self.exchange_name}: 💥 Book ticker processing error: {e}")
 
     async def _handle_server_pong(self, data: dict):
         """📨 Handle server pong response"""
