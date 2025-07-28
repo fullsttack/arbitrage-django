@@ -35,6 +35,20 @@ EXCHANGE_CONFIGS = {
         },
         'ping_format': 'json_action',  # {"action":"ping", "ping":"id"}
         'pong_format': 'json_action'   # {"action":"pong", "pong":"id"}
+    },
+    
+    'tabdeal': {
+        'url': 'wss://api1.tabdeal.org/stream/',
+        'ping_interval': 30,  # Standard WebSocket ping
+        'timeout': 60,        # 1 minute timeout
+        'subscribe_format': {
+            "method": "SUBSCRIBE",
+            "params": ["{symbol}@depth@2000ms"],
+            "id": "{id}"
+        },
+        'data_interval': 2000,  # Data updates every 2 seconds
+        'ping_format': 'websocket_ping',  # Standard WebSocket ping
+        'pong_format': 'websocket_pong'   # Standard WebSocket pong
     }
 }
 
@@ -53,9 +67,9 @@ RAMZINEX_PAIR_MAPPING = {
     '13': {'symbol': 'ETHUSDT', 'base': 'ETH', 'quote': 'USDT', 'name': 'Ethereum'},
     '509': {'symbol': 'NOTUSDT', 'base': 'NOT', 'quote': 'USDT', 'name': 'Notcoin'},
     '643': {'symbol': 'XRPUSDT', 'base': 'XRP', 'quote': 'USDT', 'name': 'Ripple'},
+    '2': {'symbol': 'BTCUSDT', 'base': 'BTC', 'quote': 'USDT', 'name': 'Bitcoin'},
     
     # Common TMN pairs (for future use)
-    '2': {'symbol': 'BTCTMN', 'base': 'BTC', 'quote': 'TMN', 'name': 'Bitcoin'},
     '11': {'symbol': 'USDTTMN', 'base': 'USDT', 'quote': 'TMN', 'name': 'Tether'},
     '46': {'symbol': 'ETHTMN', 'base': 'ETH', 'quote': 'TMN', 'name': 'Ethereum'},
     '10': {'symbol': 'LTCTMN', 'base': 'LTC', 'quote': 'TMN', 'name': 'Litecoin'},
@@ -83,4 +97,4 @@ def get_ramzinex_currency_name(pair_id: str) -> str:
 
 def get_config(exchange_name: str) -> dict:
     """🔧 Get configuration for exchange"""
-    return EXCHANGE_CONFIGS.get(exchange_name, {}) 
+    return EXCHANGE_CONFIGS.get(exchange_name, {})

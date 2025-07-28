@@ -13,7 +13,7 @@ class Command(BaseCommand):
                 'name': 'wallex',
                 'display_name': 'wallex',
                 'base_url': 'https://api.wallex.ir/v1/',
-                'websocket_url': 'wss://api.wallex.ir/v1/ws',
+                'websocket_url': 'wss://api.wallex.ir/ws',
                 'is_active': True
             },
             {
@@ -28,6 +28,13 @@ class Command(BaseCommand):
                 'display_name': 'ramzinex',
                 'base_url': 'https://publicapi.ramzinex.com/exchange/api/v1.0/',
                 'websocket_url': 'wss://websocket.ramzinex.com/websocket',
+                'is_active': True
+            },
+            {
+                'name': 'tabdeal',
+                'display_name': 'tabdeal',
+                'base_url': 'https://api1.tabdeal.org/r/api/v1/',
+                'websocket_url': 'wss://api1.tabdeal.org/stream/',
                 'is_active': True
             }
         ]
@@ -63,17 +70,21 @@ class Command(BaseCommand):
         
         # Create Trading Pairs
         trading_pairs_data = []
-        exchanges = ['wallex', 'lbank', 'ramzinex']
+        exchanges = ['wallex', 'lbank', 'ramzinex', 'tabdeal']
         base_currencies = ['XRP', 'DOGE', 'NOT', 'ETH']
         quote_currency = 'USDT'
+        
         symbol_formats = {
             'wallex': lambda base: f'{base}USDT',
             'lbank': lambda base: f'{base.lower()}_usdt',
             'ramzinex': lambda base: f'{base}/USDT',
+            'tabdeal': lambda base: f'{base.lower()}usdt',
         }
+        
         pair_ids = { 
             'ramzinex': {'XRP': '643', 'DOGE': '432', 'NOT': '509', 'ETH': '13'}
         }
+        
         for exchange in exchanges:
             for base in base_currencies:
                 trading_pairs_data.append({
@@ -86,6 +97,20 @@ class Command(BaseCommand):
                     'min_volume': 100,
                     'max_volume': 1000000000
                 })
+        
+        # Add Tabdeal IRT pairs
+        irt_base_currencies = ['USDT', 'BTC', 'ETH']
+        for base in irt_base_currencies:
+            trading_pairs_data.append({
+                'exchange': 'tabdeal',
+                'base_currency': base,
+                'quote_currency': 'IRT',
+                'symbol_format': f'{base.lower()}irt',
+                'pair_id': None,
+                'arbitrage_threshold': 0.3,
+                'min_volume': 1000,
+                'max_volume': 1000000000
+            })
 
         for pair_data in trading_pairs_data:
             try:

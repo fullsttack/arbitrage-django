@@ -9,6 +9,7 @@ from channels.db import database_sync_to_async
 from ..services.wallex import WallexService
 from ..services.lbank import LBankService
 from ..services.ramzinex import RamzinexService
+from ..services.tabdeal import TabdealService
 from ..arbitrage import FastArbitrageCalculator
 from ..models import TradingPair
 from ..redis import redis_manager
@@ -28,7 +29,8 @@ class SimpleWorkersManager:
         self.services = {
             'wallex': WallexService(),
             'lbank': LBankService(),
-            'ramzinex': RamzinexService()
+            'ramzinex': RamzinexService(),
+            'tabdeal': TabdealService()
         }
         
         # Arbitrage calculators
