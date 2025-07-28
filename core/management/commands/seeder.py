@@ -11,37 +11,44 @@ class Command(BaseCommand):
         exchanges_data = [
             {
                 'name': 'wallex',
-                'display_name': 'wallex',
+                'display_name': 'Wallex',
                 'base_url': 'https://api.wallex.ir/v1/',
                 'websocket_url': 'wss://api.wallex.ir/ws',
                 'is_active': True
             },
             {
                 'name': 'lbank',
-                'display_name': 'lbank',
+                'display_name': 'LBank',
                 'base_url': 'https://api.lbkex.com/v2/',
                 'websocket_url': 'wss://www.lbkex.net/ws/V2/',
                 'is_active': True
             },
             {
                 'name': 'ramzinex',
-                'display_name': 'ramzinex',
+                'display_name': 'Ramzinex',
                 'base_url': 'https://publicapi.ramzinex.com/exchange/api/v1.0/',
                 'websocket_url': 'wss://websocket.ramzinex.com/websocket',
                 'is_active': True
             },
             {
                 'name': 'tabdeal',
-                'display_name': 'tabdeal',
+                'display_name': 'Tabdeal',
                 'base_url': 'https://api1.tabdeal.org/r/api/v1/',
                 'websocket_url': 'wss://api1.tabdeal.org/stream/',
                 'is_active': True
             },
             {
                 'name': 'bitpin',
-                'display_name': 'bitpin',
+                'display_name': 'Bitpin',
                 'base_url': 'https://api.bitpin.ir/',
                 'websocket_url': 'wss://ws.bitpin.ir',
+                'is_active': True
+            },
+            {
+                'name': 'mexc',
+                'display_name': 'MEXC',
+                'base_url': 'https://api.mexc.com/api/v3/',
+                'websocket_url': 'wss://wbs-api.mexc.com/ws',
                 'is_active': True
             }
         ]
@@ -77,7 +84,7 @@ class Command(BaseCommand):
         
         # Create Trading Pairs
         trading_pairs_data = []
-        exchanges = ['wallex', 'lbank', 'ramzinex', 'tabdeal', 'bitpin']
+        exchanges = ['wallex', 'lbank', 'ramzinex', 'tabdeal', 'bitpin', 'mexc']
         base_currencies = ['XRP', 'DOGE', 'NOT', 'ETH']
         quote_currency = 'USDT'
         
@@ -87,14 +94,26 @@ class Command(BaseCommand):
             'ramzinex': lambda base: f'{base}/USDT',
             'tabdeal': lambda base: f'{base.lower()}usdt',
             'bitpin': lambda base: f'{base}_USDT',
+            'mexc': lambda base: f'{base}USDT',  # MEXC uses uppercase format like XRPUSDT, BTCUSDT
         }
         
         pair_ids = { 
-            'ramzinex': {'XRP': '643', 'DOGE': '432', 'NOT': '509', 'ETH': '13'}
+            'ramzinex': {
+                'XRP': '643', 
+                'DOGE': '432', 
+                'NOT': '509', 
+                'ETH': '13'
+            }
         }
         
         for exchange in exchanges:
             for base in base_currencies:
+                # Skip some pairs for certain exchanges if needed
+                if exchange == 'wallex' and base == 'BTC':
+                    continue  # Wallex might not have BTC/USDT
+                if exchange == 'tabdeal' and base in ['NOT', 'BTC']:
+                    continue  # Tabdeal might not have these pairs
+                    
                 trading_pairs_data.append({
                     'exchange': exchange,
                     'base_currency': base,

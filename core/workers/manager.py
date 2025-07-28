@@ -11,6 +11,7 @@ from ..services.lbank import LBankService
 from ..services.ramzinex import RamzinexService
 from ..services.tabdeal import TabdealService
 from ..services.bitpin import BitpinService
+from ..services.mexc import MexcService
 from ..arbitrage import FastArbitrageCalculator
 from ..models import TradingPair
 from ..redis import redis_manager
@@ -32,7 +33,8 @@ class SimpleWorkersManager:
             'lbank': LBankService(),
             'ramzinex': RamzinexService(),
             'tabdeal': TabdealService(),
-            'bitpin': BitpinService()
+            'bitpin': BitpinService(),
+            'mexc': MexcService()
         }
         
         # Arbitrage calculators
