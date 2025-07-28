@@ -10,6 +10,7 @@ from ..services.wallex import WallexService
 from ..services.lbank import LBankService
 from ..services.ramzinex import RamzinexService
 from ..services.tabdeal import TabdealService
+from ..services.bitpin import BitpinService
 from ..arbitrage import FastArbitrageCalculator
 from ..models import TradingPair
 from ..redis import redis_manager
@@ -30,7 +31,8 @@ class SimpleWorkersManager:
             'wallex': WallexService(),
             'lbank': LBankService(),
             'ramzinex': RamzinexService(),
-            'tabdeal': TabdealService()
+            'tabdeal': TabdealService(),
+            'bitpin': BitpinService()
         }
         
         # Arbitrage calculators

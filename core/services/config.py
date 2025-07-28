@@ -39,16 +39,27 @@ EXCHANGE_CONFIGS = {
     
     'tabdeal': {
         'url': 'wss://api1.tabdeal.org/stream/',
-        'ping_interval': 30,  # Standard WebSocket ping
-        'timeout': 60,        # 1 minute timeout
+        'ping_interval': None,  # No ping/pong needed - server sends data every 2s
+        'timeout': 60,          # 1 minute timeout
         'subscribe_format': {
             "method": "SUBSCRIBE",
             "params": ["{symbol}@depth@2000ms"],
             "id": "{id}"
         },
-        'data_interval': 2000,  # Data updates every 2 seconds
-        'ping_format': 'websocket_ping',  # Standard WebSocket ping
-        'pong_format': 'websocket_pong'   # Standard WebSocket pong
+        'data_interval': 2000,  # Data updates every 2 seconds automatically
+    },
+    
+    'bitpin': {
+        'url': 'wss://ws.bitpin.ir',
+        'ping_interval': 20,  # Must send PING every 20 seconds
+        'timeout': 25,        # 20s + 5s buffer
+        'subscribe_format': {
+            "method": "sub_to_market_data",
+            "symbols": ["{symbols}"]
+        },
+        'ping_format': 'json_message',   # {"message": "PING"}
+        'pong_format': 'json_message',   # {"message": "PONG"}
+        'client_ping': True,             # Client must send ping
     }
 }
 

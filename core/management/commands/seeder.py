@@ -36,6 +36,13 @@ class Command(BaseCommand):
                 'base_url': 'https://api1.tabdeal.org/r/api/v1/',
                 'websocket_url': 'wss://api1.tabdeal.org/stream/',
                 'is_active': True
+            },
+            {
+                'name': 'bitpin',
+                'display_name': 'bitpin',
+                'base_url': 'https://api.bitpin.ir/',
+                'websocket_url': 'wss://ws.bitpin.ir',
+                'is_active': True
             }
         ]
         
@@ -70,7 +77,7 @@ class Command(BaseCommand):
         
         # Create Trading Pairs
         trading_pairs_data = []
-        exchanges = ['wallex', 'lbank', 'ramzinex', 'tabdeal']
+        exchanges = ['wallex', 'lbank', 'ramzinex', 'tabdeal', 'bitpin']
         base_currencies = ['XRP', 'DOGE', 'NOT', 'ETH']
         quote_currency = 'USDT'
         
@@ -79,6 +86,7 @@ class Command(BaseCommand):
             'lbank': lambda base: f'{base.lower()}_usdt',
             'ramzinex': lambda base: f'{base}/USDT',
             'tabdeal': lambda base: f'{base.lower()}usdt',
+            'bitpin': lambda base: f'{base}_USDT',
         }
         
         pair_ids = { 
@@ -97,20 +105,6 @@ class Command(BaseCommand):
                     'min_volume': 100,
                     'max_volume': 1000000000
                 })
-        
-        # Add Tabdeal IRT pairs
-        irt_base_currencies = ['USDT', 'BTC', 'ETH']
-        for base in irt_base_currencies:
-            trading_pairs_data.append({
-                'exchange': 'tabdeal',
-                'base_currency': base,
-                'quote_currency': 'IRT',
-                'symbol_format': f'{base.lower()}irt',
-                'pair_id': None,
-                'arbitrage_threshold': 0.3,
-                'min_volume': 1000,
-                'max_volume': 1000000000
-            })
 
         for pair_data in trading_pairs_data:
             try:
