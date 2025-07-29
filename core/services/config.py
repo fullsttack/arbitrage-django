@@ -3,7 +3,7 @@
 
 EXCHANGE_CONFIGS = {
     'mexc': {
-        'url': 'ws://wbs-api.mexc.com/ws',
+        'url': 'wss://wbs-api.mexc.com/ws',
         'ping_interval': 25,  
         'timeout': 30,        
         'max_subscriptions': 30,  
@@ -71,6 +71,22 @@ EXCHANGE_CONFIGS = {
         'ping_format': 'json_message',   # {"message": "PING"}
         'pong_format': 'json_message',   # {"message": "PONG"}
         'client_ping': True,             # Client must send ping
+    },
+    
+    'bingx': {
+        'url': 'wss://open-api-swap.bingx.com/swap-market',
+        'ping_interval': None,  # Server sends ping every 5s, no client ping needed
+        'timeout': 30,
+        'max_subscriptions': 200,  # BingX limit
+        'subscribe_format': {
+            "id": "{id}",
+            "reqType": "sub", 
+            "dataType": "{symbol}@bookTicker"
+        },
+        'ping_format': 'string_ping',    # Server sends "Ping" string
+        'pong_format': 'string_pong',    # Client sends "Pong" string
+        'gzip_compression': True,        # All data is GZIP compressed
+        'symbol_format': 'dash',         # BTC-USDT format
     }
 }
 

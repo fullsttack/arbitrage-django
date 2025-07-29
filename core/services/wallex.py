@@ -58,7 +58,8 @@ class WallexService(BaseExchangeService):
             
             # Start health monitoring (Socket.IO handles ping/pong automatically)
             health_task = asyncio.create_task(self.health_monitor())
-            self.background_tasks = [health_task]
+            status_task = asyncio.create_task(self._status_monitor())
+            self.background_tasks = [health_task, status_task]
             
             logger.debug(f"{self.exchange_name}: Background tasks started: {len(self.background_tasks)}")
             return True
@@ -243,6 +244,39 @@ class WallexService(BaseExchangeService):
         
         logger.info(f"{self.exchange_name}: Socket.IO subscription result: {success_count}/{len(pairs)}")
         return success_count > 0
+
+    async def _status_monitor(self):
+        """📊 Status monitor with detailed reporting"""
+        logger.info(f"{self.exchange_name}: 📊 Status monitor started")
+        
+        try:
+            while self.is_connected:
+                await asyncio.sleep(30)
+                
+                current_time = time.time()
+                time_since_data = current_time - self.last_data_time if self.last_data_time > 0 else float('inf')
+                
+                logger.info(f"{self.exchange_name}: 📊 WALLEX Status Report:")
+                logger.info(f"  🔗 Endpoint: https://api.wallex.ir")
+                logger.info(f"  ⏱️  Time since last data: {time_since_data:.1f}s")
+                logger.info(f"  📝 Messages processed: {self.message_count}")
+                logger.info(f"  📡 Broadcaster events: {self.broadcaster_events}")
+                logger.info(f"  💰 Market data processed: {self.market_data_processed}")
+                logger.info(f"  📡 Subscribed pairs: {len(self.subscribed_pairs)}")
+                logger.info(f"  🔌 Socket.IO connected: {self.sio.connected if self.sio else False}")
+                
+                # Data flow status
+                if time_since_data < 30:
+                    logger.info(f"{self.exchange_name}: ✅ Data flow healthy")
+                elif time_since_data < 60:
+                    logger.warning(f"{self.exchange_name}: ⚠️ Data flow slow")
+                else:
+                    logger.error(f"{self.exchange_name}: ❌ No data for {time_since_data:.1f}s")
+                
+        except asyncio.CancelledError:
+            logger.info(f"{self.exchange_name}: Status monitor canceled")
+        except Exception as e:
+            logger.error(f"{self.exchange_name}: Status monitor error: {e}")
 
     def is_healthy(self) -> bool:
         """🔍 Health check - Socket.IO handles ping/pong automatically"""

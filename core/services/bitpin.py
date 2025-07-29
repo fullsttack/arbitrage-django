@@ -48,8 +48,9 @@ class BitpinService(BaseExchangeService):
             listen_task = asyncio.create_task(self.listen_loop())
             health_task = asyncio.create_task(self.health_monitor())
             ping_task = asyncio.create_task(self._client_ping_task())
+            status_task = asyncio.create_task(self._status_monitor())
             
-            self.background_tasks = [listen_task, health_task, ping_task]
+            self.background_tasks = [listen_task, health_task, ping_task, status_task]
             self.client_ping_task = ping_task
             
             logger.debug(f"{self.exchange_name}: Background tasks started: {len(self.background_tasks)}")
@@ -141,7 +142,7 @@ class BitpinService(BaseExchangeService):
     async def _handle_server_pong(self, data: dict):
         """📨 Handle server pong response"""
         self.server_pong_count += 1
-        logger.info(f"{self.exchange_name}: 🏓 RECEIVED SERVER PONG #{self.server_pong_count}")
+        logger.debug(f"{self.exchange_name}: 🏓 RECEIVED SERVER PONG #{self.server_pong_count}")
         logger.debug(f"{self.exchange_name}: Pong message: {data}")
 
     async def _handle_subscription_response(self, data: dict):
@@ -210,7 +211,7 @@ class BitpinService(BaseExchangeService):
                     await self.websocket.send(ping_json)
                     
                     self.client_ping_count += 1
-                    logger.info(f"{self.exchange_name}: 🏓 SENT CLIENT PING #{self.client_ping_count}")
+                    logger.debug(f"{self.exchange_name}: 🏓 SENT CLIENT PING #{self.client_ping_count}")
                     logger.debug(f"{self.exchange_name}: Ping message sent: {ping_json}")
                     
                 except asyncio.CancelledError:
@@ -225,6 +226,45 @@ class BitpinService(BaseExchangeService):
         
         finally:
             logger.info(f"{self.exchange_name}: Client ping task terminated")
+
+    async def _status_monitor(self):
+        """📊 Status monitor with detailed reporting"""
+        logger.info(f"{self.exchange_name}: 📊 Status monitor started")
+        
+        try:
+            while self.is_connected:
+                await asyncio.sleep(30)
+                
+                current_time = time.time()
+                time_since_data = current_time - self.last_data_time if self.last_data_time > 0 else float('inf')
+                
+                logger.info(f"{self.exchange_name}: 📊 BITPIN Status Report:")
+                logger.info(f"  🔗 Endpoint: {self.config['url']}")
+                logger.info(f"  ⏱️  Time since last data: {time_since_data:.1f}s")
+                logger.info(f"  📝 Messages processed: {self.message_count}")
+                logger.info(f"  🏓 Client pings sent: {self.client_ping_count}")
+                logger.info(f"  🏓 Server pongs received: {self.server_pong_count}")
+                logger.info(f"  📡 Subscribed pairs: {len(self.subscribed_pairs)}")
+                
+                # Ping/Pong ratio
+                if self.client_ping_count > 0:
+                    pong_ratio = self.server_pong_count / self.client_ping_count
+                    logger.info(f"  🔄 Ping/Pong ratio: {pong_ratio:.2f}")
+                else:
+                    logger.info(f"  🔄 Ping/Pong ratio: N/A")
+                
+                # Data flow status
+                if time_since_data < 30:
+                    logger.info(f"{self.exchange_name}: ✅ Data flow healthy")
+                elif time_since_data < 60:
+                    logger.warning(f"{self.exchange_name}: ⚠️ Data flow slow")
+                else:
+                    logger.error(f"{self.exchange_name}: ❌ No data for {time_since_data:.1f}s")
+                
+        except asyncio.CancelledError:
+            logger.info(f"{self.exchange_name}: Status monitor canceled")
+        except Exception as e:
+            logger.error(f"{self.exchange_name}: Status monitor error: {e}")
 
     def is_healthy(self) -> bool:
         """🔍 Bitpin health check with ping/pong stats"""

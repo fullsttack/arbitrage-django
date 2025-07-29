@@ -49,8 +49,9 @@ class LBankService(BaseExchangeService):
             listen_task = asyncio.create_task(self.listen_loop())
             health_task = asyncio.create_task(self.health_monitor())
             ping_task = asyncio.create_task(self._client_ping_task())
+            status_task = asyncio.create_task(self._status_monitor())
             
-            self.background_tasks = [listen_task, health_task, ping_task]
+            self.background_tasks = [listen_task, health_task, ping_task, status_task]
             self.client_ping_task = ping_task  # Keep reference for specific handling
             
             logger.debug(f"{self.exchange_name}: Background tasks started: {len(self.background_tasks)}")
@@ -150,7 +151,7 @@ class LBankService(BaseExchangeService):
             ping_id = data.get('ping')
             self.server_ping_count += 1
             
-            logger.info(f"{self.exchange_name}: 🏓 RECEIVED SERVER PING #{self.server_ping_count}: {ping_id}")
+            logger.debug(f"{self.exchange_name}: 🏓 RECEIVED SERVER PING #{self.server_ping_count}: {ping_id}")
             logger.debug(f"{self.exchange_name}: Full server ping message: {data}")
             
             if ping_id:
@@ -162,7 +163,7 @@ class LBankService(BaseExchangeService):
                     await self.websocket.send(pong_json)
                     self.server_pong_count += 1
                     
-                    logger.info(f"{self.exchange_name}: 🏓 SENT SERVER PONG #{self.server_pong_count}: {ping_id}")
+                    logger.debug(f"{self.exchange_name}: 🏓 SENT SERVER PONG #{self.server_pong_count}: {ping_id}")
                     logger.debug(f"{self.exchange_name}: Server pong message sent: {pong_json}")
                 else:
                     logger.error(f"{self.exchange_name}: Cannot send server PONG - no websocket or disconnected")
@@ -179,7 +180,7 @@ class LBankService(BaseExchangeService):
             pong_id = data.get('pong')
             self.client_pong_received_count += 1
             
-            logger.info(f"{self.exchange_name}: 🏓 RECEIVED SERVER PONG #{self.client_pong_received_count}: {pong_id}")
+            logger.debug(f"{self.exchange_name}: 🏓 RECEIVED SERVER PONG #{self.client_pong_received_count}: {pong_id}")
             logger.debug(f"{self.exchange_name}: Full server pong message: {data}")
             
         except Exception as e:
@@ -246,7 +247,7 @@ class LBankService(BaseExchangeService):
                     self.ping_counter += 1
                     self.client_ping_count += 1
                     
-                    logger.info(f"{self.exchange_name}: 🏓 SENT CLIENT PING #{self.client_ping_count}: {ping_id}")
+                    logger.debug(f"{self.exchange_name}: 🏓 SENT CLIENT PING #{self.client_ping_count}: {ping_id}")
                     logger.debug(f"{self.exchange_name}: Client ping message sent: {ping_json}")
                     
                 except asyncio.CancelledError:
@@ -261,6 +262,40 @@ class LBankService(BaseExchangeService):
         
         finally:
             logger.info(f"{self.exchange_name}: Client ping task terminated")
+
+    async def _status_monitor(self):
+        """📊 Status monitor with detailed reporting"""
+        logger.info(f"{self.exchange_name}: 📊 Status monitor started")
+        
+        try:
+            while self.is_connected:
+                await asyncio.sleep(30)
+                
+                current_time = time.time()
+                time_since_data = current_time - self.last_data_time if self.last_data_time > 0 else float('inf')
+                
+                logger.info(f"{self.exchange_name}: 📊 LBANK Status Report:")
+                logger.info(f"  🔗 Endpoint: {self.config['url']}")
+                logger.info(f"  ⏱️  Time since last data: {time_since_data:.1f}s")
+                logger.info(f"  📝 Messages processed: {self.message_count}")
+                logger.info(f"  🏓 Server pings received: {self.server_ping_count}")
+                logger.info(f"  🏓 Server pongs sent: {self.server_pong_count}")
+                logger.info(f"  🏓 Client pings sent: {self.client_ping_count}")
+                logger.info(f"  🏓 Client pongs received: {self.client_pong_received_count}")
+                logger.info(f"  📡 Subscribed pairs: {len(self.subscribed_pairs)}")
+                
+                # Data flow status
+                if time_since_data < 30:
+                    logger.info(f"{self.exchange_name}: ✅ Data flow healthy")
+                elif time_since_data < 60:
+                    logger.warning(f"{self.exchange_name}: ⚠️ Data flow slow")
+                else:
+                    logger.error(f"{self.exchange_name}: ❌ No data for {time_since_data:.1f}s")
+                
+        except asyncio.CancelledError:
+            logger.info(f"{self.exchange_name}: Status monitor canceled")
+        except Exception as e:
+            logger.error(f"{self.exchange_name}: Status monitor error: {e}")
 
     def is_healthy(self) -> bool:
         """🔍 LBank health check with ping/pong stats"""

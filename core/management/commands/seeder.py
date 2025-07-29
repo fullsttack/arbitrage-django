@@ -50,6 +50,13 @@ class Command(BaseCommand):
                 'base_url': 'https://api.mexc.com/api/v3/',
                 'websocket_url': 'wss://wbs-api.mexc.com/ws',
                 'is_active': True
+            },
+            {
+                'name': 'bingx',
+                'display_name': 'BingX',
+                'base_url': 'https://open-api.bingx.com/openApi/',
+                'websocket_url': 'wss://open-api-swap.bingx.com/swap-market',
+                'is_active': True
             }
         ]
         
@@ -84,7 +91,7 @@ class Command(BaseCommand):
         
         # Create Trading Pairs
         trading_pairs_data = []
-        exchanges = ['wallex', 'lbank', 'ramzinex', 'tabdeal', 'bitpin', 'mexc']
+        exchanges = ['wallex', 'lbank', 'ramzinex', 'tabdeal', 'bitpin', 'mexc', 'bingx']
         base_currencies = ['XRP', 'DOGE', 'NOT', 'ETH']
         quote_currency = 'USDT'
         
@@ -95,6 +102,7 @@ class Command(BaseCommand):
             'tabdeal': lambda base: f'{base.lower()}usdt',
             'bitpin': lambda base: f'{base}_USDT',
             'mexc': lambda base: f'{base}USDT',  # MEXC uses uppercase format like XRPUSDT, BTCUSDT
+            'bingx': lambda base: f'{base}USDT',  # BingX uses dash format internally but stores as XRPUSDT
         }
         
         pair_ids = { 
@@ -108,12 +116,6 @@ class Command(BaseCommand):
         
         for exchange in exchanges:
             for base in base_currencies:
-                # Skip some pairs for certain exchanges if needed
-                if exchange == 'wallex' and base == 'BTC':
-                    continue  # Wallex might not have BTC/USDT
-                if exchange == 'tabdeal' and base in ['NOT', 'BTC']:
-                    continue  # Tabdeal might not have these pairs
-                    
                 trading_pairs_data.append({
                     'exchange': exchange,
                     'base_currency': base,
